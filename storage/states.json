@@ -1,0 +1,148 @@
+{
+    "india": [
+        {
+            "name": "Andhra Pradesh",
+            "iso_code": "AP"
+        },
+        {
+            "name": "Arunachal Pradesh",
+            "iso_code": "AR"
+        },
+        {
+            "name": "Assam",
+            "iso_code": "AS"
+        },
+        {
+            "name": "Bihar",
+            "iso_code": "BR"
+        },
+        {
+            "name": "Chhattisgarh",
+            "iso_code": "CG"
+        },
+        {
+            "name": "Goa",
+            "iso_code": "GA"
+        },
+        {
+            "name": "Gujarat",
+            "iso_code": "GJ"
+        },
+        {
+            "name": "Haryana",
+            "iso_code": "HR"
+        },
+        {
+            "name": "Himachal Pradesh",
+            "iso_code": "HP"
+        },
+        {
+            "name": "Jharkhand",
+            "iso_code": "JH"
+        },
+        {
+            "name": "Jammu & Kashmir",
+            "iso_code": "JK"
+        },
+        {
+            "name": "Karnataka",
+            "iso_code": "KA"
+        },
+        {
+            "name": "Kerala",
+            "iso_code": "KL"
+        },
+        {
+            "name": "Madhya Pradesh",
+            "iso_code": "MP"
+        },
+        {
+            "name": "Maharashtra",
+            "iso_code": "MH"
+        },
+        {
+            "name": "Manipur",
+            "iso_code": "MN"
+        },
+        {
+            "name": "Meghalaya",
+            "iso_code": "ML"
+        },
+        {
+            "name": "Mizoram",
+            "iso_code": "MZ"
+        },
+        {
+            "name": "Nagaland",
+            "iso_code": "NL"
+        },
+        {
+            "name": "Odisha",
+            "iso_code": "OD"
+        },
+        {
+            "name": "Punjab",
+            "iso_code": "PB"
+        },
+        {
+            "name": "Rajasthan",
+            "iso_code": "RJ"
+        },
+        {
+            "name": "Sikkim",
+            "iso_code": "SK"
+        },
+        {
+            "name": "Tamil Nadu",
+            "iso_code": "TN"
+        },
+        {
+            "name": "Telangana",
+            "iso_code": "TG"
+        },
+        {
+            "name": "Tripura",
+            "iso_code": "TR"
+        },
+        {
+            "name": "Uttar Pradesh",
+            "iso_code": "UP"
+        },
+        {
+            "name": "Uttarakhand",
+            "iso_code": "UK"
+        },
+        {
+            "name": "West Bengal",
+            "iso_code": "WB"
+        },
+        {
+            "name": "Andaman & Nicobar Islands",
+            "iso_code": "AN"
+        },
+        {
+            "name": "Chandigarh",
+            "iso_code": "CH"
+        },
+        {
+            "name": "Dadar & Nagar Havali",
+            "iso_code": "DN"
+        },
+        {
+            "name": "Daman & Diu",
+            "iso_code": "DN"
+        },
+        {
+            "name": "Lakshadweep",
+            "iso_code": "LD"
+        },
+        {
+            "name": "Delhi",
+            "iso_code": "DL"
+        },
+        {
+            "name": "Puducherry",
+            "iso_code": "PY"
+        }
+    ]
+}

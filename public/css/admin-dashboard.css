@@ -1,0 +1,192 @@
+:root {
+    --primaryclr: #009CFF;
+    --blackclr: #000;
+    --plainclr: #fff;
+    --redclr: #ff0000;
+    --greenclr: #03a103;
+}
+
+a {
+    text-decoration: none !important;
+}
+
+#backToTopBtn {
+    display: none;
+    /* Hidden by default */
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 1000;
+    border: none;
+    background-color: #007bff;
+    color: white;
+    font-size: 24px;
+    border-radius: 50%;
+    padding: 10px;
+    cursor: pointer;
+}
+
+#backToTopBtn:hover {
+    background-color: #0056b3;
+}
+
+.content {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.ft-top {
+    margin-top: auto !important;
+}
+
+.navbar .sidebar-toggler {
+    background-color: var(--primaryclr) !important;
+    border: 2px solid transparent;
+    transition: all .3s linear;
+}
+
+.navbar .img-nav {
+    width: 100%;
+    text-align: center;
+}
+
+@media (max-width:767px) {
+    .navbar .img-nav {
+        margin-top: 4rem;
+    }
+}
+
+.navbar .sidebar-toggler i {
+    color: #fff;
+}
+
+.navbar .sidebar-toggler:hover {
+    border: 2px solid var(--primaryclr);
+    background-color: transparent !important;
+}
+
+.navbar .sidebar-toggler:hover i {
+    color: var(--primaryclr);
+}
+
+label {
+    font-weight: 600;
+    color: var(--blackclr);
+}
+
+.app-main__inner input[type="file"] {
+    background-color: white;
+    color: black;
+    /* Optional: Ensures text is visible */
+}
+
+/* .table-same td {
+    min-width: 160px;
+}
+
+.table-same th {
+    min-width: 160px;
+} */
+
+.emp-det strong {
+    color: #000;
+}
+
+.prop-none {
+    all: unset;
+    border: none;
+    background: none;
+}
+
+.add-flex-res {
+    display: flex;
+    align-items: center;
+}
+
+.form-label {
+    margin-bottom: .3rem;
+}
+
+input[type="file"] {
+
+    background-color: #fff !important;
+}
+
+select {
+    background-color: #fff !important;
+}
+
+.app-main__inner select {
+    background-color: #fff !important;
+}
+
+.t-black th {
+    color: var(--blackclr);
+}
+
+button {
+    cursor: pointer;
+}
+
+button i {
+    cursor: pointer;
+}
+
+span.red {
+    color: var(--redclr);
+}
+
+.actions {
+    display: flex;
+    gap: .8rem;
+}
+
+.actions i {
+    border: 1px solid #cdcdcd;
+    width: 28px;
+    height: 28px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+
+}
+
+
+.fa-trash {
+    color: var(--redclr);
+}
+
+.fa-trash:hover {
+    color: var(--plainclr);
+    background-color: var(--redclr);
+}
+
+
+.fa-pen {
+    color: var(--greenclr);
+}
+
+.fa-pen:hover {
+    color: var(--plainclr);
+    background-color: var(--greenclr);
+}
+
+.fa-eye {
+    color: var(--primaryclr);
+}
+
+.fa-eye:hover {
+    color: var(--plainclr);
+    background-color: var(--primaryclr);
+}
+
+.border-b-last-none {
+    border-bottom: 1px solid #cdcdcd;
+}
+
+
+.border-b-last-none:last-child {
+    border-bottom: none;
+}

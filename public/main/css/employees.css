@@ -1,0 +1,60 @@
+.employee-actions {
+    min-height: 38px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2px;
+}
+
+.filter-form input,
+.filter-form select {
+    margin-bottom: 10px;
+}
+
+.table th,
+.table td {
+    text-align: center;
+}
+
+.btn-group {
+    display: flex;
+    gap: 10px;
+}
+
+.shift-select {
+    width: 120px;
+    margin-right: 5px;
+}
+
+.assign-shift-form {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.assign-shift-form select {
+    margin-right: 10px;
+}
+
+/* new added css */
+.employee-actions a {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.employee-actions .dropdown li:hover {
+    background-color: #cdcdcd;
+}
+
+.main-content table td,
+.main-content table select,
+.main-content table input {
+    font-size: .9rem !important;
+    vertical-align: middle;
+}
+
+@media (max-width:1200px) {
+    .main-content table td {
+        min-width: 160px;
+    }
+}

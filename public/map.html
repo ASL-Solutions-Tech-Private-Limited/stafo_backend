@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MapmyIndia Polygon Example</title>    
+    <script src="https://apis.mappls.com/advancedmaps/api/916b8e48bbec2f473e9f1b525afcf2b2/map_sdk?v=3.0&layer=vector"></script>
+
+
+    <style>
+        #map {
+            height: 600px;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <h1>MapmyIndia Polygon Example</h1>
+    <div id="map"></div>
+
+    <script type="text/javascript">
+        var map = new mappls.Map('map', {
+            //center: [28.7041, 77.1025], // Set initial position (Delhi coordinates)
+            zoom: 8
+        });
+
+        mappls_polygon = new mappls.Polygon({
+            map: map,
+            paths: [{"lng":"88.4424407","lat": "22.6270717"},
+                {"lng":"88.4424472","lat":"22.6270632"},{"lng":"88.4424438","lat":"22.6270747"},
+                {"lng":"88.4424608","lat":"22.6270804"},{"lng":"88.4424646","lat":"22.6270810"},
+                {"lng":"88.4424504","lat":"22.6270654"},{"lng":"88.4424453","lat":"22.6270624"},
+                {"lng":"88.4424452","lat":"22.6270621"},{"lng":"88.4424455","lat":"22.6270619"}],
+            fillColor: "red",
+            fillOpacity: 0.8,
+            strokeColor: "red",
+            strokeOpacity: 0.8,
+            fitbounds: true,
+            fitboundOptions: {padding: 120,duration:1000},
+            popupHtml: 'Route 1',
+            popupOptions: {offset: {'bottom': [0, -20]}}
+        });
+
+       
+    </script>
+</body>
+</html>

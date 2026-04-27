@@ -1,0 +1,2162 @@
+[
+    {
+        "name": "Afghanistan",
+        "dial_code": "+93",
+        "alpha_2_code": "AF",
+        "alpha_3_code": "AFG",
+        "currency_symbol": "؋",
+        "currency_name": "Afghan afghani",
+        "currency_name_sf": "AFN"
+    },
+    {
+        "name": "Albania",
+        "dial_code": "+355",
+        "alpha_2_code": "AL",
+        "alpha_3_code": "ALB",
+        "currency_symbol": "Lek",
+        "currency_name": "Albanian lek",
+        "currency_name_sf": "EUR"
+    },
+    {
+        "name": "Algeria",
+        "dial_code": "+213",
+        "alpha_2_code": "DZ",
+        "alpha_3_code": "DZA",
+        "currency_symbol": "دج ",
+        "currency_name": "Algerian Dinar",
+        "currency_name_sf": "DZD"
+    },
+    {
+        "name": "American Samoa",
+        "dial_code": "+1684",
+        "alpha_2_code": "AS",
+        "alpha_3_code": "ASM",
+        "currency_symbol": "$",
+        "currency_name": "United States Dollar",
+        "currency_name_sf": "USD"
+    },
+    {
+        "name": "Andorra",
+        "dial_code": "+376",
+        "alpha_2_code": "AD",
+        "alpha_3_code": "AND",
+        "currency_symbol": "€",
+        "currency_name": "Euro",
+        "currency_name_sf": "EUR"
+    },
+    {
+        "name": "Angola",
+        "dial_code": "+244",
+        "alpha_2_code": "AO",
+        "alpha_3_code": "AGO",
+        "currency_symbol": "Kz",
+        "currency_name": "Angolan kwanza",
+        "currency_name_sf": "AOA"
+    },
+    {
+        "name": "Anguilla",
+        "dial_code": "+1264",
+        "alpha_2_code": "AI",
+        "alpha_3_code": "AIA",
+        "currency_symbol": "$",
+        "currency_name": "Eastern Caribbean Dollar",
+        "currency_name_sf": "XCD"
+    },
+    {
+        "name": "Antigua and Barbuda",
+        "dial_code": "+1268",
+        "alpha_2_code": "AG",
+        "alpha_3_code": "ATG",
+        "currency_symbol": "$",
+        "currency_name": "East Caribbean Dollar",
+        "currency_name_sf": "XCD"
+    },
+    {
+        "name": "Argentina",
+        "dial_code": "+54",
+        "alpha_2_code": "AR",
+        "alpha_3_code": "ARG",
+        "currency_symbol": "$",
+        "currency_name": "Argentine peso",
+        "currency_name_sf": "ARS"
+    },
+    {
+        "name": "Armenia",
+        "dial_code": "+374",
+        "alpha_2_code": "AM",
+        "alpha_3_code": "ARM",
+        "currency_symbol": "֏",
+        "currency_name": "Armenian dram",
+        "currency_name_sf": "AMD"
+    },
+    {
+        "name": "Aruba",
+        "dial_code": "+297",
+        "alpha_2_code": "AW",
+        "alpha_3_code": "ABW",
+        "currency_symbol": "Awg",
+        "currency_name": "Aruban Florin",
+        "currency_name_sf": "AWG"
+    },
+    {
+        "name": "Australia",
+        "dial_code": "+61",
+        "alpha_2_code": "AU",
+        "alpha_3_code": "AUS",
+        "currency_symbol": "$",
+        "currency_name": "Australian Dollar",
+        "currency_name_sf": "AUD"
+    },
+    {
+        "name": "Austria",
+        "dial_code": "+43",
+        "alpha_2_code": "AT",
+        "alpha_3_code": "AUT",
+        "currency_symbol": "€",
+        "currency_name": "Euro",
+        "currency_name_sf": "EUR"
+    },
+    {
+        "name": "Azerbaijan",
+        "dial_code": "+994",
+        "alpha_2_code": "AZ",
+        "alpha_3_code": "AZE",
+        "currency_symbol": "₼",
+        "currency_name": "Azerbaijani manat",
+        "currency_name_sf": "AZN"
+    },
+    {
+        "name": "Bahamas",
+        "dial_code": "+1242",
+        "alpha_2_code": "BS",
+        "alpha_3_code": "BHS",
+        "currency_symbol": "$",
+        "currency_name": "Bahamian Dollar",
+        "currency_name_sf": "BSD"
+    },
+    {
+        "name": "Bahrain",
+        "dial_code": "+973",
+        "alpha_2_code": "BH",
+        "alpha_3_code": "BHR",
+        "currency_symbol": ".د.ب",
+        "currency_name": "Bahraini Dinar",
+        "currency_name_sf": "BHD"
+    },
+    {
+        "name": "Bangladesh",
+        "dial_code": "+880",
+        "alpha_2_code": "BD",
+        "alpha_3_code": "BGD",
+        "currency_symbol": "৳",
+        "currency_name": "Bangladeshi taka",
+        "currency_name_sf": "BDT"
+    },
+    {
+        "name": "Barbados",
+        "dial_code": "+1246",
+        "alpha_2_code": "BB",
+        "alpha_3_code": "BRB",
+        "currency_symbol": "$",
+        "currency_name": "Barbadian Dollar",
+        "currency_name_sf": "BBD"
+    },
+    {
+        "name": "Belarus",
+        "dial_code": "+375",
+        "alpha_2_code": "BY",
+        "alpha_3_code": "BLR",
+        "currency_symbol": "Br",
+        "currency_name": "Belarusian ruble",
+        "currency_name_sf": "BYN"
+    },
+    {
+        "name": "Belgium",
+        "dial_code": "+32",
+        "alpha_2_code": "BE",
+        "alpha_3_code": "BEL",
+        "currency_symbol": "€",
+        "currency_name": "Euro",
+        "currency_name_sf": "EUR"
+    },
+    {
+        "name": "Belize",
+        "dial_code": "+501",
+        "alpha_2_code": "BZ",
+        "alpha_3_code": "BLZ",
+        "currency_symbol": "$",
+        "currency_name": "Belize Dollar",
+        "currency_name_sf": "BZD"
+    },
+    {
+        "name": "Benin",
+        "dial_code": "+229",
+        "alpha_2_code": "BJ",
+        "alpha_3_code": "BEN",
+        "currency_symbol": "CFA",
+        "currency_name": "West African CFA Franc",
+        "currency_name_sf": "XOF"
+    },
+    {
+        "name": "Bermuda",
+        "dial_code": "+1441",
+        "alpha_2_code": "BM",
+        "alpha_3_code": "BMU",
+        "currency_symbol": "$",
+        "currency_name": "Bermuda Dollar",
+        "currency_name_sf": "BMD"
+    },
+    {
+        "name": "Bhutan",
+        "dial_code": "+975",
+        "alpha_2_code": "BT",
+        "alpha_3_code": "BTN",
+        "currency_symbol": "€",
+        "currency_name": "Bhutanese ngultrum",
+        "currency_name_sf": "BTN"
+    },
+    {
+        "name": "Bosnia and Herzegovina",
+        "dial_code": "+387",
+        "alpha_2_code": "BA",
+        "alpha_3_code": "BIH",
+        "currency_symbol": "KM",
+        "currency_name": "Bosnia and Herzegovina Convertible Mark",
+        "currency_name_sf": "BAM"
+    },
+    {
+        "name": "Botswana",
+        "dial_code": "+267",
+        "alpha_2_code": "BW",
+        "alpha_3_code": "BWA",
+        "currency_symbol": "P",
+        "currency_name": "Botswanan Pula",
+        "currency_name_sf": "BWP"
+    },
+    {
+        "name": "Brazil",
+        "dial_code": "+55",
+        "alpha_2_code": "BR",
+        "alpha_3_code": "BRA",
+        "currency_symbol": "R$",
+        "currency_name": "Brazil Real",
+        "currency_name_sf": "BRL"
+    },
+    {
+        "name": "British Indian Ocean Territory",
+        "dial_code": "+246",
+        "alpha_2_code": "IO",
+        "alpha_3_code": "IOT",
+        "currency_symbol": "$",
+        "currency_name": "United States Dollar",
+        "currency_name_sf": "USD"
+    },
+    {
+        "name": "Bulgaria",
+        "dial_code": "+359",
+        "alpha_2_code": "BG",
+        "alpha_3_code": "BGR",
+        "currency_symbol": "лв",
+        "currency_name": "Bulgaria Lev",
+        "currency_name_sf": "BGN"
+    },
+    {
+        "name": "Burkina Faso",
+        "dial_code": "+226",
+        "alpha_2_code": "BF",
+        "alpha_3_code": "BFA",
+        "currency_symbol": "CFA",
+        "currency_name": "West African CFA Franc",
+        "currency_name_sf": "XOF"
+    },
+    {
+        "name": "Burundi",
+        "dial_code": "+257",
+        "alpha_2_code": "BI",
+        "alpha_3_code": "BDI",
+        "currency_symbol": "FBu",
+        "currency_name": "Burundian Franc",
+        "currency_name_sf": "BIF"
+    },
+    {
+        "name": "Cambodia",
+        "dial_code": "+855",
+        "alpha_2_code": "KH",
+        "alpha_3_code": "KHM",
+        "currency_symbol": "៛",
+        "currency_name": "Cambodia Riel",
+        "currency_name_sf": "KHR"
+    },
+    {
+        "name": "Cameroon",
+        "dial_code": "+237",
+        "alpha_2_code": "CM",
+        "alpha_3_code": "CMR",
+        "currency_symbol": "FCFA",
+        "currency_name": "Central African CFA Franc",
+        "currency_name_sf": "XAF"
+    },
+    {
+        "name": "Canada",
+        "dial_code": "+1",
+        "alpha_2_code": "CA",
+        "alpha_3_code": "CAN",
+        "currency_symbol": "$",
+        "currency_name": "Canada Dollar",
+        "currency_name_sf": "CAD"
+    },
+    {
+        "name": "Cape Verde",
+        "dial_code": "+238",
+        "alpha_2_code": "CV",
+        "alpha_3_code": "CPV",
+        "currency_symbol": "€",
+        "currency_name": "Euro",
+        "currency_name_sf": "EUR"
+    },
+    {
+        "name": "Cayman Islands",
+        "dial_code": "+ 345",
+        "alpha_2_code": "KY",
+        "alpha_3_code": "CYM",
+        "currency_symbol": "CI$",
+        "currency_name": "Cayman Islands Dollar",
+        "currency_name_sf": "KYD"
+    },
+    {
+        "name": "Central African Republic",
+        "dial_code": "+236",
+        "alpha_2_code": "CF",
+        "alpha_3_code": "CAF",
+        "currency_symbol": "$",
+        "currency_name": "Central African CFA Franc",
+        "currency_name_sf": "XAF"
+    },
+    {
+        "name": "Chad",
+        "dial_code": "+235",
+        "alpha_2_code": "TD",
+        "alpha_3_code": "TCD",
+        "currency_symbol": "FCFA",
+        "currency_name": "Central African CFA Franc",
+        "currency_name_sf": "XAF"
+    },
+    {
+        "name": "Chile",
+        "dial_code": "+56",
+        "alpha_2_code": "CL",
+        "alpha_3_code": "CHL",
+        "currency_symbol": "$",
+        "currency_name": "Chilean peso",
+        "currency_name_sf": "CLP"
+    },
+    {
+        "name": "China",
+        "dial_code": "+86",
+        "alpha_2_code": "CN",
+        "alpha_3_code": "CHN",
+        "currency_symbol": "¥",
+        "currency_name": "Chinese Yuan",
+        "currency_name_sf": "CNY"
+    },
+    {
+        "name": "Christmas Island",
+        "dial_code": "+61",
+        "alpha_2_code": "CX",
+        "alpha_3_code": "CXR",
+        "currency_symbol": "$",
+        "currency_name": "Australian Dollar",
+        "currency_name_sf": "AUD"
+    },
+    {
+        "name": "Colombia",
+        "dial_code": "+57",
+        "alpha_2_code": "CO",
+        "alpha_3_code": "COL",
+        "currency_symbol": "$",
+        "currency_name": "Colombian peso",
+        "currency_name_sf": "COP"
+    },
+    {
+        "name": "Comoros",
+        "dial_code": "+269",
+        "alpha_2_code": "KM",
+        "alpha_3_code": "COM",
+        "currency_symbol": "CF",
+        "currency_name": "Comorian Franc",
+        "currency_name_sf": "KMF"
+    },
+    {
+        "name": "Congo",
+        "dial_code": "+242",
+        "alpha_2_code": "CG",
+        "alpha_3_code": "COD",
+        "currency_symbol": "FC",
+        "currency_name": "Congolese Franc",
+        "currency_name_sf": "CDF"
+    },
+    {
+        "name": "Cook Islands",
+        "dial_code": "+682",
+        "alpha_2_code": "CK",
+        "alpha_3_code": "COK",
+        "currency_symbol": "$",
+        "currency_name": "New Zealand Dollar",
+        "currency_name_sf": "NZD"
+    },
+    {
+        "name": "Costa Rica",
+        "dial_code": "+506",
+        "alpha_2_code": "CR",
+        "alpha_3_code": "CRI",
+        "currency_symbol": "₡",
+        "currency_name": "Costa Rican colon",
+        "currency_name_sf": "CRC"
+    },
+    {
+        "name": "Croatia",
+        "dial_code": "+385",
+        "alpha_2_code": "HR",
+        "alpha_3_code": "HRV",
+        "currency_symbol": "kn",
+        "currency_name": "Croatian kuna",
+        "currency_name_sf": "HRK"
+    },
+    {
+        "name": "Cuba",
+        "dial_code": "+53",
+        "alpha_2_code": "CU",
+        "alpha_3_code": "CUB",
+        "currency_symbol": "₱",
+        "currency_name": "Cuban peso",
+        "currency_name_sf": "CUP"
+    },
+    {
+        "name": "Cyprus",
+        "dial_code": "+357",
+        "alpha_2_code": "CY",
+        "alpha_3_code": "CYP",
+        "currency_symbol": "€",
+        "currency_name": "Euro",
+        "currency_name_sf": "EUR"
+    },
+    {
+        "name": "Czech Republic",
+        "dial_code": "+420",
+        "alpha_2_code": "CZ",
+        "alpha_3_code": "CZE",
+        "currency_symbol": "€",
+        "currency_name": "Euro",
+        "currency_name_sf": "EUR"
+    },
+    {
+        "name": "Denmark",
+        "dial_code": "+45",
+        "alpha_2_code": "DK",
+        "alpha_3_code": "DNK",
+        "currency_symbol": "kr",
+        "currency_name": "Danish Krone",
+        "currency_name_sf": "DKK"
+    },
+    {
+        "name": "Djibouti",
+        "dial_code": "+253",
+        "alpha_2_code": "DJ",
+        "alpha_3_code": "DJI",
+        "currency_symbol": "Fdj",
+        "currency_name": "Djiboutian Franc",
+        "currency_name_sf": "DJF"
+    },
+    {
+        "name": "Dominica",
+        "dial_code": "+1767",
+        "alpha_2_code": "DM",
+        "alpha_3_code": "DMA",
+        "currency_symbol": "$",
+        "currency_name": "East Caribbean Dollar",
+        "currency_name_sf": "XCD"
+    },
+    {
+        "name": "Dominican Republic",
+        "dial_code": "+1849",
+        "alpha_2_code": "DO",
+        "alpha_3_code": "DOM",
+        "currency_symbol": "RD$",
+        "currency_name": "Dominican peso",
+        "currency_name_sf": "DOP"
+    },
+    {
+        "name": "Ecuador",
+        "dial_code": "+593",
+        "alpha_2_code": "EC",
+        "alpha_3_code": "ECU",
+        "currency_symbol": "$",
+        "currency_name": "United States Dollar",
+        "currency_name_sf": "USD"
+    },
+    {
+        "name": "Egypt",
+        "dial_code": "+20",
+        "alpha_2_code": "EG",
+        "alpha_3_code": "EGY",
+        "currency_symbol": "£",
+        "currency_name": "Egyptian Pound",
+        "currency_name_sf": "EGP"
+    },
+    {
+        "name": "El Salvador",
+        "dial_code": "+503",
+        "alpha_2_code": "SV",
+        "alpha_3_code": "SLV",
+        "currency_symbol": "$",
+        "currency_name": "United States Dollar",
+        "currency_name_sf": "USD"
+    },
+    {
+        "name": "Equatorial Guinea",
+        "dial_code": "+240",
+        "alpha_2_code": "GQ",
+        "alpha_3_code": "GNQ",
+        "currency_symbol": "FCFA",
+        "currency_name": "Central African CFA Franc",
+        "currency_name_sf": "XAF"
+    },
+    {
+        "name": "Eritrea",
+        "dial_code": "+291",
+        "alpha_2_code": "ER",
+        "alpha_3_code": "ERI",
+        "currency_symbol": "Nfk",
+        "currency_name": "Eritrean nakfa",
+        "currency_name_sf": "ERN"
+    },
+    {
+        "name": "Estonia",
+        "dial_code": "+372",
+        "alpha_2_code": "EE",
+        "alpha_3_code": "EST",
+        "currency_symbol": "€",
+        "currency_name": "Euro",
+        "currency_name_sf": "EUR"
+    },
+    {
+        "name": "Ethiopia",
+        "dial_code": "+251",
+        "alpha_2_code": "ET",
+        "alpha_3_code": "ETH",
+        "currency_symbol": "Br",
+        "currency_name": "Ethiopian Birr",
+        "currency_name_sf": "ETB"
+    },
+    {
+        "name": "Faroe Islands",
+        "dial_code": "+298",
+        "alpha_2_code": "FO",
+        "alpha_3_code": "FRO",
+        "currency_symbol": "kr",
+        "currency_name": "Danish Krone",
+        "currency_name_sf": "DKK"
+    },
+    {
+        "name": "Fiji",
+        "dial_code": "+679",
+        "alpha_2_code": "FJ",
+        "alpha_3_code": "FJI",
+        "currency_symbol": "$",
+        "currency_name": "Fijian Dollar",
+        "currency_name_sf": "FJD"
+    },
+    {
+        "name": "Finland",
+        "dial_code": "+358",
+        "alpha_2_code": "FI",
+        "alpha_3_code": "FIN",
+        "currency_symbol": "€",
+        "currency_name": "Euro",
+        "currency_name_sf": "EUR"
+    },
+    {
+        "name": "France",
+        "dial_code": "+33",
+        "alpha_2_code": "FR",
+        "alpha_3_code": "FRA",
+        "currency_symbol": "€",
+        "currency_name": "Euro",
+        "currency_name_sf": "EUR"
+    },
+    {
+        "name": "French Guiana",
+        "dial_code": "+594",
+        "alpha_2_code": "GF",
+        "alpha_3_code": "GUF",
+        "currency_symbol": "€",
+        "currency_name": "Euro",
+        "currency_name_sf": "EUR"
+    },
+    {
+        "name": "French Polynesia",
+        "dial_code": "+689",
+        "alpha_2_code": "PF",
+        "alpha_3_code": "PYF",
+        "currency_symbol": "₣",
+        "currency_name": "CFP Franc",
+        "currency_name_sf": "XPF"
+    },
+    {
+        "name": "Gabon",
+        "dial_code": "+241",
+        "alpha_2_code": "GA",
+        "alpha_3_code": "GAB",
+        "currency_symbol": "FCFA",
+        "currency_name": "Central African CFA Franc",
+        "currency_name_sf": "XAF"
+    },
+    {
+        "name": "Gambia",
+        "dial_code": "+220",
+        "alpha_2_code": "GM",
+        "alpha_3_code": "GMB",
+        "currency_symbol": "D",
+        "currency_name": "Gambian dalasi",
+        "currency_name_sf": "GMD"
+    },
+    {
+        "name": "Georgia",
+        "dial_code": "+995",
+        "alpha_2_code": "GE",
+        "alpha_3_code": "GEO",
+        "currency_symbol": "GEL",
+        "currency_name": "Georgian lari",
+        "currency_name_sf": "GEL"
+    },
+    {
+        "name": "Germany",
+        "dial_code": "+49",
+        "alpha_2_code": "DE",
+        "alpha_3_code": "DEU",
+        "currency_symbol": "€",
+        "currency_name": "Euro",
+        "currency_name_sf": "EUR"
+    },
+    {
+        "name": "Ghana",
+        "dial_code": "+233",
+        "alpha_2_code": "GH",
+        "alpha_3_code": "GHA",
+        "currency_symbol": "¢",
+        "currency_name": "Ghanaian cedi",
+        "currency_name_sf": "GHS"
+    },
+    {
+        "name": "Gibraltar",
+        "dial_code": "+350",
+        "alpha_2_code": "GI",
+        "alpha_3_code": "GIB",
+        "currency_symbol": "£",
+        "currency_name": "Gibraltar Pound",
+        "currency_name_sf": "GIP"
+    },
+    {
+        "name": "Greece",
+        "dial_code": "+30",
+        "alpha_2_code": "GR",
+        "alpha_3_code": "GRC",
+        "currency_symbol": "€",
+        "currency_name": "Euro",
+        "currency_name_sf": "EUR"
+    },
+    {
+        "name": "Greenland",
+        "dial_code": "+299",
+        "alpha_2_code": "GL",
+        "alpha_3_code": "GRL",
+        "currency_symbol": "kr",
+        "currency_name": "Danish Krone",
+        "currency_name_sf": "DKK"
+    },
+    {
+        "name": "Grenada",
+        "dial_code": "+1473",
+        "alpha_2_code": "GD",
+        "alpha_3_code": "GRD",
+        "currency_symbol": "$",
+        "currency_name": "East Caribbean Dollar",
+        "currency_name_sf": "XCD"
+    },
+    {
+        "name": "Guadeloupe",
+        "dial_code": "+590",
+        "alpha_2_code": "GP",
+        "alpha_3_code": "GLP",
+        "currency_symbol": "€",
+        "currency_name": "Euro",
+        "currency_name_sf": "EUR"
+    },
+    {
+        "name": "Guam",
+        "dial_code": "+1671",
+        "alpha_2_code": "GU",
+        "alpha_3_code": "GUM",
+        "currency_symbol": "$",
+        "currency_name": "United States Dollar",
+        "currency_name_sf": "USD"
+    },
+    {
+        "name": "Guatemala",
+        "dial_code": "+502",
+        "alpha_2_code": "GT",
+        "alpha_3_code": "GTM",
+        "currency_symbol": "Q",
+        "currency_name": "Guatemalan quetzal",
+        "currency_name_sf": "GTQ"
+    },
+    {
+        "name": "Guinea",
+        "dial_code": "+224",
+        "alpha_2_code": "GN",
+        "alpha_3_code": "GIN",
+        "currency_symbol": "GFr",
+        "currency_name": "Guinean Franc",
+        "currency_name_sf": "GNF"
+    },
+    {
+        "name": "Guinea-Bissau",
+        "dial_code": "+245",
+        "alpha_2_code": "GW",
+        "alpha_3_code": "GNB",
+        "currency_symbol": "CFA",
+        "currency_name": "West African CFA Franc",
+        "currency_name_sf": "XOF"
+    },
+    {
+        "name": "Guyana",
+        "dial_code": "+595",
+        "alpha_2_code": "GY",
+        "alpha_3_code": "GUY",
+        "currency_symbol": "$",
+        "currency_name": "Guyanese Dollar",
+        "currency_name_sf": "GYD"
+    },
+    {
+        "name": "Haiti",
+        "dial_code": "+509",
+        "alpha_2_code": "HT",
+        "alpha_3_code": "HTI",
+        "currency_symbol": "G",
+        "currency_name": "Haitian gourde",
+        "currency_name_sf": "HTG"
+    },
+    {
+        "name": "Honduras",
+        "dial_code": "+504",
+        "alpha_2_code": "HN",
+        "alpha_3_code": "HND",
+        "currency_symbol": "L",
+        "currency_name": "Honduran lempira",
+        "currency_name_sf": "HNL"
+    },
+    {
+        "name": "Hungary",
+        "dial_code": "+36",
+        "alpha_2_code": "HU",
+        "alpha_3_code": "HUN",
+        "currency_symbol": "Ft",
+        "currency_name": "Hungarian forint",
+        "currency_name_sf": "HUF"
+    },
+    {
+        "name": "Iceland",
+        "dial_code": "+354",
+        "alpha_2_code": "IS",
+        "alpha_3_code": "ISL",
+        "currency_symbol": "kr",
+        "currency_name": "Icelandic krona",
+        "currency_name_sf": "ISK"
+    },
+    {
+        "name": "India",
+        "dial_code": "+91",
+        "alpha_2_code": "IN",
+        "alpha_3_code": "IND",
+        "currency_symbol": "টকা",
+        "currency_name": "Indian Rupee",
+        "currency_name_sf": "INR"
+    },
+    {
+        "name": "Indonesia",
+        "dial_code": "+62",
+        "alpha_2_code": "ID",
+        "alpha_3_code": "IDN",
+        "currency_symbol": "Rp",
+        "currency_name": "Indonesian Rupiah",
+        "currency_name_sf": "IDR"
+    },
+    {
+        "name": "Iraq",
+        "dial_code": "+964",
+        "alpha_2_code": "IQ",
+        "alpha_3_code": "IRQ",
+        "currency_symbol": "ع.د",
+        "currency_name": "Iraqi Dinar",
+        "currency_name_sf": "IQD"
+    },
+    {
+        "name": "Ireland",
+        "dial_code": "+353",
+        "alpha_2_code": "IE",
+        "alpha_3_code": "IRL",
+        "currency_symbol": "€",
+        "currency_name": "Euro",
+        "currency_name_sf": "EUR"
+    },
+    {
+        "name": "Israel",
+        "dial_code": "+972",
+        "alpha_2_code": "IL",
+        "alpha_3_code": "ISR",
+        "currency_symbol": "₪",
+        "currency_name": "Israeli new shekel",
+        "currency_name_sf": "ILS"
+    },
+    {
+        "name": "Italy",
+        "dial_code": "+39",
+        "alpha_2_code": "IT",
+        "alpha_3_code": "ITA",
+        "currency_symbol": "€",
+        "currency_name": "Euro",
+        "currency_name_sf": "EUR"
+    },
+    {
+        "name": "Jamaica",
+        "dial_code": "+1876",
+        "alpha_2_code": "JM",
+        "alpha_3_code": "JAM",
+        "currency_symbol": "J$",
+        "currency_name": "Jamaican Dollar",
+        "currency_name_sf": "JMD"
+    },
+    {
+        "name": "Japan",
+        "dial_code": "+81",
+        "alpha_2_code": "JP",
+        "alpha_3_code": "JPN",
+        "currency_symbol": "￥",
+        "currency_name": "Japanese Yen",
+        "currency_name_sf": "JPY"
+    },
+    {
+        "name": "Jordan",
+        "dial_code": "+962",
+        "alpha_2_code": "JO",
+        "alpha_3_code": "JOR",
+        "currency_symbol": "د.ا",
+        "currency_name": "Jordanian Dinar",
+        "currency_name_sf": "JOD"
+    },
+    {
+        "name": "Kazakhstan",
+        "dial_code": "+77",
+        "alpha_2_code": "KZ",
+        "alpha_3_code": "KAZ",
+        "currency_symbol": "лв",
+        "currency_name": "Kazakhstani tenge",
+        "currency_name_sf": "KZT"
+    },
+    {
+        "name": "Kenya",
+        "dial_code": "+254",
+        "alpha_2_code": "KE",
+        "alpha_3_code": "KEN",
+        "currency_symbol": "/-",
+        "currency_name": "Kenyan shilling",
+        "currency_name_sf": "KES"
+    },
+    {
+        "name": "Kiribati",
+        "dial_code": "+686",
+        "alpha_2_code": "KI",
+        "alpha_3_code": "KIR",
+        "currency_symbol": "$",
+        "currency_name": "Australian Dollar",
+        "currency_name_sf": "AUD"
+    },
+    {
+        "name": "Kuwait",
+        "dial_code": "+965",
+        "alpha_2_code": "KW",
+        "alpha_3_code": "KWT",
+        "currency_symbol": "د.ك",
+        "currency_name": "Kuwaiti Dinar",
+        "currency_name_sf": "KWD"
+    },
+    {
+        "name": "Kyrgyzstan",
+        "dial_code": "+996",
+        "alpha_2_code": "KG",
+        "alpha_3_code": "KGZ",
+        "currency_symbol": "лв",
+        "currency_name": "Kyrgyzstani Som",
+        "currency_name_sf": "KGS"
+    },
+    {
+        "name": "Latvia",
+        "dial_code": "+371",
+        "alpha_2_code": "LV",
+        "alpha_3_code": "LVA",
+        "currency_symbol": "€",
+        "currency_name": "Euro",
+        "currency_name_sf": "EUR"
+    },
+    {
+        "name": "Lebanon",
+        "dial_code": "+961",
+        "alpha_2_code": "LB",
+        "alpha_3_code": "LBN",
+        "currency_symbol": "£",
+        "currency_name": "Lebanese Pound",
+        "currency_name_sf": "LBP"
+    },
+    {
+        "name": "Lesotho",
+        "dial_code": "+266",
+        "alpha_2_code": "LS",
+        "alpha_3_code": "LSO",
+        "currency_symbol": "L",
+        "currency_name": "Lesotho Loti",
+        "currency_name_sf": "LSL"
+    },
+    {
+        "name": "Liberia",
+        "dial_code": "+231",
+        "alpha_2_code": "LR",
+        "alpha_3_code": "LBR",
+        "currency_symbol": "$",
+        "currency_name": "Liberian Dollar",
+        "currency_name_sf": "LRD"
+    },
+    {
+        "name": "Liechtenstein",
+        "dial_code": "+423",
+        "alpha_2_code": "LI",
+        "alpha_3_code": "LIE",
+        "currency_symbol": "CHf",
+        "currency_name": "Swiss Franc",
+        "currency_name_sf": "CHF"
+    },
+    {
+        "name": "Lithuania",
+        "dial_code": "+370",
+        "alpha_2_code": "LT",
+        "alpha_3_code": "LTU",
+        "currency_symbol": "€",
+        "currency_name": "Euro",
+        "currency_name_sf": "EUR"
+    },
+    {
+        "name": "Luxembourg",
+        "dial_code": "+352",
+        "alpha_2_code": "LU",
+        "alpha_3_code": "LUX",
+        "currency_symbol": "€",
+        "currency_name": "Euro",
+        "currency_name_sf": "EUR"
+    },
+    {
+        "name": "Madagascar",
+        "dial_code": "+261",
+        "alpha_2_code": "MG",
+        "alpha_3_code": "MDG",
+        "currency_symbol": "Ar",
+        "currency_name": "Malagasy ariary",
+        "currency_name_sf": "MGA"
+    },
+    {
+        "name": "Malawi",
+        "dial_code": "+265",
+        "alpha_2_code": "MW",
+        "alpha_3_code": "MWI",
+        "currency_symbol": "MK",
+        "currency_name": "Malawian kwacha",
+        "currency_name_sf": "MWK"
+    },
+    {
+        "name": "Malaysia",
+        "dial_code": "+60",
+        "alpha_2_code": "MY",
+        "alpha_3_code": "MYS",
+        "currency_symbol": "RM",
+        "currency_name": "Malaysian Ringgit",
+        "currency_name_sf": "MYR"
+    },
+    {
+        "name": "Maldives",
+        "dial_code": "+960",
+        "alpha_2_code": "MV",
+        "alpha_3_code": "MDV",
+        "currency_symbol": "",
+        "currency_name": "Maldivian rufiyaa",
+        "currency_name_sf": "MVR"
+    },
+    {
+        "name": "Mali",
+        "dial_code": "+223",
+        "alpha_2_code": "ML",
+        "alpha_3_code": "MLI",
+        "currency_symbol": "CFA",
+        "currency_name": "West African CFA Franc",
+        "currency_name_sf": "XOF"
+    },
+    {
+        "name": "Malta",
+        "dial_code": "+356",
+        "alpha_2_code": "MT",
+        "alpha_3_code": "MLT",
+        "currency_symbol": "€",
+        "currency_name": "Euro",
+        "currency_name_sf": "EUR"
+    },
+    {
+        "name": "Marshall Islands",
+        "dial_code": "+692",
+        "alpha_2_code": "MH",
+        "alpha_3_code": "MHL",
+        "currency_symbol": "€",
+        "currency_name": "Euro",
+        "currency_name_sf": "EUR"
+    },
+    {
+        "name": "Martinique",
+        "dial_code": "+596",
+        "alpha_2_code": "MQ",
+        "alpha_3_code": "MTQ",
+        "currency_symbol": "€",
+        "currency_name": "Euro",
+        "currency_name_sf": "EUR"
+    },
+    {
+        "name": "Mauritania",
+        "dial_code": "+222",
+        "alpha_2_code": "MR",
+        "alpha_3_code": "MRT",
+        "currency_symbol": "€",
+        "currency_name": "Euro",
+        "currency_name_sf": "EUR"
+    },
+    {
+        "name": "Mauritius",
+        "dial_code": "+230",
+        "alpha_2_code": "MU",
+        "alpha_3_code": "MUS",
+        "currency_symbol": "₨",
+        "currency_name": "Mauritanian ouguiya",
+        "currency_name_sf": "MRO"
+    },
+    {
+        "name": "Mayotte",
+        "dial_code": "+262",
+        "alpha_2_code": "YT",
+        "alpha_3_code": "MYT",
+        "currency_symbol": "€",
+        "currency_name": "Euro",
+        "currency_name_sf": "EUR"
+    },
+    {
+        "name": "Mexico",
+        "dial_code": "+52",
+        "alpha_2_code": "MX",
+        "alpha_3_code": "MEX",
+        "currency_symbol": "$",
+        "currency_name": "Mexican peso",
+        "currency_name_sf": "MXN"
+    },
+    {
+        "name": "Monaco",
+        "dial_code": "+377",
+        "alpha_2_code": "MC",
+        "alpha_3_code": "MCO",
+        "currency_symbol": "€",
+        "currency_name": "Euro",
+        "currency_name_sf": "EUR"
+    },
+    {
+        "name": "Mongolia",
+        "dial_code": "+976",
+        "alpha_2_code": "MN",
+        "alpha_3_code": "MNG",
+        "currency_symbol": "₮",
+        "currency_name": "Mongolian tögrög",
+        "currency_name_sf": "MNT"
+    },
+    {
+        "name": "Montenegro",
+        "dial_code": "+382",
+        "alpha_2_code": "ME",
+        "alpha_3_code": "MNE",
+        "currency_symbol": "€",
+        "currency_name": "Euro",
+        "currency_name_sf": "EUR"
+    },
+    {
+        "name": "Montserrat",
+        "dial_code": "+1664",
+        "alpha_2_code": "MS",
+        "alpha_3_code": "MSR",
+        "currency_symbol": "$",
+        "currency_name": "Eastern Caribbean Dollar",
+        "currency_name_sf": "XCD"
+    },
+    {
+        "name": "Morocco",
+        "dial_code": "+212",
+        "alpha_2_code": "MA",
+        "alpha_3_code": "MAR",
+        "currency_symbol": "د.إ",
+        "currency_name": "Moroccan dirham",
+        "currency_name_sf": "MAD"
+    },
+    {
+        "name": "Myanmar",
+        "dial_code": "+95",
+        "alpha_2_code": "MM",
+        "alpha_3_code": "MMR",
+        "currency_symbol": "K",
+        "currency_name": "Burmese kyat",
+        "currency_name_sf": "MMK"
+    },
+    {
+        "name": "Namibia",
+        "dial_code": "+264",
+        "alpha_2_code": "NA",
+        "alpha_3_code": "NAM",
+        "currency_symbol": "$",
+        "currency_name": "Namibian Dollar",
+        "currency_name_sf": "NAD"
+    },
+    {
+        "name": "Nauru",
+        "dial_code": "+674",
+        "alpha_2_code": "NR",
+        "alpha_3_code": "NRU",
+        "currency_symbol": "$",
+        "currency_name": "Australian Dollar",
+        "currency_name_sf": "AUD"
+    },
+    {
+        "name": "Nepal",
+        "dial_code": "+977",
+        "alpha_2_code": "NP",
+        "alpha_3_code": "NPL",
+        "currency_symbol": "नेरू",
+        "currency_name": "Nepalese Rupee",
+        "currency_name_sf": "NPR"
+    },
+    {
+        "name": "Netherlands",
+        "dial_code": "+31",
+        "alpha_2_code": "NL",
+        "alpha_3_code": "NLD",
+        "currency_symbol": "€",
+        "currency_name": "Euro",
+        "currency_name_sf": "EUR"
+    },
+    {
+        "name": "Netherlands Antilles",
+        "dial_code": "+599",
+        "alpha_2_code": "AN",
+        "alpha_3_code": "ANT",
+        "currency_symbol": "Netherlands Antilles Guilder",
+        "currency_name": "ƒ",
+        "currency_name_sf": "ANG"
+    },
+    {
+        "name": "New Caledonia",
+        "dial_code": "+687",
+        "alpha_2_code": "NC",
+        "alpha_3_code": "NCL",
+        "currency_symbol": "F",
+        "currency_name": "CFP Franc",
+        "currency_name_sf": "XPF"
+    },
+    {
+        "name": "New Zealand",
+        "dial_code": "+64",
+        "alpha_2_code": "NZ",
+        "alpha_3_code": "NZL",
+        "currency_symbol": "$",
+        "currency_name": "New Zealand Dollar",
+        "currency_name_sf": "NZD"
+    },
+    {
+        "name": "Nicaragua",
+        "dial_code": "+505",
+        "alpha_2_code": "NI",
+        "alpha_3_code": "NIC",
+        "currency_symbol": "€",
+        "currency_name": "Euro",
+        "currency_name_sf": "EUR"
+    },
+    {
+        "name": "Niger",
+        "dial_code": "+227",
+        "alpha_2_code": "NE",
+        "alpha_3_code": "NER",
+        "currency_symbol": "C$",
+        "currency_name": "Nicaraguan cordoba",
+        "currency_name_sf": "NIO"
+    },
+    {
+        "name": "Nigeria",
+        "dial_code": "+234",
+        "alpha_2_code": "NG",
+        "alpha_3_code": "NGA",
+        "currency_symbol": "₦",
+        "currency_name": "Nigerian naira",
+        "currency_name_sf": "NGN"
+    },
+    {
+        "name": "Niue",
+        "dial_code": "+683",
+        "alpha_2_code": "NU",
+        "alpha_3_code": "NIU",
+        "currency_symbol": "$",
+        "currency_name": "New Zealand Dollar",
+        "currency_name_sf": "NZD"
+    },
+    {
+        "name": "Norfolk Island",
+        "dial_code": "+672",
+        "alpha_2_code": "NF",
+        "alpha_3_code": "NFK",
+        "currency_symbol": "$",
+        "currency_name": "Australian Dollar",
+        "currency_name_sf": "AUD"
+    },
+    {
+        "name": "Northern Mariana Islands",
+        "dial_code": "+1670",
+        "alpha_2_code": "MP",
+        "alpha_3_code": "MNP",
+        "currency_symbol": "$",
+        "currency_name": "United States Dollar",
+        "currency_name_sf": "USD"
+    },
+    {
+        "name": "Norway",
+        "dial_code": "+47",
+        "alpha_2_code": "NO",
+        "alpha_3_code": "NOR",
+        "currency_symbol": "kr",
+        "currency_name": "Norwegian Krone",
+        "currency_name_sf": "NOK"
+    },
+    {
+        "name": "Oman",
+        "dial_code": "+968",
+        "alpha_2_code": "OM",
+        "alpha_3_code": "OMN",
+        "currency_symbol": "﷼",
+        "currency_name": "Omani rial",
+        "currency_name_sf": "OMR"
+    },
+    {
+        "name": "Pakistan",
+        "dial_code": "+92",
+        "alpha_2_code": "PK",
+        "alpha_3_code": "PAK",
+        "currency_symbol": "₨",
+        "currency_name": "Pakistani rupee",
+        "currency_name_sf": "PKR"
+    },
+    {
+        "name": "Palau",
+        "dial_code": "+680",
+        "alpha_2_code": "PW",
+        "alpha_3_code": "PLW",
+        "currency_symbol": "$",
+        "currency_name": "United States Dollar",
+        "currency_name_sf": "USD"
+    },
+    {
+        "name": "Panama",
+        "dial_code": "+507",
+        "alpha_2_code": "PA",
+        "alpha_3_code": "PAN",
+        "currency_symbol": "B/.",
+        "currency_name": "Panamanian balboa",
+        "currency_name_sf": "PAB"
+    },
+    {
+        "name": "Papua New Guinea",
+        "dial_code": "+675",
+        "alpha_2_code": "PG",
+        "alpha_3_code": "PNG",
+        "currency_symbol": "K",
+        "currency_name": "Papua New Guinean kina",
+        "currency_name_sf": "PGK"
+    },
+    {
+        "name": "Paraguay",
+        "dial_code": "+595",
+        "alpha_2_code": "PY",
+        "alpha_3_code": "PRY",
+        "currency_symbol": "Gs",
+        "currency_name": "Paraguayan guarani",
+        "currency_name_sf": "PYG"
+    },
+    {
+        "name": "Peru",
+        "dial_code": "+51",
+        "alpha_2_code": "PE",
+        "alpha_3_code": "PER",
+        "currency_symbol": "S/.",
+        "currency_name": "Peruvian sol",
+        "currency_name_sf": "PEN"
+    },
+    {
+        "name": "Philippines",
+        "dial_code": "+63",
+        "alpha_2_code": "PH",
+        "alpha_3_code": "PHL",
+        "currency_symbol": "₱",
+        "currency_name": "Philippine Peso",
+        "currency_name_sf": "PHP"
+    },
+    {
+        "name": "Poland",
+        "dial_code": "+48",
+        "alpha_2_code": "PL",
+        "alpha_3_code": "POL",
+        "currency_symbol": "€",
+        "currency_name": "Euro",
+        "currency_name_sf": "EUR"
+    },
+    {
+        "name": "Portugal",
+        "dial_code": "+351",
+        "alpha_2_code": "PT",
+        "alpha_3_code": "PRT",
+        "currency_symbol": "€",
+        "currency_name": "Euro",
+        "currency_name_sf": "EUR"
+    },
+    {
+        "name": "Puerto Rico",
+        "dial_code": "+1 939",
+        "alpha_2_code": "PR",
+        "alpha_3_code": "PRI",
+        "currency_symbol": "$",
+        "currency_name": "United States Dollar",
+        "currency_name_sf": "USD"
+    },
+    {
+        "name": "Qatar",
+        "dial_code": "+974",
+        "alpha_2_code": "QA",
+        "alpha_3_code": "QAT",
+        "currency_symbol": "﷼",
+        "currency_name": "Qatari riyal",
+        "currency_name_sf": "QAR"
+    },
+    {
+        "name": "Romania",
+        "dial_code": "+40",
+        "alpha_2_code": "RO",
+        "alpha_3_code": "ROU",
+        "currency_symbol": "lei",
+        "currency_name": "Romanian leu",
+        "currency_name_sf": "RON"
+    },
+    {
+        "name": "Rwanda",
+        "dial_code": "+250",
+        "alpha_2_code": "RW",
+        "alpha_3_code": "RWA",
+        "currency_symbol": "FRw",
+        "currency_name": "Rwandan Franc",
+        "currency_name_sf": "RWF"
+    },
+    {
+        "name": "Samoa",
+        "dial_code": "+685",
+        "alpha_2_code": "WS",
+        "alpha_3_code": "WSM",
+        "currency_symbol": "SAT",
+        "currency_name": "Samoan tala",
+        "currency_name_sf": "WST"
+    },
+    {
+        "name": "San Marino",
+        "dial_code": "+378",
+        "alpha_2_code": "SM",
+        "alpha_3_code": "SMR",
+        "currency_symbol": "€",
+        "currency_name": "Euro",
+        "currency_name_sf": "EUR"
+    },
+    {
+        "name": "Saudi Arabia",
+        "dial_code": "+966",
+        "alpha_2_code": "SA",
+        "alpha_3_code": "SAU",
+        "currency_symbol": "﷼",
+        "currency_name": "Saudi riyal",
+        "currency_name_sf": "SAR"
+    },
+    {
+        "name": "Senegal",
+        "dial_code": "+221",
+        "alpha_2_code": "SN",
+        "alpha_3_code": "SEN",
+        "currency_symbol": "CFA",
+        "currency_name": "West African CFA Franc",
+        "currency_name_sf": "XOF"
+    },
+    {
+        "name": "Serbia",
+        "dial_code": "+381",
+        "alpha_2_code": "RS",
+        "alpha_3_code": "SRB",
+        "currency_symbol": "Дин.",
+        "currency_name": "Serbian Dinar",
+        "currency_name_sf": "RSD"
+    },
+    {
+        "name": "Seychelles",
+        "dial_code": "+248",
+        "alpha_2_code": "SC",
+        "alpha_3_code": "SYC",
+        "currency_symbol": "₨",
+        "currency_name": "Seychellois rupee",
+        "currency_name_sf": "SCR"
+    },
+    {
+        "name": "Sierra Leone",
+        "dial_code": "+232",
+        "alpha_2_code": "SL",
+        "alpha_3_code": "SLE",
+        "currency_symbol": "Le",
+        "currency_name": "Sierra Leonean leone",
+        "currency_name_sf": "SLL"
+    },
+    {
+        "name": "Slovakia",
+        "dial_code": "+421",
+        "alpha_2_code": "SK",
+        "alpha_3_code": "SVK",
+        "currency_symbol": "€",
+        "currency_name": "Euro",
+        "currency_name_sf": "EUR"
+    },
+    {
+        "name": "Slovenia",
+        "dial_code": "+386",
+        "alpha_2_code": "SI",
+        "alpha_3_code": "SVN",
+        "currency_symbol": "€",
+        "currency_name": "Euro",
+        "currency_name_sf": "EUR"
+    },
+    {
+        "name": "Solomon Islands",
+        "dial_code": "+677",
+        "alpha_2_code": "SB",
+        "alpha_3_code": "SLB",
+        "currency_symbol": "$",
+        "currency_name": "Solomon Islands Dollar",
+        "currency_name_sf": "SBD"
+    },
+    {
+        "name": "South Africa",
+        "dial_code": "+27",
+        "alpha_2_code": "ZA",
+        "alpha_3_code": "ZAF",
+        "currency_symbol": "R",
+        "currency_name": "South African rand",
+        "currency_name_sf": "ZAR"
+    },
+    {
+        "name": "South Georgia and the South Sandwich Islands",
+        "dial_code": "+500",
+        "alpha_2_code": "GS",
+        "alpha_3_code": "SGS",
+        "currency_symbol": "£",
+        "currency_name": "Pound Sterling",
+        "currency_name_sf": "SGS"
+    },
+    {
+        "name": "Spain",
+        "dial_code": "+34",
+        "alpha_2_code": "ES",
+        "alpha_3_code": "ESP",
+        "currency_symbol": "€",
+        "currency_name": "Euro",
+        "currency_name_sf": "EUR"
+    },
+    {
+        "name": "Sri Lanka",
+        "dial_code": "+94",
+        "alpha_2_code": "LK",
+        "alpha_3_code": "LKA",
+        "currency_symbol": "SL Re",
+        "currency_name": "Sri Lankan Rupee",
+        "currency_name_sf": "LKR"
+    },
+    {
+        "name": "Sudan",
+        "dial_code": "+249",
+        "alpha_2_code": "SD",
+        "alpha_3_code": "SDN",
+        "currency_symbol": "ج.س.",
+        "currency_name": "Sudanese Pound",
+        "currency_name_sf": "SDG"
+    },
+    {
+        "name": "Suriname",
+        "dial_code": "+597",
+        "alpha_2_code": "SR",
+        "alpha_3_code": "SUR",
+        "currency_symbol": "$",
+        "currency_name": "Surinamese Dollar",
+        "currency_name_sf": "SRD"
+    },
+    {
+        "name": "Swaziland",
+        "dial_code": "+268",
+        "alpha_2_code": "SZ",
+        "alpha_3_code": "SWZ",
+        "currency_symbol": "R",
+        "currency_name": "South African Rand",
+        "currency_name_sf": "ZAR"
+    },
+    {
+        "name": "Sweden",
+        "dial_code": "+46",
+        "alpha_2_code": "SE",
+        "alpha_3_code": "SWE",
+        "currency_symbol": "kr",
+        "currency_name": "Swedish krona",
+        "currency_name_sf": "SEK"
+    },
+    {
+        "name": "Switzerland",
+        "dial_code": "+41",
+        "alpha_2_code": "CH",
+        "alpha_3_code": "CHE",
+        "currency_symbol": "CHF",
+        "currency_name": "Swiss Franc",
+        "currency_name_sf": "CHF"
+    },
+    {
+        "name": "Tajikistan",
+        "dial_code": "+992",
+        "alpha_2_code": "TJ",
+        "alpha_3_code": "TJK",
+        "currency_symbol": "SM",
+        "currency_name": "Tajikistani Somoni",
+        "currency_name_sf": "TJS"
+    },
+    {
+        "name": "Thailand",
+        "dial_code": "+66",
+        "alpha_2_code": "TH",
+        "alpha_3_code": "THA",
+        "currency_symbol": "฿",
+        "currency_name": "Thai baht",
+        "currency_name_sf": "THB"
+    },
+    {
+        "name": "Togo",
+        "dial_code": "+228",
+        "alpha_2_code": "TG",
+        "alpha_3_code": "TGO",
+        "currency_symbol": "CFA",
+        "currency_name": "West African CFA Franc",
+        "currency_name_sf": "XOF"
+    },
+    {
+        "name": "Tokelau",
+        "dial_code": "+690",
+        "alpha_2_code": "TK",
+        "alpha_3_code": "TKL",
+        "currency_symbol": "$",
+        "currency_name": "New Zealand Dollar",
+        "currency_name_sf": "NZD"
+    },
+    {
+        "name": "Tonga",
+        "dial_code": "+676",
+        "alpha_2_code": "TO",
+        "alpha_3_code": "TON",
+        "currency_symbol": "T$",
+        "currency_name": "Tongan pa'anga",
+        "currency_name_sf": "TOP"
+    },
+    {
+        "name": "Trinidad and Tobago",
+        "dial_code": "+1868",
+        "alpha_2_code": "TT",
+        "alpha_3_code": "TTO",
+        "currency_symbol": "TT$",
+        "currency_name": "Trinidad and Tobago Dollar",
+        "currency_name_sf": "TTD"
+    },
+    {
+        "name": "Tunisia",
+        "dial_code": "+216",
+        "alpha_2_code": "TN",
+        "alpha_3_code": "TUN",
+        "currency_symbol": "د.ت",
+        "currency_name": "Tunisian Dinar",
+        "currency_name_sf": "TND"
+    },
+    {
+        "name": "Turkey",
+        "dial_code": "+90",
+        "alpha_2_code": "TR",
+        "alpha_3_code": "TUR",
+        "currency_symbol": "₺",
+        "currency_name": "Turkish lira",
+        "currency_name_sf": "TRY"
+    },
+    {
+        "name": "Turkmenistan",
+        "dial_code": "+993",
+        "alpha_2_code": "TM",
+        "alpha_3_code": "TKM",
+        "currency_symbol": "T",
+        "currency_name": "Turkmenistan manat",
+        "currency_name_sf": "TMT"
+    },
+    {
+        "name": "Turks and Caicos Islands",
+        "dial_code": "+1649",
+        "alpha_2_code": "TC",
+        "alpha_3_code": "TCA",
+        "currency_symbol": "$",
+        "currency_name": "United States Dollar",
+        "currency_name_sf": "USD"
+    },
+    {
+        "name": "Tuvalu",
+        "dial_code": "+688",
+        "alpha_2_code": "TV",
+        "alpha_3_code": "TUV",
+        "currency_symbol": "$",
+        "currency_name": "Australian Dollar",
+        "currency_name_sf": "AUD"
+    },
+    {
+        "name": "Uganda",
+        "dial_code": "+256",
+        "alpha_2_code": "UG",
+        "alpha_3_code": "UGA",
+        "currency_symbol": "USh",
+        "currency_name": "Ugandan shilling",
+        "currency_name_sf": "UGX"
+    },
+    {
+        "name": "Ukraine",
+        "dial_code": "+380",
+        "alpha_2_code": "UA",
+        "alpha_3_code": "UKR",
+        "currency_symbol": "₴",
+        "currency_name": "Ukrainian hryvnia",
+        "currency_name_sf": "UAH"
+    },
+    {
+        "name": "United Arab Emirates",
+        "dial_code": "+971",
+        "alpha_2_code": "AE",
+        "alpha_3_code": "ARE",
+        "currency_symbol": "د.إ",
+        "currency_name": "United Arab Emirates dirham",
+        "currency_name_sf": "AED"
+    },
+    {
+        "name": "United Kingdom",
+        "dial_code": "+44",
+        "alpha_2_code": "GB",
+        "alpha_3_code": "GBR",
+        "currency_symbol": "£",
+        "currency_name": "British Pound",
+        "currency_name_sf": "GBP"
+    },
+    {
+        "name": "United States",
+        "dial_code": "+1",
+        "alpha_2_code": "US",
+        "alpha_3_code": "USA",
+        "currency_symbol": "$",
+        "currency_name": "United States Dollar",
+        "currency_name_sf": "USD"
+    },
+    {
+        "name": "Uruguay",
+        "dial_code": "+598",
+        "alpha_2_code": "UY",
+        "alpha_3_code": "URY",
+        "currency_symbol": "$U",
+        "currency_name": "Uruguayan peso",
+        "currency_name_sf": "UYU"
+    },
+    {
+        "name": "Uzbekistan",
+        "dial_code": "+998",
+        "alpha_2_code": "UZ",
+        "alpha_3_code": "UZB",
+        "currency_symbol": "лв",
+        "currency_name": "Uzbekistani Som",
+        "currency_name_sf": "UZS"
+    },
+    {
+        "name": "Vanuatu",
+        "dial_code": "+678",
+        "alpha_2_code": "VU",
+        "alpha_3_code": "VUT",
+        "currency_symbol": "VT",
+        "currency_name": "Vanuatu vatu",
+        "currency_name_sf": "VUV"
+    },
+    {
+        "name": "Wallis and Futuna",
+        "dial_code": "+681",
+        "alpha_2_code": "WF",
+        "alpha_3_code": "WLF",
+        "currency_symbol": "F",
+        "currency_name": "CFP Franc",
+        "currency_name_sf": "XPF"
+    },
+    {
+        "name": "Yemen",
+        "dial_code": "+967",
+        "alpha_2_code": "YE",
+        "alpha_3_code": "YEM",
+        "currency_symbol": "﷼",
+        "currency_name": "Yemeni rial",
+        "currency_name_sf": "YER"
+    },
+    {
+        "name": "Zambia",
+        "dial_code": "+260",
+        "alpha_2_code": "ZM",
+        "alpha_3_code": "ZMB",
+        "currency_symbol": "ZK",
+        "currency_name": "Zambian kwacha",
+        "currency_name_sf": "ZMW"
+    },
+    {
+        "name": "Zimbabwe",
+        "dial_code": "+263",
+        "alpha_2_code": "ZW",
+        "alpha_3_code": "ZWE",
+        "currency_symbol": "$",
+        "currency_name": "United States Dollar",
+        "currency_name_sf": "USD"
+    },
+    {
+        "name": "Aland Islands",
+        "dial_code": "+358",
+        "alpha_2_code": "AX",
+        "alpha_3_code": "ALA",
+        "currency_symbol": "€",
+        "currency_name": "Euro",
+        "currency_name_sf": "EUR"
+    },
+    {
+        "name": "Bolivia, Plurinational State of",
+        "dial_code": "+591",
+        "alpha_2_code": "BO",
+        "alpha_3_code": "BOL",
+        "currency_symbol": "Bs",
+        "currency_name": "Boliviano",
+        "currency_name_sf": "BOB"
+    },
+    {
+        "name": "Brunei Darussalam",
+        "dial_code": "+673",
+        "alpha_2_code": "BN",
+        "alpha_3_code": "BRN",
+        "currency_symbol": "B$",
+        "currency_name": "Brunei Dollar",
+        "currency_name_sf": "BND"
+    },
+    {
+        "name": "Cocos (Keeling) Islands",
+        "dial_code": "+61",
+        "alpha_2_code": "CC",
+        "alpha_3_code": "CCK",
+        "currency_symbol": "$",
+        "currency_name": "Australian Dollar",
+        "currency_name_sf": "AUD"
+    },
+    {
+        "name": "Congo, The Democratic Republic of the",
+        "dial_code": "+243",
+        "alpha_2_code": "CD",
+        "alpha_3_code": "COG",
+        "currency_symbol": "FrCD",
+        "currency_name": "Congolese Franc",
+        "currency_name_sf": "CDF"
+    },
+    {
+        "name": "Cote d'Ivoire",
+        "dial_code": "+225",
+        "alpha_2_code": "CI",
+        "alpha_3_code": "CIV",
+        "currency_symbol": "CFA",
+        "currency_name": "West African CFA Franc",
+        "currency_name_sf": "XOF"
+    },
+    {
+        "name": "Falkland Islands (Malvinas)",
+        "dial_code": "+500",
+        "alpha_2_code": "FK",
+        "alpha_3_code": "FLK",
+        "currency_symbol": "£",
+        "currency_name": "Falkland Islands Pound",
+        "currency_name_sf": "FKP"
+    },
+    {
+        "name": "Guernsey",
+        "dial_code": "+44",
+        "alpha_2_code": "GG",
+        "alpha_3_code": "GGY",
+        "currency_symbol": "£",
+        "currency_name": "Pound Sterling",
+        "currency_name_sf": "GGP"
+    },
+    {
+        "name": "Holy See (Vatican City State)",
+        "dial_code": "+379",
+        "alpha_2_code": "VA",
+        "alpha_3_code": "VAT",
+        "currency_symbol": "€",
+        "currency_name": "Euro",
+        "currency_name_sf": "EUR"
+    },
+    {
+        "name": "Hong Kong",
+        "dial_code": "+852",
+        "alpha_2_code": "HK",
+        "alpha_3_code": "HKG",
+        "currency_symbol": "$",
+        "currency_name": "Hong Kong Dollar",
+        "currency_name_sf": "HKD"
+    },
+    {
+        "name": "Iran, Islamic Republic of",
+        "dial_code": "+98",
+        "alpha_2_code": "IR",
+        "alpha_3_code": "IRN",
+        "currency_symbol": "﷼",
+        "currency_name": "Iranian rial",
+        "currency_name_sf": "IRR"
+    },
+    {
+        "name": "Isle of Man",
+        "dial_code": "+44",
+        "alpha_2_code": "IM",
+        "alpha_3_code": "IMN",
+        "currency_symbol": "£",
+        "currency_name": "Isle of Man Pound",
+        "currency_name_sf": "IMP"
+    },
+    {
+        "name": "Jersey",
+        "dial_code": "+44",
+        "alpha_2_code": "JE",
+        "alpha_3_code": "JEY",
+        "currency_symbol": "£",
+        "currency_name": "Jersey Pound",
+        "currency_name_sf": "JEP"
+    },
+    {
+        "name": "Korea, Democratic People's Republic of",
+        "dial_code": "+850",
+        "alpha_2_code": "KP",
+        "alpha_3_code": "PRK",
+        "currency_symbol": "₩",
+        "currency_name": "North Korean won",
+        "currency_name_sf": "KPW"
+    },
+    {
+        "name": "Korea, Republic of",
+        "dial_code": "+82",
+        "alpha_2_code": "KR",
+        "alpha_3_code": "KOR",
+        "currency_symbol": "₩",
+        "currency_name": "South Korean Won",
+        "currency_name_sf": "KRW"
+    },
+    {
+        "name": "Lao People's Democratic Republic",
+        "dial_code": "+856",
+        "alpha_2_code": "LA",
+        "alpha_3_code": "LAO",
+        "currency_symbol": "₭",
+        "currency_name": "Lao kip",
+        "currency_name_sf": "LAK"
+    },
+    {
+        "name": "Libyan Arab Jamahiriya",
+        "dial_code": "+218",
+        "alpha_2_code": "LY",
+        "alpha_3_code": "LBY",
+        "currency_symbol": "ل.د",
+        "currency_name": "Libyan Dinar",
+        "currency_name_sf": "LYD"
+    },
+    {
+        "name": "Macao",
+        "dial_code": "+853",
+        "alpha_2_code": "MO",
+        "alpha_3_code": "MAC",
+        "currency_symbol": "MOP$",
+        "currency_name": "Macanese pataca",
+        "currency_name_sf": "MOP"
+    },
+    {
+        "name": "Macedonia, The Former Yugoslav Republic of",
+        "dial_code": "+389",
+        "alpha_2_code": "MK",
+        "alpha_3_code": "MKD",
+        "currency_symbol": "ден",
+        "currency_name": "Macedonia Denar",
+        "currency_name_sf": "MKD"
+    },
+    {
+        "name": "Micronesia, Federated States of",
+        "dial_code": "+691",
+        "alpha_2_code": "FM",
+        "alpha_3_code": "FSM",
+        "currency_symbol": "$",
+        "currency_name": "United States Dollar",
+        "currency_name_sf": "USD"
+    },
+    {
+        "name": "Moldova, Republic of",
+        "dial_code": "+373",
+        "alpha_2_code": "MD",
+        "alpha_3_code": "MDA",
+        "currency_symbol": "L",
+        "currency_name": "Moldovan leu",
+        "currency_name_sf": "MDL"
+    },
+    {
+        "name": "Mozambique",
+        "dial_code": "+258",
+        "alpha_2_code": "MZ",
+        "alpha_3_code": "MOZ",
+        "currency_symbol": "MT",
+        "currency_name": "Mozambican metical",
+        "currency_name_sf": "MZN"
+    },
+    {
+        "name": "Palestinian Territory, Occupied",
+        "dial_code": "+970",
+        "alpha_2_code": "PS",
+        "alpha_3_code": "PSE",
+        "currency_symbol": "₪",
+        "currency_name": "Israeli new shekel",
+        "currency_name_sf": "ILS"
+    },
+    {
+        "name": "Pitcairn",
+        "dial_code": "+872",
+        "alpha_2_code": "PN",
+        "alpha_3_code": "PCN",
+        "currency_symbol": "$",
+        "currency_name": "New Zealand Dollar",
+        "currency_name_sf": "NZD"
+    },
+    {
+        "name": "Réunion",
+        "dial_code": "+262",
+        "alpha_2_code": "RE",
+        "alpha_3_code": "REU",
+        "currency_symbol": "€",
+        "currency_name": "Euro",
+        "currency_name_sf": "EUR"
+    },
+    {
+        "name": "Russia",
+        "dial_code": "+7",
+        "alpha_2_code": "RU",
+        "alpha_3_code": "RUS",
+        "currency_symbol": "₽",
+        "currency_name": "Russian ruble",
+        "currency_name_sf": "RUB"
+    },
+    {
+        "name": "Saint Barthélemy",
+        "dial_code": "+590",
+        "alpha_2_code": "BL",
+        "alpha_3_code": "BLM",
+        "currency_symbol": "€",
+        "currency_name": "Euro",
+        "currency_name_sf": "EUR"
+    },
+    {
+        "name": "Saint Helena, Ascension and Tristan Da Cunha",
+        "dial_code": "+290",
+        "alpha_2_code": "SH",
+        "alpha_3_code": "SHN",
+        "currency_symbol": "£",
+        "currency_name": "Saint Helena Pound",
+        "currency_name_sf": "SHP"
+    },
+    {
+        "name": "Saint Kitts and Nevis",
+        "dial_code": "+1869",
+        "alpha_2_code": "KN",
+        "alpha_3_code": "KNA",
+        "currency_symbol": "EC$",
+        "currency_name": "East Caribbean Dollar",
+        "currency_name_sf": "XCD"
+    },
+    {
+        "name": "Saint Lucia",
+        "dial_code": "+1 758",
+        "alpha_2_code": "LC",
+        "alpha_3_code": "LCA",
+        "currency_symbol": "$",
+        "currency_name": "East Caribbean Dollar",
+        "currency_name_sf": "XCD"
+    },
+    {
+        "name": "Saint Martin",
+        "dial_code": "+590",
+        "alpha_2_code": "MF",
+        "alpha_3_code": "MAF",
+        "currency_symbol": "NAf",
+        "currency_name": "Netherlands Antillean Guilder",
+        "currency_name_sf": "ANG"
+    },
+    {
+        "name": "Saint Pierre and Miquelon",
+        "dial_code": "+508",
+        "alpha_2_code": "PM",
+        "alpha_3_code": "SPM",
+        "currency_symbol": "€",
+        "currency_name": "Euro",
+        "currency_name_sf": "EUR"
+    },
+    {
+        "name": "Saint Vincent and the Grenadines",
+        "dial_code": "+1784",
+        "alpha_2_code": "VC",
+        "alpha_3_code": "VCT",
+        "currency_symbol": "",
+        "currency_name": "East Caribbean Dollar",
+        "currency_name_sf": "XCD"
+    },
+    {
+        "name": "Sao Tome and Principe",
+        "dial_code": "+239",
+        "alpha_2_code": "ST",
+        "alpha_3_code": "STP",
+        "currency_symbol": "Db",
+        "currency_name": "Sao Tome and Principe dobra",
+        "currency_name_sf": "STD"
+    },
+    {
+        "name": "Singapore",
+        "dial_code": "+65",
+        "alpha_2_code": "SG",
+        "alpha_3_code": "SGP",
+        "currency_symbol": "$",
+        "currency_name": "Singapore Dollar",
+        "currency_name_sf": "SGD"
+    },
+    {
+        "name": "Somalia",
+        "dial_code": "+252",
+        "alpha_2_code": "SO",
+        "alpha_3_code": "Som",
+        "currency_symbol": "S",
+        "currency_name": "Somali shilling",
+        "currency_name_sf": "SOS"
+    },
+    {
+        "name": "Svalbard and Jan Mayen",
+        "dial_code": "+47",
+        "alpha_2_code": "SJ",
+        "alpha_3_code": "SJM",
+        "currency_symbol": "kr",
+        "currency_name": "Norwegian Krone",
+        "currency_name_sf": "NOK"
+    },
+    {
+        "name": "Syrian Arab Republic",
+        "dial_code": "+963",
+        "alpha_2_code": "SY",
+        "alpha_3_code": "SYR",
+        "currency_symbol": "£S",
+        "currency_name": "Syrian Pound",
+        "currency_name_sf": "SYP"
+    },
+    {
+        "name": "Taiwan, Province of China",
+        "dial_code": "+886",
+        "alpha_2_code": "TW",
+        "alpha_3_code": "TWN",
+        "currency_symbol": "NT$",
+        "currency_name": "New Taiwan Dollar",
+        "currency_name_sf": "TWD"
+    },
+    {
+        "name": "Tanzania, United Republic of",
+        "dial_code": "+255",
+        "alpha_2_code": "TZ",
+        "alpha_3_code": "TZA",
+        "currency_symbol": "",
+        "currency_name": "Tanzanian shilling",
+        "currency_name_sf": "TZS"
+    },
+    {
+        "name": "Timor-Leste",
+        "dial_code": "+670",
+        "alpha_2_code": "TL",
+        "alpha_3_code": "TLS",
+        "currency_symbol": "$",
+        "currency_name": "United States Dollar",
+        "currency_name_sf": "USD"
+    },
+    {
+        "name": "Venezuela, Bolivarian Republic of",
+        "dial_code": "+58",
+        "alpha_2_code": "VE",
+        "alpha_3_code": "VEN",
+        "currency_symbol": "Bs",
+        "currency_name": "Venezuelan bolívar",
+        "currency_name_sf": "VEF"
+    },
+    {
+        "name": "Vietnam",
+        "dial_code": "+84",
+        "alpha_2_code": "VN",
+        "alpha_3_code": "VNM",
+        "currency_symbol": "₫",
+        "currency_name": "Vietnamese Dong",
+        "currency_name_sf": "VND"
+    },
+    {
+        "name": "Virgin Islands, British",
+        "dial_code": "+1284",
+        "alpha_2_code": "VG",
+        "alpha_3_code": "VGB",
+        "currency_symbol": "R",
+        "currency_name": "Euro",
+        "currency_name_sf": "EUR"
+    },
+    {
+        "name": "European Union",
+        "dial_code": "",
+        "alpha_2_code": "EU",
+        "alpha_3_code": "EUR",
+        "currency_symbol": "€",
+        "currency_name": "Euro",
+        "currency_name_sf": "EUR"
+    }
+ ]

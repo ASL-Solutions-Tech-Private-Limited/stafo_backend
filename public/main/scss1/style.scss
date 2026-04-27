@@ -1,0 +1,19 @@
+:root {
+    --primaryclr: #70086d;
+    --primarylight: #cf16b2;
+    --overviewlight: #ffc8ff;
+    --cardclr: #78006c0f;
+    --themesecondclr: #f5cf00;
+    --themethirdclr: #26539b;
+    --ratingstarsclr: #F68300;
+    --whiteclr: #fff;
+    --blackclr: #000;
+    --cardnameclr: #292929;
+    --primaryfont: 'Arimo';
+    --drak-sky: #103f66;
+    --light-sky: #7dc5ff;
+}
+
+@import './components/colors';
+@import './components/customAnimations';
+@import './pages/home';

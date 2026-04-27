@@ -1,0 +1,85 @@
+@extends('admin.layouts.master')
+@section('main-content')
+    <div class="app-main__outer">
+        @if(\Session::has('status'))
+        <script type="text/javascript">
+      console.log('{{\Session::get('status')}}')
+        function massge() {
+        Swal.fire({
+          title: 'Success',
+        text: '{{\Session::get('status')}}',
+        timer: 2000,
+        icon:'success',
+        showCancelButton: false,
+        showConfirmButton: false
+        }).then(
+        function () {},
+        // handling the promise rejection
+        function (dismiss) {
+          if (dismiss === 'timer') {
+            //console.log('I was closed by the timer')
+          }
+        }
+      );
+        }
+
+        window.onload = massge;
+       </script>
+      @endif
+        <div class="app-main__inner">
+            <div class="d-flex justify-content-between user-access">
+              <div class="user-welcome">
+                <h3>User List</h3>
+              </div>@can('role-create')
+              <a href="{{ route('roles.create') }}" class="btn primary-bg"><i class="fa-solid fa-plus"></i> Add New Role</a>
+              @endcan
+            </div>
+
+            <div class="users-datatable mt-3 p-3">
+              <div class="row">
+                <div class="col">
+                      <div class="users-table">
+                        <div class="table-responsive">
+                        <table id="usersTable" class="table w-100">
+                          <thead>
+                            <tr>
+                              <th><input type="checkbox" name="" id=""></th>
+                              <th>Role Name</th>
+
+                              <th>Action</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            @foreach($roles as $key => $role)
+
+                            <tr>
+                                <td><input type="checkbox" name="" id=""></td>
+                                <td>{{$role->name}}</td>
+
+                                  <td>@can('role-edit')<a class="edit" href="{{ route('roles.edit',$role->id) }}"><i class="fa-solid fa-pen"></i></a>@endcan @can('role-delete')<a class="delete"><i class="fa-solid fa-trash-can"></i></a>@endcan</td>
+                            </tr>
+                            @endforeach
+                          </tbody>
+                        </table>
+                  </div>
+                </div>
+                </div>
+                <!-- Tab End -->
+
+              </div>
+            </div>
+          </div>
+
+
+    </div>
+
+
+
+
+    <script>
+
+        new DataTable('#usersTable');
+
+    </script>
+@endsection
+
