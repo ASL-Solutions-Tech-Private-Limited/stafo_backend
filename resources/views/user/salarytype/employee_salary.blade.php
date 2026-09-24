@@ -14,7 +14,6 @@
                     <i class="fa-solid fa-receipt"></i> Monthly Payroll Register
                 </div>
                 <h3 class="fw-bold text-dark mb-1">Payroll & Salary Disbursement Register</h3>
-                <p class="text-muted small mb-0">Executive summary of monthly payroll commitments, compensation breakdown, and employee payslips.</p>
             </div>
             <div class="d-flex align-items-center gap-2">
                 <form id="salary_export" action="{{ route('salary-export') }}" method="GET" class="d-inline">
@@ -24,6 +23,9 @@
                         <i class="fa-solid fa-file-excel me-1"></i> Export Payroll
                     </button>
                 </form>
+                <a href="{{ route('salary-export-bank-transfer', ['selected_month' => $month, 'selected_year' => $year]) }}" class="btn btn-outline-dark px-3 py-2 rounded-3 fw-semibold">
+                    <i class="fa-solid fa-building-columns me-1"></i> Bank Payout CSV
+                </a>
                 <a href="{{ route('generateSalary') }}" class="btn btn-primary px-3 py-2 rounded-3 fw-semibold shadow-sm">
                     <i class="fa-solid fa-calculator me-1"></i> Generate Payroll
                 </a>

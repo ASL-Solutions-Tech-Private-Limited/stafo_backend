@@ -480,126 +480,29 @@ class SalarytypeController extends Controller
             'month' => 'required|integer|between:1,12',
         ]);
 
-        $employeeId = $request->employee;
+        $employeeId = (int)$request->employee;
         $month = (int)$request->month;
         $year = (int)($request->year ?? date('Y'));
 
         $employee = Employee::where('company_id', Auth::id())->findOrFail($employeeId);
 
-        // Delete any existing components for this month/year to allow clean re-generation
-        EmployeeSalary::where('company_id', Auth::id())
-            ->where('employee_id', $employeeId)
-            ->where('salary_month', $month)
-            ->where('salary_year', $year)
-            ->delete();
+        $basicSalaryInput = $request->input('basic_salary');
+        $overrideBasic = ($basicSalaryInput !== null && is_numeric(str_replace(',', '', $basicSalaryInput)))
+            ? (float)str_replace(',', '', $basicSalaryInput)
+            : null;
 
-        $basicSalary = (float)str_replace(',', '', $request->input('basic_salary', $employee->salary ?? 0));
-        $grossAmount = (float)str_replace(',', '', $request->input('gross_amount', 0));
-        $otherDeduction = (float)str_replace(',', '', $request->input('other_deduction', 0));
-        $reimbursement = (float)str_replace(',', '', $request->input('reimbursement', 0));
-        $absentDays = (float)$request->input('absent_days', 0);
-        $workingDays = (int)$request->input('working_days', 26);
-        $totalWorkingDays = (int)$request->input('total_working_days', 26);
-        $holidayCount = (int)$request->input('holiday_count', 0);
-        $presentDays = (float)$request->input('present_days', max(0, $workingDays - $absentDays));
-        $departmentName = $request->input('department_name', $employee->department ? $employee->department->name : 'General');
+        $options = [
+            'arrears' => (float)str_replace(',', '', $request->input('arrears', 0)),
+            'bonus' => (float)str_replace(',', '', $request->input('bonus', 0)),
+        ];
 
-        // Fetch salary types for this department or company
-        $salarytypes = collect();
-        if ($employee->department_id) {
-            $salarytypes = Salarytype::where('company_id', Auth::id())
-                ->where('department_id', $employee->department_id)
-                ->where('status', '1')
-                ->get();
-        }
-        if ($salarytypes->isEmpty()) {
-            $salarytypes = Salarytype::where('company_id', Auth::id())
-                ->where(function ($q) {
-                    $q->whereNull('department_id')->orWhere('department_id', 0);
-                })
-                ->where('status', '1')
-                ->get();
+        if ($request->has('tds_amount') && is_numeric(str_replace(',', '', $request->input('tds_amount')))) {
+            $options['tds_amount'] = (float)str_replace(',', '', $request->input('tds_amount'));
         }
 
-        $totalEarning = 0;
-        $totalDeduction = 0;
-
-        if (!$salarytypes->isEmpty()) {
-            foreach ($salarytypes as $salarytype) {
-                $componentAmount = str_replace(',', '', $request->input('salary_type_' . $salarytype->id));
-                $componentAmount = is_numeric($componentAmount) ? (float)$componentAmount : 0;
-
-                $salary = new EmployeeSalary();
-                $salary->company_id = Auth::id();
-                $salary->employee_id = $employeeId;
-                $salary->salary_month = $month;
-                $salary->salary_year = $year;
-                $salary->salary_type_id = $salarytype->id;
-                $salary->salary_type_amount = $salarytype->amount;
-                $salary->salary_type_amount_type = $salarytype->amount_type;
-                $salary->amount = $componentAmount;
-                $salary->label = $salarytype->salary_type;
-                $salary->basic_salary = $basicSalary;
-                $salary->gross_salary = $grossAmount;
-                $salary->other_deduction = $otherDeduction;
-                $salary->absent_days = $absentDays;
-                $salary->working_days = $workingDays;
-                $salary->reimbursement = $reimbursement;
-                $salary->save();
-
-                if ($salarytype->payment_type == 'Earning') {
-                    $totalEarning += $componentAmount;
-                } else {
-                    $totalDeduction += $componentAmount;
-                }
-            }
-        } else {
-            // If no custom salary types configured, record base salary component
-            $salary = new EmployeeSalary();
-            $salary->company_id = Auth::id();
-            $salary->employee_id = $employeeId;
-            $salary->salary_month = $month;
-            $salary->salary_year = $year;
-            $salary->salary_type_id = null;
-            $salary->salary_type_amount = $basicSalary;
-            $salary->salary_type_amount_type = 'Flat';
-            $salary->amount = $basicSalary;
-            $salary->label = 'Basic Salary';
-            $salary->basic_salary = $basicSalary;
-            $salary->gross_salary = $grossAmount;
-            $salary->other_deduction = $otherDeduction;
-            $salary->absent_days = $absentDays;
-            $salary->working_days = $workingDays;
-            $salary->reimbursement = $reimbursement;
-            $salary->save();
-        }
-
-        // Save canonical EmployeeSalarySummary record
-        EmployeeSalarySummary::updateOrCreate(
-            [
-                'company_id' => Auth::id(),
-                'employee_id' => $employeeId,
-                'salary_month' => $month,
-                'salary_year' => $year
-            ],
-            [
-                'employee_name' => $employee->name,
-                'department_name' => $departmentName,
-                'basic_salary' => $basicSalary,
-                'total_earning' => $totalEarning,
-                'total_deduction' => $totalDeduction,
-                'other_deduction' => $otherDeduction,
-                'reimbursement' => $reimbursement,
-                'net_salary' => $grossAmount,
-                'absent_days' => $absentDays,
-                'working_days' => $workingDays,
-                'total_working_days' => $totalWorkingDays,
-                'holiday_count' => $holidayCount,
-                'present_days' => $presentDays,
-                'status' => 'Generated',
-                'generated_date' => now()
-            ]
-        );
+        $payrollService = app(\App\Services\Payroll\PayrollCalculatorService::class);
+        $calc = $payrollService->calculate($employee, $month, $year, $overrideBasic, $options);
+        $payrollService->savePayrollRecord(Auth::id(), $employeeId, $month, $year, $calc);
 
         return redirect()->route('employeeSalaryList', [
             'month' => $month,
@@ -809,85 +712,166 @@ class SalarytypeController extends Controller
 
     public function export(Request $request)
     {
-        $month = $request->input('selected_month', date('m') - 1);
-        $year = $request->input('selected_year', date('Y'));
-        $emp_id = $request->input('employee_id', '');
-        $company = Auth::user();
-        $monthArray = array('January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December');
-        
-        
+        $month = (int)$request->input('selected_month', date('m'));
+        $year = (int)$request->input('selected_year', date('Y'));
+        $companyId = Auth::id();
+
+        $summaries = EmployeeSalarySummary::with(['employee.bankAccount', 'employee.designation'])
+            ->where('company_id', $companyId)
+            ->where('salary_month', $month)
+            ->where('salary_year', $year)
+            ->get();
 
         $spreadsheet = new Spreadsheet();
         $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle("Payroll Register {$month}-{$year}");
 
         $headers = [
-            'EmpId',
-            'Company',
-            'Employee',
-            'PF Number',
+            'Emp Code',
+            'Employee Name',
+            'Department',
+            'Designation',
+            'PAN Number',
+            'UAN / PF No',
             'ESI Number',
-            'Salary Month',
-            'Salary Year',
-            'Basic Salary',
-            'Gross Salary',
-            'Reimbursement',
-            'Absent Days',
+            'Bank Name',
+            'Account Number',
+            'IFSC Code',
+            'Total Month Days',
             'Working Days',
-            //'Payment Type'
+            'Present Days',
+            'Leave Days',
+            'Absent Days',
+            'Basic Salary (₹)',
+            'Gross Salary (₹)',
+            'Reimbursement (₹)',
+            'Arrears (₹)',
+            'Bonus (₹)',
+            'Employee PF (₹)',
+            'Employee ESIC (₹)',
+            'Professional Tax (₹)',
+            'TDS / Tax (₹)',
+            'LOP Deductions (₹)',
+            'Total Deductions (₹)',
+            'Net Take-Home (₹)',
+            'Employer PF (₹)',
+            'Employer ESIC (₹)',
+            'Gratuity (₹)',
+            'Monthly CTC (₹)',
+            'Payment Status',
+            'Generated Date',
         ];
 
-        $salarytypes = Salarytype::where('company_id', Auth::id())->where('status', '1')->get();
-        foreach ($salarytypes as $salarytype) {            
-            $headers[] = $salarytype->salary_type;
-        }
-
-        // Headers
         $sheet->fromArray($headers, null, 'A1');
 
-        // Data
         $row = 2;
-        
-        $employees = Employee::where('company_id', Auth::id())->select('id', 'name')->get();
-        foreach ($employees as $employee) {
-            $emp_id = $employee->id;
-            $employeeSalaries = EmployeeSalary::where('company_id', Auth::id())->where('salary_month', $month)->where('salary_year', $year)->where('employee_id', $emp_id)->get();
-            $employeeSalary = EmployeeSalary::where('company_id', Auth::id())->where('salary_month', $month)->where('salary_year', $year)->where('employee_id', $emp_id)->first();
-            if(!empty($employeeSalary)){
-                $body_array = [
-                    $employeeSalary->employee->emp_id,
-                    $employeeSalary->company->company_name,
-                    $employeeSalary->employee->name,
-                    $employeeSalary->pf_number,
-                    $employeeSalary->esi_number,
-                    $monthArray[ $employeeSalary->salary_month - 1],
-                    $employeeSalary->salary_year,
-                    $employeeSalary->basic_salary,
-                    $employeeSalary->gross_salary,
-                    $employeeSalary->reimbursement,
-                    $employeeSalary->absent_days,
-                    $employeeSalary->working_days,                    
-                    //$employeeSalary->salarytype->payment_type,
-                ];
-            
-                foreach ($employeeSalaries as $salary) {
-                    //$body_array[]=$salary->salarytype->payment_type;
-                    $body_array[]=$salary->amount;
-                }
-            } else {
-                $body_array = array();
-            }
-            $sheet->fromArray($body_array, null, "A{$row}");
+        foreach ($summaries as $s) {
+            $emp = $s->employee;
+            $bank = $emp ? $emp->bankAccount : null;
 
-                $row++;
+            $sheet->fromArray([
+                $emp->emp_id ?? ('EMP-' . $s->employee_id),
+                $s->employee_name,
+                $s->department_name,
+                $emp && $emp->designation ? $emp->designation->title : ($emp->position ?? 'Staff'),
+                $emp->pan ?? 'N/A',
+                $emp->uan ?? ($emp->pf_number ?? 'N/A'),
+                $emp->esi_number ?? 'N/A',
+                $bank->bank_name ?? 'N/A',
+                $bank ? (' ' . $bank->account_number) : 'N/A',
+                $bank->ifsc_code ?? 'N/A',
+                $s->total_working_days ?? 30,
+                $s->working_days ?? 26,
+                $s->present_days ?? 0,
+                $s->leave_days ?? 0,
+                $s->absent_days ?? 0,
+                $s->basic_salary,
+                $s->gross_salary,
+                $s->reimbursement ?? 0,
+                $s->arrears ?? 0,
+                $s->bonus ?? 0,
+                $s->pf_employee ?? 0,
+                $s->esi_employee ?? 0,
+                $s->pt_amount ?? 0,
+                $s->tds_amount ?? 0,
+                $s->other_deduction ?? 0,
+                $s->total_deduction ?? 0,
+                $s->net_salary,
+                $s->pf_employer ?? 0,
+                $s->esi_employer ?? 0,
+                $s->gratuity ?? 0,
+                $s->ctc ?? $s->gross_salary,
+                $s->payment_status ?? 'Pending',
+                $s->generated_date ? $s->generated_date->format('Y-m-d') : '',
+            ], null, "A{$row}");
+            $row++;
         }
-        $writer = new Xlsx($spreadsheet);
 
-        // Return as a streamed response
+        $writer = new Xlsx($spreadsheet);
+        $fileName = "Payroll_Register_{$month}_{$year}.xlsx";
+
         return new StreamedResponse(function () use ($writer) {
             $writer->save('php://output');
         }, 200, [
             'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-            'Content-Disposition' => 'attachment; filename="Salary.xlsx"',
+            'Content-Disposition' => "attachment; filename=\"{$fileName}\"",
+        ]);
+    }
+
+    public function exportBankTransfer(Request $request)
+    {
+        $month = (int)$request->input('selected_month', date('m'));
+        $year = (int)$request->input('selected_year', date('Y'));
+        $companyId = Auth::id();
+
+        $summaries = EmployeeSalarySummary::with(['employee.bankAccount'])
+            ->where('company_id', $companyId)
+            ->where('salary_month', $month)
+            ->where('salary_year', $year)
+            ->get();
+
+        $monthName = Carbon::create($year, $month, 1)->format('M Y');
+        $fileName = "Bank_Disbursement_{$month}_{$year}.csv";
+
+        return new StreamedResponse(function () use ($summaries, $monthName) {
+            $handle = fopen('php://output', 'w');
+
+            // Standard Corporate Net Banking / NACH / NEFT Payout Batch Header
+            fputcsv($handle, [
+                'Beneficiary Account Number',
+                'IFSC Code',
+                'Beneficiary Name',
+                'Net Amount',
+                'Payment Mode',
+                'Narration',
+                'Employee Code',
+                'Bank Name',
+                'Email',
+                'Phone'
+            ]);
+
+            foreach ($summaries as $s) {
+                $emp = $s->employee;
+                $bank = $emp ? $emp->bankAccount : null;
+
+                fputcsv($handle, [
+                    $bank ? $bank->account_number : '',
+                    $bank ? $bank->ifsc_code : '',
+                    $bank ? ($bank->account_holder_name ?: $s->employee_name) : $s->employee_name,
+                    number_format((float)$s->net_salary, 2, '.', ''),
+                    'NEFT',
+                    "Salary for {$monthName}",
+                    $emp ? ($emp->emp_id ?: 'EMP-' . $s->employee_id) : 'EMP-' . $s->employee_id,
+                    $bank ? $bank->bank_name : '',
+                    $emp ? $emp->email : '',
+                    $emp ? $emp->phone : '',
+                ]);
+            }
+
+            fclose($handle);
+        }, 200, [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => "attachment; filename=\"{$fileName}\"",
         ]);
     }
 

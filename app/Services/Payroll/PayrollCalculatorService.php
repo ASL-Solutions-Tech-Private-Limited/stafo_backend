@@ -19,7 +19,7 @@ use Illuminate\Support\Collection;
 class PayrollCalculatorService
 {
     /**
-     * Compute comprehensive, market-standard payroll for an employee.
+     * Compute comprehensive, market-standard payroll for an employee (Keka / Zoho Payroll parity).
      *
      * @param Employee $employee
      * @param int $month (1-12)
@@ -30,9 +30,17 @@ class PayrollCalculatorService
      */
     public function calculate(Employee $employee, int $month, int $year, $overrideBasic = null, array $options = []): array
     {
+        $annualCtc = (float)($employee->ctc ?? 0);
+        $monthlyCtc = $annualCtc > 0 ? round($annualCtc / 12, 2) : 0.0;
+
         $basicSalary = $overrideBasic !== null && is_numeric($overrideBasic)
             ? (float)$overrideBasic
             : (float)($employee->salary ?? 0);
+
+        // If basic salary is not set but CTC is set, Keka standard defaults Basic to 50% of monthly CTC
+        if ($basicSalary <= 0 && $monthlyCtc > 0) {
+            $basicSalary = round($monthlyCtc * 0.50, 2);
+        }
 
         $departmentName = $employee->department ? $employee->department->name : 'General';
         $companyId = $employee->company_id;
@@ -119,10 +127,13 @@ class PayrollCalculatorService
         $halfDayCount = 0;
         $lateArrivalCount = 0;
         $attendanceLeaveCount = 0;
+        $attendanceByDate = [];
 
         foreach ($attendances as $att) {
             $attType = strtolower(trim((string)$att->attendance));
             $isHalf = ((int)$att->halfday === 1) || in_array($attType, ['halfday', 'half day']);
+            $attDate = Carbon::parse($att->date)->format('Y-m-d');
+            $attendanceByDate[$attDate] = $attType;
 
             if ($isHalf) {
                 $halfDayCount++;
@@ -150,7 +161,6 @@ class PayrollCalculatorService
         $presentDays = round($fullPresentCount + ($halfDayCount * 0.5), 1);
 
         // Effective Paid Days & Absent / LOP Days
-        // Note: Paid days = Present + Approved Leaves (cannot exceed tenure working days)
         $paidDays = min($workingDays, round($presentDays + $leaveDays, 1));
         $absentDays = max(0, round($workingDays - $paidDays, 1));
 
@@ -167,14 +177,22 @@ class PayrollCalculatorService
         $dailySalary = $basicSalary > 0 ? round($basicSalary / max(1, $divisor), 2) : 0;
 
         // 9. Attendance Deductions (LOP)
-        // If employee is prorated (joined mid-month), base earnings scale by active days
-        $prorationFactor = $isProrated ? ($tenureCalendarDays / $daysInMonth) : 1.0;
         $absentDeduction = round($absentDays * $dailySalary, 2);
         $lateDeduction = round($latePenaltyDays * $dailySalary, 2);
         $halfDayDeduction = round($halfDayCount * ($dailySalary / 2), 2);
-        $otherDeduction = round($absentDeduction + $lateDeduction, 2);
 
-        // 10. Approved Reimbursements / Expenses
+        // 10. Sandwich Leave Rule Check (Keka Standard)
+        $enableSandwich = $options['enable_sandwich'] ?? false;
+        $sandwichDeduction = 0.0;
+        $sandwichDays = 0;
+        if ($enableSandwich && $dailySalary > 0) {
+            $sandwichDays = $this->detectSandwichLeaveDays($effectiveStart, $effectiveEnd, $weekOffDays, $companyHolidays, $attendanceByDate);
+            $sandwichDeduction = round($sandwichDays * $dailySalary, 2);
+        }
+
+        $otherDeduction = round($absentDeduction + $lateDeduction + $sandwichDeduction, 2);
+
+        // 11. Approved Reimbursements / Expenses
         $reimbursement = (float)Expense::where('employee_id', $employee->id)
             ->where('company_id', $companyId)
             ->whereMonth('created_at', $month)
@@ -191,7 +209,11 @@ class PayrollCalculatorService
                 ->sum('amount');
         }
 
-        // 11. Salary Components (Earnings & Deductions from Salarytype)
+        // 12. Arrears & Performance Bonus (Keka / Zoho Standard)
+        $arrears = (float)($options['arrears'] ?? 0.0);
+        $bonus = (float)($options['bonus'] ?? 0.0);
+
+        // 13. Salary Components (Earnings & Deductions)
         $salarytypes = $this->getSalaryComponentsForEmployee($employee);
 
         $earnings = [];
@@ -203,41 +225,123 @@ class PayrollCalculatorService
         $hasEsiComponent = false;
         $hasPtComponent = false;
 
-        foreach ($salarytypes as $st) {
-            $amount = ($st->amount_type === 'Flat')
-                ? (float)$st->amount
-                : round(($basicSalary * (float)$st->amount / 100), 2);
+        if ($salarytypes->isNotEmpty()) {
+            foreach ($salarytypes as $st) {
+                $amount = ($st->amount_type === 'Flat')
+                    ? (float)$st->amount
+                    : round(($basicSalary * (float)$st->amount / 100), 2);
 
-            $label = $st->salary_type . ($st->amount_type !== 'Flat' ? ' (' . $st->amount . '%)' : '');
-            $item = [
-                'id' => $st->id,
-                'label' => $label,
-                'name' => $st->salary_type,
-                'amount' => $amount,
-                'amount_type' => $st->amount_type,
-                'rate' => $st->amount,
-                'payment_type' => $st->payment_type,
+                $label = $st->salary_type . ($st->amount_type !== 'Flat' ? ' (' . $st->amount . '%)' : '');
+                $item = [
+                    'id' => $st->id,
+                    'label' => $label,
+                    'name' => $st->salary_type,
+                    'amount' => $amount,
+                    'amount_type' => $st->amount_type,
+                    'rate' => $st->amount,
+                    'payment_type' => $st->payment_type,
+                ];
+
+                if ($st->payment_type === 'Earning') {
+                    $earnings[] = $item;
+                    $totalEarningComponents += $amount;
+                } else {
+                    $deductions[] = $item;
+                    $totalDeductionComponents += $amount;
+
+                    // Check for statutory labels
+                    $lowerName = strtolower($st->salary_type);
+                    if (str_contains($lowerName, 'pf') || str_contains($lowerName, 'provident')) $hasPfComponent = true;
+                    if (str_contains($lowerName, 'esi') || str_contains($lowerName, 'insurance')) $hasEsiComponent = true;
+                    if (str_contains($lowerName, 'pt') || str_contains($lowerName, 'professional tax')) $hasPtComponent = true;
+                }
+            }
+        } elseif ($monthlyCtc > 0 && $basicSalary > 0) {
+            // Enterprise CTC Auto-Decomposition Structure (Keka / Zoho standard breakdown)
+            $hraAmount = round($basicSalary * 0.40, 2); // 40% of Basic HRA
+            $conveyanceAmount = 1600.0; // Standard Conveyance Allowance
+            $medicalAmount = 1250.0;    // Standard Medical Allowance
+
+            $earnings[] = [
+                'id' => null,
+                'label' => 'House Rent Allowance (HRA - 40%)',
+                'name' => 'House Rent Allowance (HRA)',
+                'amount' => $hraAmount,
+                'amount_type' => 'Percentage',
+                'rate' => 40,
+                'payment_type' => 'Earning',
+            ];
+            $earnings[] = [
+                'id' => null,
+                'label' => 'Conveyance Allowance',
+                'name' => 'Conveyance Allowance',
+                'amount' => $conveyanceAmount,
+                'amount_type' => 'Flat',
+                'rate' => $conveyanceAmount,
+                'payment_type' => 'Earning',
+            ];
+            $earnings[] = [
+                'id' => null,
+                'label' => 'Medical Allowance',
+                'name' => 'Medical Allowance',
+                'amount' => $medicalAmount,
+                'amount_type' => 'Flat',
+                'rate' => $medicalAmount,
+                'payment_type' => 'Earning',
             ];
 
-            if ($st->payment_type === 'Earning') {
-                $earnings[] = $item;
-                $totalEarningComponents += $amount;
-            } else {
-                $deductions[] = $item;
-                $totalDeductionComponents += $amount;
+            // Employer PF & Gratuity estimates for balancing special allowance
+            $estimatedPfEmployer = min($basicSalary, 15000.0) * 0.12;
+            $estimatedGratuity = round((15 / 26) * ($basicSalary / 12), 2);
+            $specialAllowance = max(0, round($monthlyCtc - ($basicSalary + $hraAmount + $conveyanceAmount + $medicalAmount + $estimatedPfEmployer + $estimatedGratuity), 2));
 
-                // Check for statutory labels
-                $lowerName = strtolower($st->salary_type);
-                if (str_contains($lowerName, 'pf') || str_contains($lowerName, 'provident')) $hasPfComponent = true;
-                if (str_contains($lowerName, 'esi') || str_contains($lowerName, 'insurance')) $hasEsiComponent = true;
-                if (str_contains($lowerName, 'pt') || str_contains($lowerName, 'professional tax')) $hasPtComponent = true;
+            if ($specialAllowance > 0) {
+                $earnings[] = [
+                    'id' => null,
+                    'label' => 'Special Allowance',
+                    'name' => 'Special Allowance',
+                    'amount' => $specialAllowance,
+                    'amount_type' => 'Flat',
+                    'rate' => $specialAllowance,
+                    'payment_type' => 'Earning',
+                ];
             }
+
+            foreach ($earnings as $e) {
+                $totalEarningComponents += $e['amount'];
+            }
+        }
+
+        // Add Arrears and Bonus into Earnings list if present
+        if ($arrears > 0) {
+            $earnings[] = [
+                'id' => null,
+                'label' => 'Salary Arrears',
+                'name' => 'Arrears',
+                'amount' => $arrears,
+                'amount_type' => 'Flat',
+                'rate' => $arrears,
+                'payment_type' => 'Earning',
+            ];
+            $totalEarningComponents += $arrears;
+        }
+
+        if ($bonus > 0) {
+            $earnings[] = [
+                'id' => null,
+                'label' => 'Performance / Variable Bonus',
+                'name' => 'Bonus',
+                'amount' => $bonus,
+                'amount_type' => 'Flat',
+                'rate' => $bonus,
+                'payment_type' => 'Earning',
+            ];
+            $totalEarningComponents += $bonus;
         }
 
         $grossEarnings = round($basicSalary + $totalEarningComponents + $reimbursement, 2);
 
-        // 12. Indian Statutory Compliance Engine (EPF, ESIC, PT)
-        // If not already configured as a custom deduction component:
+        // 14. Indian Statutory Compliance Engine (EPF, ESIC, PT, Gratuity)
         $statutory = $this->computeStatutoryDeductions(
             $employee,
             $basicSalary,
@@ -254,7 +358,12 @@ class PayrollCalculatorService
         $esiEmployee = $statutory['esi_employee'];
         $esiEmployer = $statutory['esi_employer'];
         $ptAmount = $statutory['pt_amount'];
-        $tdsAmount = (float)($options['tds_amount'] ?? 0);
+        $gratuity = $statutory['gratuity'];
+
+        // 15. Automated Income Tax / TDS Engine (Old vs New Regime)
+        $taxRegime = $employee->tax_regime ?? ($options['tax_regime'] ?? 'new');
+        $tdsDetails = $this->computeAutomatedTds($employee, $grossEarnings, $month, $year, $taxRegime, $options);
+        $tdsAmount = $tdsDetails['monthly_tds'];
 
         // Include any statutory items that were auto-computed into deductions list
         foreach ($statutory['auto_deductions'] as $autoDed) {
@@ -262,9 +371,27 @@ class PayrollCalculatorService
             $totalDeductionComponents += $autoDed['amount'];
         }
 
+        if ($tdsAmount > 0) {
+            $deductions[] = [
+                'id' => null,
+                'label' => 'Tax Deducted at Source (TDS - ' . strtoupper($taxRegime) . ' Regime)',
+                'name' => 'TDS',
+                'amount' => $tdsAmount,
+                'amount_type' => 'Statutory',
+                'rate' => $tdsAmount,
+                'payment_type' => 'Deduction',
+            ];
+            $totalDeductionComponents += $tdsAmount;
+        }
+
         $totalStatutoryDeductions = round($pfEmployee + $esiEmployee + $ptAmount + $tdsAmount, 2);
-        $totalDeductions = round($totalDeductionComponents + $otherDeduction + $tdsAmount, 2);
+        $totalDeductions = round($totalDeductionComponents + $otherDeduction, 2);
         $netSalary = max(0, round($grossEarnings - $totalDeductions, 2));
+
+        // Effective Monthly CTC
+        $effectiveMonthlyCtc = $monthlyCtc > 0
+            ? $monthlyCtc
+            : round($grossEarnings + $pfEmployer + $esiEmployer + $gratuity, 2);
 
         return [
             'employee' => $employee,
@@ -286,8 +413,16 @@ class PayrollCalculatorService
             'absent_deduction' => $absentDeduction,
             'late_deduction' => $lateDeduction,
             'halfday_deduction' => $halfDayDeduction,
+            'sandwich_deduction' => $sandwichDeduction,
             'other_deduction' => $otherDeduction,
             'reimbursement' => $reimbursement,
+            'arrears' => $arrears,
+            'bonus' => $bonus,
+            'ctc' => $effectiveMonthlyCtc,
+            'annual_ctc' => $annualCtc > 0 ? $annualCtc : round($effectiveMonthlyCtc * 12, 2),
+            'gratuity' => $gratuity,
+            'tax_regime' => $taxRegime,
+            'tax_details' => $tdsDetails,
             'earnings' => $earnings,
             'deductions' => $deductions,
             'total_earning_components' => round($totalEarningComponents, 2),
@@ -306,7 +441,7 @@ class PayrollCalculatorService
     }
 
     /**
-     * Indian Statutory Deductions Engine (EPF, ESIC, Professional Tax)
+     * Indian Statutory Deductions Engine (EPF, ESIC, Professional Tax, Gratuity)
      */
     protected function computeStatutoryDeductions(
         Employee $employee,
@@ -323,13 +458,15 @@ class PayrollCalculatorService
         $esiEmployee = 0.0;
         $esiEmployer = 0.0;
         $ptAmount = 0.0;
+        $gratuity = 0.0;
         $autoDeductions = [];
 
         $enablePf = $options['enable_pf'] ?? (!empty($employee->pf_number));
         $enableEsi = $options['enable_esi'] ?? (!empty($employee->esi_number) || ($grossEarnings > 0 && $grossEarnings <= 21000));
         $enablePt = $options['enable_pt'] ?? true;
+        $enableGratuity = $options['enable_gratuity'] ?? true;
 
-        // 1. EPF Calculation
+        // 1. EPF Calculation (12% employee, 8.33% EPS capped at 1250 + 3.67% EPF employer)
         if ($enablePf && !$hasPfComponent && $basicSalary > 0) {
             $pfWageLimit = 15000.0;
             $pfCap = $options['pf_cap'] ?? true;
@@ -390,14 +527,184 @@ class PayrollCalculatorService
             }
         }
 
+        // 4. Gratuity (Statutory liability: 15 days basic salary / 26 per year = 4.81% of basic per month)
+        if ($enableGratuity && $basicSalary > 0) {
+            $gratuity = round((15 / 26) * ($basicSalary / 12), 2);
+        }
+
         return [
             'pf_employee' => $pfEmployee,
             'pf_employer' => $pfEmployer,
             'esi_employee' => $esiEmployee,
             'esi_employer' => $esiEmployer,
             'pt_amount' => $ptAmount,
+            'gratuity' => $gratuity,
             'auto_deductions' => $autoDeductions,
         ];
+    }
+
+    /**
+     * Automated Indian Income Tax / TDS Engine (FY 2024-25 / 2025-26 under Sec 115BAC & Old Regime)
+     */
+    public function computeAutomatedTds(Employee $employee, float $grossMonthly, int $month, int $year, string $regime = 'new', array $options = []): array
+    {
+        if (isset($options['tds_amount']) && is_numeric($options['tds_amount'])) {
+            return [
+                'monthly_tds' => (float)$options['tds_amount'],
+                'annual_gross' => round($grossMonthly * 12, 2),
+                'annual_tax' => round((float)$options['tds_amount'] * 12, 2),
+                'taxable_income' => 0.0,
+                'regime' => $regime,
+            ];
+        }
+
+        // Indian Financial Year runs April to March
+        // Determine remaining months in FY
+        // If month is Apr (4), remaining = 12. If Mar (3), remaining = 1.
+        $remainingMonths = ($month >= 4) ? (12 - ($month - 4)) : (3 - $month + 1);
+        $remainingMonths = max(1, min(12, $remainingMonths));
+
+        $annualGross = round($grossMonthly * 12, 2);
+        $regime = strtolower($regime) === 'old' ? 'old' : 'new';
+
+        $standardDeduction = ($regime === 'new') ? 75000.0 : 50000.0;
+        $chapter6a = 0.0;
+
+        if ($regime === 'old') {
+            // Old Regime deductions: Section 80C (up to 1.5L), Section 80D (up to 25k)
+            $declarations = !empty($employee->tax_declarations) ? json_decode($employee->tax_declarations, true) : [];
+            $sec80c = min(150000.0, (float)($declarations['80c'] ?? 150000.0));
+            $sec80d = min(25000.0, (float)($declarations['80d'] ?? 25000.0));
+            $chapter6a = $sec80c + $sec80d;
+        }
+
+        $taxableIncome = max(0.0, $annualGross - $standardDeduction - $chapter6a);
+        $annualTax = 0.0;
+
+        if ($regime === 'new') {
+            // New Regime Slabs (FY 2024-25 / 2025-26 Budget)
+            // 0 - 3,00,000 : Nil
+            // 3,00,001 - 7,00,000 : 5%
+            // 7,00,001 - 10,00,000 : 10%
+            // 10,00,001 - 12,00,000 : 15%
+            // 12,00,001 - 15,00,000 : 20%
+            // Above 15,00,000 : 30%
+            if ($taxableIncome <= 700000.0) {
+                // Section 87A rebate covers tax up to 7L
+                $annualTax = 0.0;
+            } else {
+                if ($taxableIncome > 1500000.0) {
+                    $annualTax += ($taxableIncome - 1500000.0) * 0.30;
+                    $taxableIncome = 1500000.0;
+                }
+                if ($taxableIncome > 1200000.0) {
+                    $annualTax += ($taxableIncome - 1200000.0) * 0.20;
+                    $taxableIncome = 1200000.0;
+                }
+                if ($taxableIncome > 1000000.0) {
+                    $annualTax += ($taxableIncome - 1000000.0) * 0.15;
+                    $taxableIncome = 1000000.0;
+                }
+                if ($taxableIncome > 700000.0) {
+                    $annualTax += ($taxableIncome - 700000.0) * 0.10;
+                    $taxableIncome = 700000.0;
+                }
+                if ($taxableIncome > 300000.0) {
+                    $annualTax += ($taxableIncome - 300000.0) * 0.05;
+                }
+            }
+        } else {
+            // Old Regime Slabs
+            // 0 - 2,50,000 : Nil
+            // 2,50,001 - 5,00,000 : 5%
+            // 5,00,001 - 10,00,000 : 20%
+            // Above 10,00,000 : 30%
+            if ($taxableIncome <= 500000.0) {
+                // Section 87A rebate covers tax up to 5L
+                $annualTax = 0.0;
+            } else {
+                if ($taxableIncome > 1000000.0) {
+                    $annualTax += ($taxableIncome - 1000000.0) * 0.30;
+                    $taxableIncome = 1000000.0;
+                }
+                if ($taxableIncome > 500000.0) {
+                    $annualTax += ($taxableIncome - 500000.0) * 0.20;
+                    $taxableIncome = 500000.0;
+                }
+                if ($taxableIncome > 250000.0) {
+                    $annualTax += ($taxableIncome - 250000.0) * 0.05;
+                }
+            }
+        }
+
+        // Add 4% Health and Education Cess
+        if ($annualTax > 0) {
+            $annualTax = round($annualTax * 1.04, 2);
+        }
+
+        $monthlyTds = $annualTax > 0 ? round($annualTax / 12, 2) : 0.0;
+
+        return [
+            'monthly_tds' => $monthlyTds,
+            'annual_gross' => $annualGross,
+            'annual_tax' => $annualTax,
+            'taxable_income' => max(0.0, $annualGross - $standardDeduction - $chapter6a),
+            'regime' => $regime,
+        ];
+    }
+
+    /**
+     * Sandwich Leave Rule Detector (Keka / Zoho Standard)
+     * If an employee takes absent/unapproved leave before and after a weekend/holiday,
+     * the intervening off days count as Loss of Pay.
+     */
+    protected function detectSandwichLeaveDays(Carbon $start, Carbon $end, array $weekOffs, Collection $holidays, array $attendanceByDate): int
+    {
+        $sandwichDays = 0;
+        $period = CarbonPeriod::create($start, $end);
+        $dates = iterator_to_array($period);
+        $totalDays = count($dates);
+
+        for ($i = 0; $i < $totalDays; $i++) {
+            $currDate = $dates[$i];
+            $currStr = $currDate->format('Y-m-d');
+            $dayOfWeek = $currDate->dayOfWeek + 1;
+            $isOff = in_array($dayOfWeek, $weekOffs) || $holidays->contains($currStr);
+
+            if ($isOff) {
+                // Find previous working day
+                $prevAbsent = false;
+                for ($p = $i - 1; $p >= 0; $p--) {
+                    $pDate = $dates[$p];
+                    $pStr = $pDate->format('Y-m-d');
+                    $pDayOfWeek = $pDate->dayOfWeek + 1;
+                    if (!in_array($pDayOfWeek, $weekOffs) && !$holidays->contains($pStr)) {
+                        $pStatus = $attendanceByDate[$pStr] ?? 'absent';
+                        $prevAbsent = in_array($pStatus, ['absent', 'leave']);
+                        break;
+                    }
+                }
+
+                // Find next working day
+                $nextAbsent = false;
+                for ($n = $i + 1; $n < $totalDays; $n++) {
+                    $nDate = $dates[$n];
+                    $nStr = $nDate->format('Y-m-d');
+                    $nDayOfWeek = $nDate->dayOfWeek + 1;
+                    if (!in_array($nDayOfWeek, $weekOffs) && !$holidays->contains($nStr)) {
+                        $nStatus = $attendanceByDate[$nStr] ?? 'absent';
+                        $nextAbsent = in_array($nStatus, ['absent', 'leave']);
+                        break;
+                    }
+                }
+
+                if ($prevAbsent && $nextAbsent) {
+                    $sandwichDays++;
+                }
+            }
+        }
+
+        return $sandwichDays;
     }
 
     /**
@@ -485,6 +792,12 @@ class PayrollCalculatorService
                 'total_deduction' => $calc['total_deduction_components'],
                 'other_deduction' => $calc['other_deduction'],
                 'reimbursement' => $calc['reimbursement'],
+                'arrears' => $calc['arrears'] ?? 0.0,
+                'bonus' => $calc['bonus'] ?? 0.0,
+                'ctc' => $calc['ctc'] ?? 0.0,
+                'gratuity' => $calc['gratuity'] ?? 0.0,
+                'tax_regime' => $calc['tax_regime'] ?? 'new',
+                'sandwich_deduction' => $calc['sandwich_deduction'] ?? 0.0,
                 'net_salary' => $calc['net_salary'],
                 'gross_salary' => $calc['gross_earnings'],
                 'absent_days' => $calc['absent_days'],
@@ -603,8 +916,16 @@ class PayrollCalculatorService
             'absent_deduction' => 0.0,
             'late_deduction' => 0.0,
             'halfday_deduction' => 0.0,
+            'sandwich_deduction' => 0.0,
             'other_deduction' => 0.0,
             'reimbursement' => 0.0,
+            'arrears' => 0.0,
+            'bonus' => 0.0,
+            'ctc' => 0.0,
+            'annual_ctc' => 0.0,
+            'gratuity' => 0.0,
+            'tax_regime' => 'new',
+            'tax_details' => [],
             'earnings' => [],
             'deductions' => [],
             'total_earning_components' => 0.0,

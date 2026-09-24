@@ -317,6 +317,7 @@ Route::prefix('company')->namespace('App\Http\Controllers')->middleware('auth')-
     Route::get('employee/salary-slip/download', [SalarytypeController::class, 'salaryPDF'])->name('salaryPDF');
     Route::delete('delete-salary/{id}', [SalarytypeController::class, 'deleteSalary'])->name('deleteSalary');
     Route::get('salary/export', [SalarytypeController::class, 'export'])->name('salary-export');
+    Route::get('salary/export-bank-transfer', [SalarytypeController::class, 'exportBankTransfer'])->name('salary-export-bank-transfer');
 
     // Department routes
     Route::resource('departments', DepartmentController::class);
