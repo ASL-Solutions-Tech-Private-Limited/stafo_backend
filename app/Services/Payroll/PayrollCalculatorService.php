@@ -161,19 +161,40 @@ class PayrollCalculatorService
         $presentDays = round($fullPresentCount + ($halfDayCount * 0.5), 1);
 
         // Effective Paid Days & Absent / LOP Days
-        $paidDays = min($workingDays, round($presentDays + $leaveDays, 1));
-        $absentDays = max(0, round($workingDays - $paidDays, 1));
-
-        // Late penalty days (e.g. 3 lates = 1 day penalty)
-        $latePenaltyDays = $graceAllowedDays > 0 ? (int)floor($lateArrivalCount / $graceAllowedDays) : 0;
-
-        // 8. Daily Salary Divisor (Calendar Days vs Working Days vs Fixed 30)
         $divisorMode = $options['divisor_mode'] ?? 'calendar_days';
         $divisor = match ($divisorMode) {
             'working_days' => $totalMonthWorkingDays,
             'fixed_30'     => 30,
             default        => $daysInMonth,
         };
+
+        $baseTenurePaid = round($presentDays + $leaveDays, 1);
+
+        if ($isProrated) {
+            // In Keka & Zoho, unworked days outside active tenure count as non-paid/LOP
+            if ($divisorMode === 'working_days') {
+                $nonTenureUnpaidDays = max(0, $totalMonthWorkingDays - $tenureWorkingDays);
+                $tenureAbsent = max(0, round($tenureWorkingDays - $baseTenurePaid, 1));
+                $absentDays = round($nonTenureUnpaidDays + $tenureAbsent, 1);
+                $paidDays = max(0, round($totalMonthWorkingDays - $absentDays, 1));
+                $workingDays = $totalMonthWorkingDays;
+            } else {
+                // Calendar mode: tenure calendar days vs total month days
+                $nonTenureUnpaidDays = max(0, $daysInMonth - $tenureCalendarDays);
+                $tenureAbsent = max(0, round($tenureWorkingDays - $baseTenurePaid, 1));
+                $absentDays = round($nonTenureUnpaidDays + $tenureAbsent, 1);
+                $paidDays = max(0, round($daysInMonth - $absentDays, 1));
+                $workingDays = $daysInMonth;
+            }
+        } else {
+            $paidDays = min($workingDays, $baseTenurePaid);
+            $absentDays = max(0, round($workingDays - $paidDays, 1));
+        }
+
+        // Late penalty days (e.g. 3 lates = 1 day penalty)
+        $latePenaltyDays = $graceAllowedDays > 0 ? (int)floor($lateArrivalCount / $graceAllowedDays) : 0;
+
+        // Daily Salary Divisor
         $dailySalary = $basicSalary > 0 ? round($basicSalary / max(1, $divisor), 2) : 0;
 
         // 9. Attendance Deductions (LOP)
@@ -593,24 +614,25 @@ class PayrollCalculatorService
                 // Section 87A rebate covers tax up to 7L
                 $annualTax = 0.0;
             } else {
-                if ($taxableIncome > 1500000.0) {
-                    $annualTax += ($taxableIncome - 1500000.0) * 0.30;
-                    $taxableIncome = 1500000.0;
+                $remIncome = $taxableIncome;
+                if ($remIncome > 1500000.0) {
+                    $annualTax += ($remIncome - 1500000.0) * 0.30;
+                    $remIncome = 1500000.0;
                 }
-                if ($taxableIncome > 1200000.0) {
-                    $annualTax += ($taxableIncome - 1200000.0) * 0.20;
-                    $taxableIncome = 1200000.0;
+                if ($remIncome > 1200000.0) {
+                    $annualTax += ($remIncome - 1200000.0) * 0.20;
+                    $remIncome = 1200000.0;
                 }
-                if ($taxableIncome > 1000000.0) {
-                    $annualTax += ($taxableIncome - 1000000.0) * 0.15;
-                    $taxableIncome = 1000000.0;
+                if ($remIncome > 1000000.0) {
+                    $annualTax += ($remIncome - 1000000.0) * 0.15;
+                    $remIncome = 1000000.0;
                 }
-                if ($taxableIncome > 700000.0) {
-                    $annualTax += ($taxableIncome - 700000.0) * 0.10;
-                    $taxableIncome = 700000.0;
+                if ($remIncome > 700000.0) {
+                    $annualTax += ($remIncome - 700000.0) * 0.10;
+                    $remIncome = 700000.0;
                 }
-                if ($taxableIncome > 300000.0) {
-                    $annualTax += ($taxableIncome - 300000.0) * 0.05;
+                if ($remIncome > 300000.0) {
+                    $annualTax += ($remIncome - 300000.0) * 0.05;
                 }
             }
         } else {
@@ -623,16 +645,17 @@ class PayrollCalculatorService
                 // Section 87A rebate covers tax up to 5L
                 $annualTax = 0.0;
             } else {
-                if ($taxableIncome > 1000000.0) {
-                    $annualTax += ($taxableIncome - 1000000.0) * 0.30;
-                    $taxableIncome = 1000000.0;
+                $remIncome = $taxableIncome;
+                if ($remIncome > 1000000.0) {
+                    $annualTax += ($remIncome - 1000000.0) * 0.30;
+                    $remIncome = 1000000.0;
                 }
-                if ($taxableIncome > 500000.0) {
-                    $annualTax += ($taxableIncome - 500000.0) * 0.20;
-                    $taxableIncome = 500000.0;
+                if ($remIncome > 500000.0) {
+                    $annualTax += ($remIncome - 500000.0) * 0.20;
+                    $remIncome = 500000.0;
                 }
-                if ($taxableIncome > 250000.0) {
-                    $annualTax += ($taxableIncome - 250000.0) * 0.05;
+                if ($remIncome > 250000.0) {
+                    $annualTax += ($remIncome - 250000.0) * 0.05;
                 }
             }
         }

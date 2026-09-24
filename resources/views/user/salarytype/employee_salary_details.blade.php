@@ -142,25 +142,45 @@
                 // Loop through salary components safely
                 if(isset($employeeSalaries)) {
                     foreach($employeeSalaries as $salary) {
-                        if ($salary->salary_type_id == 0 || !$salary->salarytype) {
+                        $label = trim($salary->label ?: ($salary->salarytype->salary_type ?? ''));
+                        if (empty($label) || strcasecmp($label, 'Basic Salary') === 0) {
                             continue;
                         }
-                        $ptype = $salary->salarytype->payment_type ?? 'Earning';
+                        $ptype = $salary->payment_type ?: ($salary->salarytype->payment_type ?? 'Earning');
                         $amt = (float)$salary->amount;
                         if($ptype == 'Earning' && $amt > 0) {
                             $earningsList[] = [
-                                'title' => $salary->label ?? $salary->salarytype->salary_type,
+                                'title' => $label,
                                 'amount' => $amt
                             ];
                             $total_earning += $amt;
                         } elseif($ptype == 'Deduction' && $amt > 0) {
                             $deductionsList[] = [
-                                'title' => $salary->label ?? $salary->salarytype->salary_type,
+                                'title' => $label,
                                 'amount' => $amt
                             ];
                             $total_deduction += $amt;
                         }
                     }
+                }
+
+                // If statutory deductions are not in components list, pull from salarySummary
+                $existingDedTitles = array_map(fn($d) => strtolower($d['title']), $deductionsList);
+                if (($salarySummary->pf_employee ?? 0) > 0 && !array_filter($existingDedTitles, fn($t) => str_contains($t, 'pf') || str_contains($t, 'provident'))) {
+                    $deductionsList[] = ['title' => 'Provident Fund (PF - 12%)', 'amount' => (float)$salarySummary->pf_employee];
+                    $total_deduction += (float)$salarySummary->pf_employee;
+                }
+                if (($salarySummary->esi_employee ?? 0) > 0 && !array_filter($existingDedTitles, fn($t) => str_contains($t, 'esi'))) {
+                    $deductionsList[] = ['title' => 'ESIC (0.75%)', 'amount' => (float)$salarySummary->esi_employee];
+                    $total_deduction += (float)$salarySummary->esi_employee;
+                }
+                if (($salarySummary->pt_amount ?? 0) > 0 && !array_filter($existingDedTitles, fn($t) => str_contains($t, 'professional') || str_contains($t, 'pt'))) {
+                    $deductionsList[] = ['title' => 'Professional Tax (PT)', 'amount' => (float)$salarySummary->pt_amount];
+                    $total_deduction += (float)$salarySummary->pt_amount;
+                }
+                if (($salarySummary->tds_amount ?? 0) > 0 && !array_filter($existingDedTitles, fn($t) => str_contains($t, 'tds') || str_contains($t, 'tax'))) {
+                    $deductionsList[] = ['title' => 'TDS / Income Tax (' . strtoupper($salarySummary->tax_regime ?? 'New') . ' Regime)', 'amount' => (float)$salarySummary->tds_amount];
+                    $total_deduction += (float)$salarySummary->tds_amount;
                 }
 
                 // Reimbursement
@@ -172,7 +192,18 @@
                     $total_earning += (float)$salarySummary->reimbursement;
                 }
 
-                // Attendance LOP
+                // Arrears & Bonus if stored directly on summary
+                $existingEarnTitles = array_map(fn($e) => strtolower($e['title']), $earningsList);
+                if (($salarySummary->arrears ?? 0) > 0 && !array_filter($existingEarnTitles, fn($t) => str_contains($t, 'arrear'))) {
+                    $earningsList[] = ['title' => 'Salary Arrears', 'amount' => (float)$salarySummary->arrears];
+                    $total_earning += (float)$salarySummary->arrears;
+                }
+                if (($salarySummary->bonus ?? 0) > 0 && !array_filter($existingEarnTitles, fn($t) => str_contains($t, 'bonus'))) {
+                    $earningsList[] = ['title' => 'Performance Bonus', 'amount' => (float)$salarySummary->bonus];
+                    $total_earning += (float)$salarySummary->bonus;
+                }
+
+                // Attendance LOP & Sandwich
                 if($other_deduction > 0){
                     $deductionsList[] = [
                         'title' => 'Attendance Loss of Pay (LOP)',
@@ -181,7 +212,7 @@
                     $total_deduction += $other_deduction;
                 }
 
-                $gross_earning = $total_earning;
+                $gross_earning = (float)($salarySummary->gross_salary ?? $total_earning);
                 $total_deductions = $total_deduction;
                 $net_salary = (float)($salarySummary->net_salary ?? max(0, $gross_earning - $total_deductions));
             @endphp

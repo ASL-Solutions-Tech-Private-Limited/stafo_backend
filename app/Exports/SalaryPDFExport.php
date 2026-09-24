@@ -201,15 +201,15 @@ class SalaryPDFExport
         // Dynamic components from employeeSalaries
         if ($employeeSalaries->isNotEmpty()) {
             foreach ($employeeSalaries as $salary) {
-                $ptype = $salary->salarytype->payment_type ?? '';
+                $ptype = $salary->payment_type ?: ($salary->salarytype->payment_type ?? '');
                 $amt = (float)$salary->amount;
                 $label = trim($salary->label ?: ($salary->salarytype->salary_type ?? ''));
 
-                if ($amt <= 0) {
+                if ($amt <= 0 || strcasecmp($label, 'Basic Salary') === 0) {
                     continue;
                 }
 
-                if ($ptype === 'Earning' || (empty($ptype) && stripos($label, 'deduct') === false && stripos($label, 'pf') === false && stripos($label, 'tax') === false)) {
+                if ($ptype === 'Earning' || (empty($ptype) && stripos($label, 'deduct') === false && stripos($label, 'pf') === false && stripos($label, 'tax') === false && stripos($label, 'esi') === false && stripos($label, 'pt') === false)) {
                     $earningsList[] = [
                         'name' => $label ?: 'Allowance',
                         'amount' => $amt,
@@ -223,13 +223,24 @@ class SalaryPDFExport
         $reimbursement = (float)($salarySummary->reimbursement ?? 0);
         if ($reimbursement > 0) {
             $earningsList[] = [
-                'name' => 'Reimbursement',
+                'name' => 'Expense Reimbursement',
                 'amount' => $reimbursement,
             ];
             $totalEarnings += $reimbursement;
         }
 
-        $grossSalary = $totalEarnings;
+        // Arrears & Bonus
+        $existingPdfEarnNames = array_map(fn($e) => strtolower($e['name']), $earningsList);
+        if (($salarySummary->arrears ?? 0) > 0 && !array_filter($existingPdfEarnNames, fn($n) => str_contains($n, 'arrear'))) {
+            $earningsList[] = ['name' => 'Salary Arrears', 'amount' => (float)$salarySummary->arrears];
+            $totalEarnings += (float)$salarySummary->arrears;
+        }
+        if (($salarySummary->bonus ?? 0) > 0 && !array_filter($existingPdfEarnNames, fn($n) => str_contains($n, 'bonus'))) {
+            $earningsList[] = ['name' => 'Performance Bonus', 'amount' => (float)$salarySummary->bonus];
+            $totalEarnings += (float)$salarySummary->bonus;
+        }
+
+        $grossSalary = (float)($salarySummary->gross_salary ?? $totalEarnings);
 
         // Dynamic Deductions Calculation
         $deductionsList = [];
@@ -241,11 +252,11 @@ class SalaryPDFExport
                 $amt = (float)$salary->amount;
                 $label = trim($salary->label ?: ($salary->salarytype->salary_type ?? ''));
 
-                if ($amt <= 0) {
+                if ($amt <= 0 || strcasecmp($label, 'Basic Salary') === 0) {
                     continue;
                 }
 
-                if ($ptype === 'Deduction' || stripos($label, 'deduct') !== false || stripos($label, 'pf') !== false || stripos($label, 'tax') !== false) {
+                if ($ptype === 'Deduction' || stripos($label, 'deduct') !== false || stripos($label, 'pf') !== false || stripos($label, 'tax') !== false || stripos($label, 'esi') !== false || stripos($label, 'pt') !== false) {
                     $deductionsList[] = [
                         'name' => $label ?: 'Deduction',
                         'amount' => $amt,
@@ -255,10 +266,29 @@ class SalaryPDFExport
             }
         }
 
+        // Statutory deductions fallback from summary if not already in list
+        $existingPdfDedNames = array_map(fn($d) => strtolower($d['name']), $deductionsList);
+        if (($salarySummary->pf_employee ?? 0) > 0 && !array_filter($existingPdfDedNames, fn($n) => str_contains($n, 'provident') || str_contains($n, 'pf'))) {
+            $deductionsList[] = ['name' => 'Provident Fund (PF - 12%)', 'amount' => (float)$salarySummary->pf_employee];
+            $totalDeductions += (float)$salarySummary->pf_employee;
+        }
+        if (($salarySummary->esi_employee ?? 0) > 0 && !array_filter($existingPdfDedNames, fn($n) => str_contains($n, 'esi'))) {
+            $deductionsList[] = ['name' => 'ESIC (0.75%)', 'amount' => (float)$salarySummary->esi_employee];
+            $totalDeductions += (float)$salarySummary->esi_employee;
+        }
+        if (($salarySummary->pt_amount ?? 0) > 0 && !array_filter($existingPdfDedNames, fn($n) => str_contains($n, 'professional') || str_contains($n, 'pt'))) {
+            $deductionsList[] = ['name' => 'Professional Tax (PT)', 'amount' => (float)$salarySummary->pt_amount];
+            $totalDeductions += (float)$salarySummary->pt_amount;
+        }
+        if (($salarySummary->tds_amount ?? 0) > 0 && !array_filter($existingPdfDedNames, fn($n) => str_contains($n, 'tds') || str_contains($n, 'tax'))) {
+            $deductionsList[] = ['name' => 'TDS / Income Tax (' . strtoupper($salarySummary->tax_regime ?? 'New') . ' Regime)', 'amount' => (float)$salarySummary->tds_amount];
+            $totalDeductions += (float)$salarySummary->tds_amount;
+        }
+
         // Dynamic Other Deductions (e.g. Loss of Pay / LOP / absent deduction)
         $otherDeduction = (float)($salarySummary->other_deduction ?? 0);
         if ($otherDeduction > 0) {
-            $otherLabel = 'Other Deductions' . ($absentDays > 0 ? ' (LOP)' : '');
+            $otherLabel = 'Attendance Loss of Pay (LOP)';
             $deductionsList[] = [
                 'name' => $otherLabel,
                 'amount' => $otherDeduction,

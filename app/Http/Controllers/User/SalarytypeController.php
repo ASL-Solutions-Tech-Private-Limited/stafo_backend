@@ -320,6 +320,35 @@ class SalarytypeController extends Controller
                             </div>
                         </div>
                     </div>
+                    <div class="row g-3 mt-2 pt-3 border-top">
+                        <div class="col-12 col-md-4">
+                            <label class="form-label small fw-bold text-muted mb-1">
+                                <i class="fa-solid fa-clock-rotate-left text-primary me-1"></i> Salary Arrears
+                            </label>
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-text bg-light">₹</span>
+                                <input type="number" step="0.01" name="arrears" id="arrears_input" class="form-control fw-semibold salary_type_amount" data-paymenttype="Earning" value="' . ($calc['arrears'] ?? 0) . '">
+                            </div>
+                        </div>
+                        <div class="col-12 col-md-4">
+                            <label class="form-label small fw-bold text-muted mb-1">
+                                <i class="fa-solid fa-gift text-success me-1"></i> Performance Bonus
+                            </label>
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-text bg-light">₹</span>
+                                <input type="number" step="0.01" name="bonus" id="bonus_input" class="form-control fw-semibold salary_type_amount" data-paymenttype="Earning" value="' . ($calc['bonus'] ?? 0) . '">
+                            </div>
+                        </div>
+                        <div class="col-12 col-md-4">
+                            <label class="form-label small fw-bold text-muted mb-1">
+                                <i class="fa-solid fa-receipt text-danger me-1"></i> TDS / Tax Override (' . strtoupper($calc['tax_regime'] ?? 'New') . ' Regime)
+                            </label>
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-text bg-light">₹</span>
+                                <input type="number" step="0.01" name="tds_amount" id="tds_input" class="form-control fw-semibold salary_type_amount" data-paymenttype="Deduction" value="' . ($calc['tds_amount'] ?? 0) . '">
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>';
