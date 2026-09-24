@@ -3,13 +3,14 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Models\User;
-
+use App\Models\Employee;
 use Illuminate\Http\Request;
 use App\Models\CompanyDetail;
 use App\Models\ProprietorDetail;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 use App\Models\CompanyReferralCode;
 use App\Models\GraceSetting;
@@ -178,6 +179,12 @@ class LoginRegisterController extends Controller
      */
     public function login()
     {
+        if (Auth::guard('employee')->check()) {
+            return redirect()->route('employee.dashboard');
+        }
+        if (Auth::guard('web')->check()) {
+            return redirect()->route('user.dashboard');
+        }
         return view('auth.login');
     }
 
@@ -187,47 +194,102 @@ class LoginRegisterController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-
-
-
-
     public function authenticate(Request $request)
     {
-       
-        $email = $request->email;
-        $mobilePattern = '/^\+?[1-9]\d{1,14}$/'; // Basic mobile number regex for international format
-        if (preg_match($mobilePattern, $email)) {
-            $credentials = $request->validate([
+        $input = trim($request->email);
+        $mobilePattern = '/^\+?[0-9]{10,14}$/'; // Phone number pattern (including 10-digit Indian numbers)
+
+        // Case 1: Phone number (Mobile + OTP)
+        if (preg_match($mobilePattern, $input)) {
+            $request->validate([
                 'email' => 'required',
                 'otp' => 'required'
             ]);
-            $otp = $request->otp;
-            $user = CompanyDetail::where('mobile_no', $email)->where('otp', $otp)->first();
-            if ($user) {
-                // Log in the user
-                Auth::login($user);
+            $otp = trim($request->otp);
+
+            // A. Check if it is a Company user
+            $company = CompanyDetail::where('mobile_no', $input)
+                ->where(function ($query) use ($otp, $input) {
+                    $query->where('otp', $otp);
+                    $cachedOtp = Cache::get('otp_' . $input);
+                    if ($cachedOtp) {
+                        $query->orWhereRaw('? = ?', [$otp, $cachedOtp]);
+                    }
+                })
+                ->first();
+
+            if ($company) {
+                Auth::guard('web')->login($company);
+                $request->session()->regenerate();
+
+                return redirect()->route('user.dashboard')
+                    ->withSuccess('You have successfully logged in!')
+                    ->with('user_id', $company->id);
+            }
+
+            // B. Check if it is an Employee user
+            $employee = Employee::where('phone', $input)
+                ->where('status', '1')
+                ->where(function ($query) use ($otp, $input) {
+                    $query->where('otp', $otp);
+                    $cachedOtp = Cache::get('otp_' . $input);
+                    if ($cachedOtp) {
+                        $query->orWhereRaw('? = ?', [$otp, $cachedOtp]);
+                    }
+                })
+                ->first();
+
+            if ($employee) {
+                Auth::guard('employee')->login($employee);
+                $request->session()->regenerate();
+
+                return redirect()->route('employee.dashboard')
+                    ->withSuccess('Welcome back, ' . ($employee->name ?? 'Employee') . '! You have successfully logged in.')
+                    ->with('employee_id', $employee->id);
             }
         } else {
+            // Case 2: Email input
+            if ($request->filled('otp')) {
+                // Email + OTP (for Employee login via registered email)
+                $otp = trim($request->otp);
+
+                $employee = Employee::where(function ($q) use ($input) {
+                    $q->where('email', $input)->orWhere('official_email_id', $input);
+                })
+                ->where('status', '1')
+                ->where(function ($query) use ($otp, $input) {
+                    $query->where('otp', $otp);
+                    $cachedOtp = Cache::get('otp_' . $input);
+                    if ($cachedOtp) {
+                        $query->orWhereRaw('? = ?', [$otp, $cachedOtp]);
+                    }
+                })
+                ->first();
+
+                if ($employee) {
+                    Auth::guard('employee')->login($employee);
+                    $request->session()->regenerate();
+
+                    return redirect()->route('employee.dashboard')
+                        ->withSuccess('Welcome back, ' . ($employee->name ?? 'Employee') . '! You have successfully logged in.')
+                        ->with('employee_id', $employee->id);
+                }
+            }
+
+            // Password login (for Company)
             $credentials = $request->validate([
                 'email' => 'required|email',
                 'password' => 'required'
             ]);
-            Auth::attempt($credentials);
-        }
 
+            if (Auth::guard('web')->attempt($credentials)) {
+                $request->session()->regenerate();
+                $userId = Auth::guard('web')->id();
 
-        if (Auth::id()) {
-            $request->session()->regenerate();
-
-            // Get the authenticated user's ID
-            $userId = Auth::id(); // This will get the ID of the logged-in user
-
-            // dd($userId);
-
-            // Optionally, you can pass the user ID to the session or redirect
-            return redirect()->route('dashboard')
-                ->withSuccess('You have successfully logged in!')
-                ->with('user_id', $userId); // Send the user ID with the redirect response
+                return redirect()->route('user.dashboard')
+                    ->withSuccess('You have successfully logged in!')
+                    ->with('user_id', $userId);
+            }
         }
 
         return back()->withErrors([
@@ -242,7 +304,10 @@ class LoginRegisterController extends Controller
      */
     public function dashboard()
     {
-        if (Auth::check()) {
+        if (Auth::guard('employee')->check()) {
+            return redirect()->route('employee.dashboard');
+        }
+        if (Auth::guard('web')->check()) {
             return view('auth.dashboard');
         }
 
@@ -260,10 +325,17 @@ class LoginRegisterController extends Controller
      */
     public function logout(Request $request)
     {
+        if (Auth::guard('employee')->check()) {
+            Auth::guard('employee')->logout();
+        }
+        if (Auth::guard('web')->check()) {
+            Auth::guard('web')->logout();
+        }
         Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
+
         return redirect()->route('login')
-            ->withSuccess('You have logged out successfully!');;
+            ->withSuccess('You have logged out successfully!');
     }
 }

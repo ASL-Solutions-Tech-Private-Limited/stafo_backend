@@ -1,237 +1,316 @@
 @extends('user.layouts.app')
 
-@section('title', 'Employee Salary Details')
+@section('title', 'Official Payslip | STAFO HRMS')
 
 @section('content')
 
-<div class="card mt-4 p-3">
-    <div class="container">
-        <div class="col-md-12 text-center">
-            <h2 class="fw-bold">{{ $company->company_name }}</h2>
-            <span>{{ $company->address }}, {{ $company->pin }}</span>
-            <h6>Pay Slip of {{ $monthArray[$salarySummary->salary_month - 1] }}, {{ $salarySummary->salary_year }}</h6>
+<div class="card shadow-sm border-0 rounded-4 mb-4">
+    <div class="card-body p-4">
+
+        <!-- Top Actions Bar -->
+        <div class="d-flex align-items-center justify-content-between mb-4 pb-3 border-bottom d-print-none">
+            <a href="{{ route('employeeSalaryList', ['month' => $salarySummary->salary_month, 'year' => $salarySummary->salary_year]) }}" class="btn btn-outline-secondary px-3 py-2 rounded-3">
+                <i class="fa-solid fa-arrow-left me-1"></i> Back to Payroll Register
+            </a>
+            <div class="d-flex align-items-center gap-2">
+                <button onclick="window.print()" class="btn btn-outline-primary px-3 py-2 rounded-3">
+                    <i class="fa-solid fa-print me-1"></i> Print Payslip
+                </button>
+                <a href="{{ route('salaryPDF') }}?emp_id={{ $salarySummary->employee_id }}&month={{ $salarySummary->salary_month }}&year={{ $salarySummary->salary_year }}" class="btn btn-primary px-3 py-2 rounded-3 shadow-sm">
+                    <i class="fa-solid fa-file-pdf me-1"></i> Download PDF
+                </a>
+            </div>
         </div>
 
-        <table class="salary-main-table" width="100%" cellspacing="0" cellpadding="5" border="1">
-            <tr style="background-color: #f2f2f2;">
-                <td>
-                    <b>Employee Name:</b> {{ $salarySummary->employee_name }} <br>
-                    <b>Employee Code:</b> {{ $salarySummary->employee->emp_id ?? 'N/A' }} <br>
-                    <b>DOJ:</b> {{ date('dS F, Y', strtotime($salarySummary->employee->date_of_joining ?? date('Y-m-d'))) }} <br>
-                    
-                    <!-- Bank Account Details -->
-                    @if($salarySummary->employee && $salarySummary->employee->bankAccount)
-                        <b>Account No:</b> {{ $salarySummary->employee->bankAccount->account_number }} <br>
-                        <b>Bank Name:</b> {{ $salarySummary->employee->bankAccount->bank_name }} <br>
-                        <b>IFSC Code:</b> {{ $salarySummary->employee->bankAccount->ifsc_code }}
-                    @else
-                        <b>Account No:</b> N/A <br>
-                        <b>Bank Details:</b> Not Available
-                    @endif
-                </td>
-                
-                <td>
-                    <b>PF Number:</b> {{ $salarySummary->employee->pf_number ?? 'N/A' }} <br>
-                    <b>ESI Number:</b> {{ $salarySummary->employee->esi_number ?? 'N/A' }} <br>
-                    
-                    <!-- Attendance Details from Summary Table -->
-                    <b>Total Working Days:</b> {{ $salarySummary->total_working_days ?? $salarySummary->working_days }} <br>
-                    <b>Holidays:</b> {{ $salarySummary->holiday_count ?? 0 }} <br>
-                    <b>Actual Working Days:</b> {{ $salarySummary->working_days }} <br>
-                    <b>Absent Days:</b> {{ $salarySummary->absent_days }} <br>
-                    <b>Present Days:</b> {{ ($salarySummary->working_days - $salarySummary->absent_days) }} <br>
-                </td>
-            </tr>
+        <!-- Official Payslip Container -->
+        <div class="payslip-container p-4 p-md-5 border rounded-4 bg-white shadow-xs mx-auto" style="max-width: 900px;">
             
-            <tr style="background-color: rgb(99, 120, 179); font-weight: bold; color: white;">
-                <td width="50%">Earning</td>
-                <td width="50%">Deduction</td>
-            </tr>
-            
+            <!-- Company Letterhead & Payslip Header -->
+            <div class="text-center mb-4 pb-4 border-bottom">
+                <div class="d-inline-block px-3 py-1 rounded-pill bg-primary bg-opacity-10 text-primary fw-bold small mb-2 text-uppercase letter-spacing">
+                    Confidential Salary Slip &bull; {{ $monthArray[$salarySummary->salary_month - 1] ?? '' }} {{ $salarySummary->salary_year }}
+                </div>
+                <h2 class="fw-bold text-dark mb-1">{{ $company->company_name ?? 'STAFO Partner Organization' }}</h2>
+                <p class="text-muted small mb-0">
+                    {{ $company->address ?? '' }}
+                    @if(!empty($company->pin)), PIN: {{ $company->pin }}@endif
+                    @if(!empty($company->mobile_number)) &bull; Tel: {{ $company->mobile_number }}@endif
+                </p>
+            </div>
+
+            <!-- Employee & Banking Information Grid -->
+            <div class="row g-3 mb-4">
+                <div class="col-12 col-md-6">
+                    <div class="p-3 bg-light rounded-4 h-100 border">
+                        <h6 class="fw-bold text-dark mb-3 d-flex align-items-center gap-2">
+                            <i class="fa-solid fa-id-badge text-primary"></i> Employee Profile
+                        </h6>
+                        <table class="table table-sm table-borderless mb-0 small">
+                            <tr>
+                                <td class="text-muted ps-0" style="width: 130px;">Full Name:</td>
+                                <td class="fw-bold text-dark">{{ $salarySummary->employee_name }}</td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted ps-0">Employee Code:</td>
+                                <td class="fw-semibold text-dark">{{ $salarySummary->employee->emp_id ?? 'N/A' }}</td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted ps-0">Department:</td>
+                                <td class="text-dark">{{ $salarySummary->department_name ?? ($salarySummary->employee->department->name ?? 'General') }}</td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted ps-0">Designation:</td>
+                                <td class="text-dark">{{ $salarySummary->employee->designation->name ?? ($salarySummary->employee->designation ?? 'Staff Member') }}</td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted ps-0">Date of Joining:</td>
+                                <td class="text-dark">
+                                    {{ !empty($salarySummary->employee->date_of_joining) ? date('d M, Y', strtotime($salarySummary->employee->date_of_joining)) : 'N/A' }}
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="col-12 col-md-6">
+                    <div class="p-3 bg-light rounded-4 h-100 border">
+                        <h6 class="fw-bold text-dark mb-3 d-flex align-items-center gap-2">
+                            <i class="fa-solid fa-building-columns text-success"></i> Banking & Statutory
+                        </h6>
+                        <table class="table table-sm table-borderless mb-0 small">
+                            <tr>
+                                <td class="text-muted ps-0" style="width: 130px;">Bank Name:</td>
+                                <td class="fw-semibold text-dark">{{ $salarySummary->employee->bankAccount->bank_name ?? 'N/A' }}</td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted ps-0">Account Number:</td>
+                                <td class="fw-bold text-dark">{{ $salarySummary->employee->bankAccount->account_number ?? 'N/A' }}</td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted ps-0">IFSC Code:</td>
+                                <td class="text-dark">{{ $salarySummary->employee->bankAccount->ifsc_code ?? 'N/A' }}</td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted ps-0">PF Number:</td>
+                                <td class="text-dark">{{ $salarySummary->employee->pf_number ?? 'N/A' }}</td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted ps-0">ESI / UAN:</td>
+                                <td class="text-dark">{{ $salarySummary->employee->esi_number ?? ($salarySummary->employee->uan_number ?? 'N/A') }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Attendance Metrics Bar -->
+            <div class="p-3 bg-light rounded-4 border mb-4">
+                <div class="row g-2 text-center text-md-start align-items-center">
+                    <div class="col-6 col-md-3">
+                        <small class="text-muted d-block">Working Days</small>
+                        <span class="fw-bold text-dark fs-6">{{ $salarySummary->working_days ?? $salarySummary->total_working_days ?? 26 }} Days</span>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <small class="text-muted d-block">Holidays</small>
+                        <span class="fw-bold text-primary fs-6">{{ $salarySummary->holiday_count ?? 0 }} Days</span>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <small class="text-muted d-block">Days Present</small>
+                        <span class="fw-bold text-success fs-6">{{ $salarySummary->present_days ?? 0 }} Days</span>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <small class="text-muted d-block">Loss of Pay (Absent/Late)</small>
+                        <span class="fw-bold text-danger fs-6">{{ $salarySummary->absent_days ?? 0 }} Days</span>
+                    </div>
+                </div>
+            </div>
+
             @php
-                $earning = '';
-                $deduction = '';
-                $other_deduction = $salarySummary->other_deduction;
-                $total_earning = 0;
+                $total_earning = (float)($salarySummary->basic_salary ?? 0);
                 $total_deduction = 0;
+                $other_deduction = (float)($salarySummary->other_deduction ?? 0);
                 
-                // Basic Salary
-                $earning .= '<div class="row mb-1">
-                            <div class="col-md-6">Basic Salary</div>
-                            <div class="col-md-6 text-end">' . number_format($salarySummary->basic_salary, 2, '.', ',') . '</div>
-                        </div>';
-                $total_earning += $salarySummary->basic_salary;
-                
-                // Loop through salary components
-                foreach($employeeSalaries as $salary){
-                    if($salary->salarytype->payment_type == 'Earning'){
-                        $earning .= '<div class="row mb-1">
-                            <div class="col-md-6">' . $salary->salarytype->salary_type . '</div>
-                            <div class="col-md-6 text-end">' . number_format($salary->amount, 2, '.', ',') . '</div>
-                        </div>';
-                        $total_earning += $salary->amount;
-                    }
-                    if($salary->salarytype->payment_type == 'Deduction'){
-                        $deduction .= '<div class="row mb-1">
-                            <div class="col-md-6">' . $salary->salarytype->salary_type . '</div>
-                            <div class="col-md-6 text-end">' . number_format($salary->amount, 2, '.', ',') . '</div>
-                        </div>';
-                        $total_deduction += $salary->amount;
+                $earningsList = [];
+                $deductionsList = [];
+
+                // Basic Salary entry
+                $earningsList[] = [
+                    'title' => 'Basic Salary',
+                    'amount' => (float)$salarySummary->basic_salary
+                ];
+
+                // Loop through salary components safely
+                if(isset($employeeSalaries)) {
+                    foreach($employeeSalaries as $salary) {
+                        if ($salary->salary_type_id == 0 || !$salary->salarytype) {
+                            continue;
+                        }
+                        $ptype = $salary->salarytype->payment_type ?? 'Earning';
+                        $amt = (float)$salary->amount;
+                        if($ptype == 'Earning' && $amt > 0) {
+                            $earningsList[] = [
+                                'title' => $salary->label ?? $salary->salarytype->salary_type,
+                                'amount' => $amt
+                            ];
+                            $total_earning += $amt;
+                        } elseif($ptype == 'Deduction' && $amt > 0) {
+                            $deductionsList[] = [
+                                'title' => $salary->label ?? $salary->salarytype->salary_type,
+                                'amount' => $amt
+                            ];
+                            $total_deduction += $amt;
+                        }
                     }
                 }
-                
+
                 // Reimbursement
-                if($salarySummary->reimbursement > 0){
-                    $earning .= '<div class="row mb-1">
-                                <div class="col-md-6">Reimbursement</div>
-                                <div class="col-md-6 text-end">' . number_format($salarySummary->reimbursement, 2, '.', ',') . '</div>
-                            </div>';
+                if(($salarySummary->reimbursement ?? 0) > 0){
+                    $earningsList[] = [
+                        'title' => 'Expense Reimbursement',
+                        'amount' => (float)$salarySummary->reimbursement
+                    ];
+                    $total_earning += (float)$salarySummary->reimbursement;
                 }
-                
-                // Other Deduction
+
+                // Attendance LOP
                 if($other_deduction > 0){
-                    $deduction .= '<div class="row mb-1">
-                                <div class="col-md-6">Other Deduction</div>
-                                <div class="col-md-6 text-end">' . number_format($other_deduction, 2, '.', ',') . '</div>
-                            </div>';
+                    $deductionsList[] = [
+                        'title' => 'Attendance Loss of Pay (LOP)',
+                        'amount' => $other_deduction
+                    ];
+                    $total_deduction += $other_deduction;
                 }
-                
-                // Calculate totals
-                $gross_earning = $total_earning + $salarySummary->reimbursement;
-                $total_deductions = $total_deduction + $other_deduction;
-                $net_salary = $gross_earning - $total_deductions;
+
+                $gross_earning = $total_earning;
+                $total_deductions = $total_deduction;
+                $net_salary = (float)($salarySummary->net_salary ?? max(0, $gross_earning - $total_deductions));
             @endphp
-            
-            <tr style="font-size: 12px;">
-                <td style="vertical-align: top;">{!! $earning !!}</td>
-                <td style="vertical-align: top;">{!! $deduction !!}</td>
-            </tr>
-            
-            <tr style="background-color: rgb(147, 170, 233); font-weight: bold; color: black;">
-                <td>
-                    <div class="row">
-                        <div class="col-md-6">Total Earning</div>
-                        <div class="col-md-6 text-end">{{ number_format($gross_earning, 2, '.', ',') }}</div>
+
+            <!-- Earnings vs Deductions Split Table -->
+            <div class="row g-4 mb-4">
+                <!-- Earnings Column -->
+                <div class="col-12 col-md-6">
+                    <div class="border rounded-4 overflow-hidden h-100">
+                        <div class="bg-success bg-gradient text-white p-3 fw-bold d-flex align-items-center justify-content-between">
+                            <span><i class="fa-solid fa-arrow-trend-up me-2"></i> Earnings & Allowances</span>
+                            <span>Amount (₹)</span>
+                        </div>
+                        <div class="p-3 bg-white">
+                            @foreach($earningsList as $item)
+                                <div class="d-flex align-items-center justify-content-between py-2 border-bottom border-light">
+                                    <span class="text-dark">{{ $item['title'] }}</span>
+                                    <span class="fw-semibold text-dark">₹{{ number_format((float)$item['amount'], 2) }}</span>
+                                </div>
+                            @endforeach
+                            <div class="d-flex align-items-center justify-content-between pt-3 mt-2 border-top fw-bold text-success fs-6">
+                                <span>Gross Earnings</span>
+                                <span>₹{{ number_format((float)$gross_earning, 2) }}</span>
+                            </div>
+                        </div>
                     </div>
-                </td>
-                <td>
-                    <div class="row">
-                        <div class="col-md-6">Total Deduction</div>
-                        <div class="col-md-6 text-end">{{ number_format($total_deductions, 2, '.', ',') }}</div>
+                </div>
+
+                <!-- Deductions Column -->
+                <div class="col-12 col-md-6">
+                    <div class="border rounded-4 overflow-hidden h-100">
+                        <div class="bg-danger bg-gradient text-white p-3 fw-bold d-flex align-items-center justify-content-between">
+                            <span><i class="fa-solid fa-arrow-trend-down me-2"></i> Deductions & LOP</span>
+                            <span>Amount (₹)</span>
+                        </div>
+                        <div class="p-3 bg-white">
+                            @if(count($deductionsList) > 0)
+                                @foreach($deductionsList as $item)
+                                    <div class="d-flex align-items-center justify-content-between py-2 border-bottom border-light">
+                                        <span class="text-dark">{{ $item['title'] }}</span>
+                                        <span class="fw-semibold text-dark">₹{{ number_format((float)$item['amount'], 2) }}</span>
+                                    </div>
+                                @endforeach
+                            @else
+                                <div class="text-center py-4 text-muted small">No statutory or attendance deductions applied</div>
+                            @endif
+                            <div class="d-flex align-items-center justify-content-between pt-3 mt-2 border-top fw-bold text-danger fs-6">
+                                <span>Total Deductions</span>
+                                <span>₹{{ number_format((float)$total_deductions, 2) }}</span>
+                            </div>
+                        </div>
                     </div>
-                </td>
-            </tr>
-            
-            <tr style="background-color: #d4edda;">
-                <td colspan="2">
-                    <b>Gross Salary: {{ number_format($gross_earning, 2, '.', ',') }} 
-                    ({{ ucwords(\App\Helpers\Helper::convert($gross_earning)) }} Only)</b>
-                </td>
-            </tr>
-            
-            <tr style="background-color: #e8f0fe;">
-                <td colspan="2">
-                    <b>Net Salary: {{ number_format($salarySummary->net_salary, 2, '.', ',') }} 
-                    ({{ ucwords(\App\Helpers\Helper::convert($salarySummary->net_salary)) }} Only)</b>
-                </td>
-            </tr>
-            
-            @if($salarySummary->status)
-            <tr>
-                <td colspan="2">
-                    <b>Status:</b> 
-                    <span class="badge bg-{{ $salarySummary->status == 'Paid' ? 'success' : 'warning' }}">
-                        {{ $salarySummary->status }}
-                    </span>
-                    <br>
-                    <b>Generated Date:</b> {{ date('dS F, Y', strtotime($salarySummary->generated_date)) }}
-                </td>
-            </tr>
-            @endif
-         </table>
-        
-        <div class="text-center mt-4">
-          
-            <a href="{{ url()->previous() }}" class="btn btn-secondary">
-                <i class="fas fa-arrow-left"></i> Back
-            </a>
+                </div>
+            </div>
+
+            <!-- Net Take-Home Hero Card -->
+            <div class="p-4 rounded-4 border mb-4" style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); color: white;">
+                <div class="row align-items-center g-3">
+                    <div class="col-12 col-md-7">
+                        <span class="text-white-50 small text-uppercase fw-bold letter-spacing d-block mb-1">Net Salary Payable</span>
+                        <h2 class="fw-bold text-white mb-1">₹{{ number_format((float)$net_salary, 2) }}</h2>
+                        <span class="text-white-50 small">
+                            <i class="fa-solid fa-receipt me-1"></i>
+                            <strong>Amount in Words:</strong> {{ $salarySummary->net_salary_in_words ?? ucwords(\App\Helpers\Helper::convert($net_salary)) }} Only
+                        </span>
+                    </div>
+                    <div class="col-12 col-md-5 text-md-end">
+                        <div class="mb-2">
+                            @php
+                                $status = $salarySummary->status ?? 'Generated';
+                            @endphp
+                            <span class="badge {{ $status == 'Paid' ? 'bg-success text-white' : 'bg-warning text-dark' }} fs-6 px-3 py-1 rounded-pill">
+                                <i class="fa-solid {{ $status == 'Paid' ? 'fa-circle-check' : 'fa-clock' }} me-1"></i> {{ $status }}
+                            </span>
+                        </div>
+                        @if(!empty($salarySummary->generated_date))
+                            <small class="text-white-50 d-block">
+                                Generated on: {{ date('d M, Y', strtotime($salarySummary->generated_date)) }}
+                            </small>
+                        @endif
+                    </div>
+                </div>
+            </div>
+
+            <!-- Signatures & Authority -->
+            <div class="row mt-5 pt-4 text-center">
+                <div class="col-6">
+                    <div class="border-top border-dark pt-2 mx-auto" style="max-width: 220px;">
+                        <small class="fw-semibold text-dark d-block">Employee Signature</small>
+                        <small class="text-muted">Acknowledged & Accepted</small>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="border-top border-dark pt-2 mx-auto" style="max-width: 220px;">
+                        <small class="fw-semibold text-dark d-block">Authorized Signatory</small>
+                        <small class="text-muted">{{ $company->company_name ?? 'Management' }}</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Payslip Footer Note -->
+            <div class="text-center pt-4 mt-4 border-top text-muted small">
+                <p class="mb-0">This is a system-generated payslip generated via STAFO HRMS. For inquiries, contact HR/Finance.</p>
+            </div>
+
         </div>
+
     </div>
 </div>
 
 <style>
     @media print {
-        .btn {
-            display: none;
+        .d-print-none {
+            display: none !important;
+        }
+        .main-content-wrapper {
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+        .payslip-container {
+            border: none !important;
+            box-shadow: none !important;
+            padding: 0 !important;
+            max-width: 100% !important;
         }
         .card {
-            margin: 0;
-            padding: 0;
+            border: none !important;
+            box-shadow: none !important;
         }
-        .salary-main-table {
-            margin-top: 0;
-        }
-    }
-    .salary-main-table {
-        width: 100%;
-        margin-top: 20px;
-        border-collapse: collapse;
-    }
-    .salary-main-table td {
-        padding: 10px;
-        vertical-align: top;
-    }
-    .row {
-        margin-bottom: 5px;
-        display: flex;
-        justify-content: space-between;
-    }
-    .col-md-6 {
-        flex: 0 0 50%;
-    }
-    .text-end {
-        text-align: right;
-    }
-    .badge {
-        padding: 5px 10px;
-        border-radius: 5px;
-        font-size: 12px;
-        display: inline-block;
-    }
-    .bg-success {
-        background-color: #28a745;
-        color: white;
-    }
-    .bg-warning {
-        background-color: #ffc107;
-        color: black;
-    }
-    .mt-4 {
-        margin-top: 1.5rem;
-    }
-    .text-center {
-        text-align: center;
-    }
-    .btn {
-        padding: 8px 16px;
-        border-radius: 4px;
-        text-decoration: none;
-        display: inline-block;
-        margin: 0 5px;
-        cursor: pointer;
-    }
-    .btn-primary {
-        background-color: #007bff;
-        color: white;
-        border: none;
-    }
-    .btn-secondary {
-        background-color: #6c757d;
-        color: white;
-        border: none;
-    }
-    .fas {
-        margin-right: 5px;
     }
 </style>
 

@@ -1,110 +1,133 @@
 @extends('user.layouts.app')
 
-@section('title', 'Salary Type Add - Package Wise')
+@section('title', 'Create Salary Types | STAFO HRMS')
 
 @section('content')
-<div class="card mt-4 p-3">
-    <div class="container">
-        <h2 class="fw-bold mb-3">New Salary Type</h2>
+@include('user.layouts.alert')
+
+<div class="card shadow-sm border-0">
+    <div class="card-body p-4">
+
+        <!-- Page Header -->
+        <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3 mb-4 pb-3 border-bottom">
+            <div>
+                <h3 class="fw-bold text-dark mb-1">Create Salary Types for Department</h3>
+                <p class="text-muted small mb-0">Configure department-wide earning allowances and deduction components</p>
+            </div>
+            <a href="{{ route('salarytype.index') }}" class="btn btn-outline-secondary px-3 py-2">
+                <i class="fa-solid fa-arrow-left me-1"></i> Back to Salary Types
+            </a>
+        </div>
         
-        <!-- Package Selection Section -->
-        <div class="alert alert-info mb-4">
-            <div class="row align-items-center">
+        <!-- Department Selection Section -->
+        <div class="p-3 bg-light rounded-4 border mb-4">
+            <div class="row align-items-center g-3">
                 <div class="col-md-3">
-                    <label for="package_id" class="fw-bold">Select Package <span class="text-danger">*</span></label>
+                    <label for="department_id" class="fw-bold text-dark mb-0">
+                        <i class="fa-solid fa-building text-primary me-1"></i> Select Department <span class="text-danger">*</span>
+                    </label>
                 </div>
-                <div class="col-md-9">
-                    <select name="package_id" id="package_id" class="form-control" required>
-                        <option value="">-- Select Package --</option>
-                        @foreach($packages as $package)
-                            <option value="{{ $package->id }}" {{ old('package_id') == $package->id ? 'selected' : '' }}>
-                                {{ $package->package_name }} ({{ $package->package_type }})
+                <div class="col-md-5">
+                    <select name="department_id" id="department_id" class="form-select" required>
+                        <option value="">-- Select Department --</option>
+                        @foreach($departments as $department)
+                            <option value="{{ $department->id }}" 
+                                    {{ old('department_id') == $department->id ? 'selected' : '' }}>
+                                {{ $department->name }}
                             </option>
                         @endforeach
                     </select>
-                    @error('package_id')
-                        <div class="text-danger mt-1">{{ $message }}</div>
+                    @error('department_id')
+                        <div class="text-danger small mt-1">{{ $message }}</div>
                     @enderror
+                </div>
+                <div class="col-md-4">
+                    <div id="department-info" style="display: none;">
+                        <span class="text-muted small">Configuring for:</span> 
+                        <span id="selected-department-name" class="badge-stafo badge-stafo-primary"></span>
+                    </div>
                 </div>
             </div>
         </div>
         
         <form action="{{ route('salarytype.store') }}" method="POST" id="salaryTypeForm">
             @csrf
-            <input type="hidden" name="package_id" id="selected_package_id" value="{{ old('package_id') }}">
+            <input type="hidden" name="department_id" id="selected_department_id" value="{{ old('department_id') }}">
             
             <div id="salary-type-container">
                 <!-- Default Salary Type Row -->
-                <div class="salary-type-row card mb-3 p-3">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <h5 class="mb-0">Salary Type</h5>
-                        <button type="button" class="btn btn-danger btn-sm remove-row" style="display: none;">
-                            <i class="fas fa-trash"></i> Remove
+                <div class="salary-type-row card mb-3 border p-3 rounded-4 bg-light">
+                    <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
+                        <h6 class="fw-bold text-dark mb-0 d-flex align-items-center gap-2">
+                            <span class="badge bg-primary rounded-pill">1</span> Salary Component #1
+                        </h6>
+                        <button type="button" class="btn btn-sm btn-outline-danger remove-row" style="display: none; border-radius: 8px;">
+                            <i class="fas fa-trash me-1"></i> Remove
                         </button>
                     </div>
                     
-                    <div class="row">
+                    <div class="row g-3">
                         <div class="col-md-6">
-                            <div class="form-group mb-3">
-                                <label>Payment Type <span class="text-danger">*</span></label>
-                                <select name="items[0][payment_type]" class="form-control" required>
+                            <div class="form-group mb-2">
+                                <label class="form-label fw-semibold text-dark">Payment Type <span class="text-danger">*</span></label>
+                                <select name="items[0][payment_type]" class="form-select" required>
                                     <option value="">Select Payment Type</option>
-                                    <option value="Earning" {{ old('items.0.payment_type') == 'Earning' ? 'selected' : '' }}>Earning</option>
-                                    <option value="Deduction" {{ old('items.0.payment_type') == 'Deduction' ? 'selected' : '' }}>Deduction</option>
+                                    <option value="Earning" {{ old('items.0.payment_type') == 'Earning' ? 'selected' : '' }}>Earning (Addition)</option>
+                                    <option value="Deduction" {{ old('items.0.payment_type') == 'Deduction' ? 'selected' : '' }}>Deduction (Subtraction)</option>
                                 </select>
                                 @error('items.0.payment_type')
-                                    <div class="text-danger">{{ $message }}</div>
+                                    <div class="text-danger small">{{ $message }}</div>
                                 @enderror
                             </div>
                         </div>
                         
                         <div class="col-md-6">
-                            <div class="form-group mb-3">
-                                <label>Salary Type <span class="text-danger">*</span></label>
-                                <input type="text" name="items[0][salary_type]" class="form-control" value="{{ old('items.0.salary_type') }}" placeholder="Enter salary type" required>
+                            <div class="form-group mb-2">
+                                <label class="form-label fw-semibold text-dark">Salary Component Name <span class="text-danger">*</span></label>
+                                <input type="text" name="items[0][salary_type]" class="form-control" value="{{ old('items.0.salary_type') }}" placeholder="e.g. Basic, HRA, Medical, PF" required>
                                 @error('items.0.salary_type')
-                                    <div class="text-danger">{{ $message }}</div>
+                                    <div class="text-danger small">{{ $message }}</div>
                                 @enderror
                             </div>
                         </div>
                         
-                        <div class="col-md-6">
-                            <div class="form-group mb-3">
-                                <label>Description</label>
+                        <div class="col-md-12">
+                            <div class="form-group mb-2">
+                                <label class="form-label fw-semibold text-dark">Description</label>
                                 <textarea name="items[0][salary_type_description]" class="form-control" rows="2" placeholder="Enter description (optional)">{{ old('items.0.salary_type_description') }}</textarea>
                                 @error('items.0.salary_type_description')
-                                    <div class="text-danger">{{ $message }}</div>
+                                    <div class="text-danger small">{{ $message }}</div>
                                 @enderror
                             </div>
                         </div>
                         
-                        <div class="col-md-6">
-                            <div class="form-group mb-3">
-                                <label>Amount <span class="text-danger">*</span></label>
+                        <div class="col-md-4">
+                            <div class="form-group mb-2">
+                                <label class="form-label fw-semibold text-dark">Amount / Value <span class="text-danger">*</span></label>
                                 <input type="number" step="0.01" name="items[0][amount]" class="form-control" value="{{ old('items.0.amount') }}" placeholder="Enter amount" required>
                                 @error('items.0.amount')
-                                    <div class="text-danger">{{ $message }}</div>
+                                    <div class="text-danger small">{{ $message }}</div>
                                 @enderror
                             </div>
                         </div>
                         
-                        <div class="col-md-6">
-                            <div class="form-group mb-3">
-                                <label>Amount Type <span class="text-danger">*</span></label>
-                                <select name="items[0][amount_type]" class="form-control" required>
-                                    <option value="Flat" {{ old('items.0.amount_type') == 'Flat' ? 'selected' : '' }}>Flat</option>
-                                    <option value="Percentage" {{ old('items.0.amount_type') == 'Percentage' ? 'selected' : '' }}>Percentage</option>
+                        <div class="col-md-4">
+                            <div class="form-group mb-2">
+                                <label class="form-label fw-semibold text-dark">Amount Type <span class="text-danger">*</span></label>
+                                <select name="items[0][amount_type]" class="form-select" required>
+                                    <option value="Flat" {{ old('items.0.amount_type') == 'Flat' ? 'selected' : '' }}>Flat Amount (₹)</option>
+                                    <option value="Percentage" {{ old('items.0.amount_type') == 'Percentage' ? 'selected' : '' }}>Percentage of Basic (%)</option>
                                 </select>
                                 @error('items.0.amount_type')
-                                    <div class="text-danger">{{ $message }}</div>
+                                    <div class="text-danger small">{{ $message }}</div>
                                 @enderror
                             </div>
                         </div>
                         
-                        <div class="col-md-6">
-                            <div class="form-group mb-3">
-                                <label>Status</label>
-                                <select name="items[0][status]" class="form-control">
+                        <div class="col-md-4">
+                            <div class="form-group mb-2">
+                                <label class="form-label fw-semibold text-dark">Status</label>
+                                <select name="items[0][status]" class="form-select">
                                     <option value="1" {{ old('items.0.status') == '1' ? 'selected' : '' }}>Active</option>
                                     <option value="0" {{ old('items.0.status') == '0' ? 'selected' : '' }}>Inactive</option>
                                 </select>
@@ -115,20 +138,18 @@
             </div>
             
             <!-- Add More Button -->
-            <div class="row mb-3">
-                <div class="col-md-12">
-                    <button type="button" class="btn btn-success" id="addMoreBtn">
-                        <i class="fas fa-plus"></i> Add More Salary Type
-                    </button>
-                </div>
+            <div class="mb-4">
+                <button type="button" class="btn btn-outline-primary" id="addMoreBtn">
+                    <i class="fas fa-plus me-1"></i> Add Another Component
+                </button>
             </div>
             
             <!-- Submit Buttons -->
-            <div class="row">
-                <div class="col-md-12 text-end">
-                    <a href="{{ route('salarytype.index') }}" class="btn btn-secondary">Cancel</a>
-                    <button type="submit" class="btn btn-primary">Save All</button>
-                </div>
+            <div class="d-flex justify-content-end align-items-center gap-2 pt-3 border-top">
+                <a href="{{ route('salarytype.index') }}" class="btn btn-outline-secondary px-4">Cancel</a>
+                <button type="submit" class="btn btn-primary px-5 fw-bold">
+                    <i class="fa-solid fa-floppy-disk me-1"></i> Save All Components
+                </button>
             </div>
         </form>
     </div>
@@ -136,18 +157,32 @@
 @endsection
 
 @section('js')
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
 <script>
     let rowCount = 1;
     
-    // Update hidden package_id when dropdown changes
-    $('#package_id').on('change', function() {
-        $('#selected_package_id').val($(this).val());
+    // When department is selected
+    $('#department_id').on('change', function() {
+        const selectedOption = $(this).find('option:selected');
+        const departmentId = $(this).val();
+        const departmentName = selectedOption.text();
+        
+        if (departmentId) {
+            $('#selected_department_id').val(departmentId);
+            $('#selected-department-name').text(departmentName);
+            $('#department-info').show();
+        } else {
+            $('#selected_department_id').val('');
+            $('#department-info').hide();
+        }
     });
     
-    // Initialize package_id on page load
+    // Initialize values on page load
     $(document).ready(function() {
-        if ($('#package_id').val()) {
-            $('#selected_package_id').val($('#package_id').val());
+        if ($('#department_id').val()) {
+            $('#department_id').trigger('change');
         }
     });
     
@@ -157,55 +192,57 @@
         const newIndex = currentCount;
         
         const newRow = `
-            <div class="salary-type-row card mb-3 p-3">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <h5 class="mb-0">Salary Type</h5>
-                    <button type="button" class="btn btn-danger btn-sm remove-row">
-                        <i class="fas fa-trash"></i> Remove
+            <div class="salary-type-row card mb-3 border p-3 rounded-4 bg-light">
+                <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
+                    <h6 class="fw-bold text-dark mb-0 d-flex align-items-center gap-2">
+                        <span class="badge bg-primary rounded-pill">${currentCount + 1}</span> Salary Component #${currentCount + 1}
+                    </h6>
+                    <button type="button" class="btn btn-sm btn-outline-danger remove-row" style="border-radius: 8px;">
+                        <i class="fas fa-trash me-1"></i> Remove
                     </button>
                 </div>
-                <div class="row">
+                <div class="row g-3">
                     <div class="col-md-6">
-                        <div class="form-group mb-3">
-                            <label>Payment Type <span class="text-danger">*</span></label>
-                            <select name="items[${newIndex}][payment_type]" class="form-control" required>
+                        <div class="form-group mb-2">
+                            <label class="form-label fw-semibold text-dark">Payment Type <span class="text-danger">*</span></label>
+                            <select name="items[${newIndex}][payment_type]" class="form-select" required>
                                 <option value="">Select Payment Type</option>
-                                <option value="Earning">Earning</option>
-                                <option value="Deduction">Deduction</option>
+                                <option value="Earning">Earning (Addition)</option>
+                                <option value="Deduction">Deduction (Subtraction)</option>
                             </select>
                         </div>
                     </div>
                     <div class="col-md-6">
-                        <div class="form-group mb-3">
-                            <label>Salary Type <span class="text-danger">*</span></label>
-                            <input type="text" name="items[${newIndex}][salary_type]" class="form-control" placeholder="Enter salary type" required>
+                        <div class="form-group mb-2">
+                            <label class="form-label fw-semibold text-dark">Salary Component Name <span class="text-danger">*</span></label>
+                            <input type="text" name="items[${newIndex}][salary_type]" class="form-control" placeholder="e.g. Basic, HRA, Medical, PF" required>
                         </div>
                     </div>
-                    <div class="col-md-6">
-                        <div class="form-group mb-3">
-                            <label>Description</label>
+                    <div class="col-md-12">
+                        <div class="form-group mb-2">
+                            <label class="form-label fw-semibold text-dark">Description</label>
                             <textarea name="items[${newIndex}][salary_type_description]" class="form-control" rows="2" placeholder="Enter description (optional)"></textarea>
                         </div>
                     </div>
-                    <div class="col-md-6">
-                        <div class="form-group mb-3">
-                            <label>Amount <span class="text-danger">*</span></label>
+                    <div class="col-md-4">
+                        <div class="form-group mb-2">
+                            <label class="form-label fw-semibold text-dark">Amount <span class="text-danger">*</span></label>
                             <input type="number" step="0.01" name="items[${newIndex}][amount]" class="form-control" placeholder="Enter amount" required>
                         </div>
                     </div>
-                    <div class="col-md-6">
-                        <div class="form-group mb-3">
-                            <label>Amount Type <span class="text-danger">*</span></label>
-                            <select name="items[${newIndex}][amount_type]" class="form-control" required>
-                                <option value="Flat">Flat</option>
-                                <option value="Percentage">Percentage</option>
+                    <div class="col-md-4">
+                        <div class="form-group mb-2">
+                            <label class="form-label fw-semibold text-dark">Amount Type <span class="text-danger">*</span></label>
+                            <select name="items[${newIndex}][amount_type]" class="form-select" required>
+                                <option value="Flat">Flat Amount (₹)</option>
+                                <option value="Percentage">Percentage of Basic (%)</option>
                             </select>
                         </div>
                     </div>
-                    <div class="col-md-6">
-                        <div class="form-group mb-3">
-                            <label>Status</label>
-                            <select name="items[${newIndex}][status]" class="form-control">
+                    <div class="col-md-4">
+                        <div class="form-group mb-2">
+                            <label class="form-label fw-semibold text-dark">Status</label>
+                            <select name="items[${newIndex}][status]" class="form-select">
                                 <option value="1">Active</option>
                                 <option value="0">Inactive</option>
                             </select>
@@ -238,7 +275,7 @@
     function updateRowNumbers() {
         $('#salary-type-container .salary-type-row').each(function(index) {
             // Update heading
-            $(this).find('h5').text(`Salary Type #${index + 1}`);
+            $(this).find('h6').html(`<span class="badge bg-primary rounded-pill">${index + 1}</span> Salary Component #${index + 1}`);
             
             // Update all input names
             $(this).find('input, select, textarea').each(function() {
@@ -256,10 +293,10 @@
         let isValid = true;
         let errorMessage = '';
         
-        // Check if package is selected
-        if (!$('#selected_package_id').val()) {
+        // Check if department is selected
+        if (!$('#selected_department_id').val()) {
             isValid = false;
-            errorMessage = 'Please select a package first!';
+            errorMessage = 'Please select a department first!';
         }
         
         // Check each row for required fields
@@ -299,28 +336,4 @@
     // Initialize
     updateRemoveButtons();
 </script>
-
-
-@endsection
-
-@section('css')
-<style>
-    .salary-type-row {
-        background-color: #f8f9fa;
-        border-left: 4px solid #007bff;
-        transition: all 0.3s ease;
-    }
-    
-    .salary-type-row:hover {
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    }
-    
-    .remove-row {
-        transition: all 0.2s ease;
-    }
-    
-    .remove-row:hover {
-        transform: scale(1.05);
-    }
-</style>
 @endsection

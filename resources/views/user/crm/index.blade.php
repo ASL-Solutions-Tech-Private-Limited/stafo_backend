@@ -1,96 +1,104 @@
 @extends('user.layouts.app')
-@section('title', 'Lead List') <!-- Set your custom title here -->
+@section('title', 'CRM Leads & Pipeline | STAFO HRMS')
 
 @section('content')
-    <div class="card mt-4 p-3 shadow-sm border-0">
-        <div>
-            <div class="row mb-3">
-                <div class="col-md-9 col-6">
-                    <h2 class="fw-bold">Lead List</h2>
-                </div>
-                <div class="col-md-3 col-6 text-end">
-                    <a href="{{ route('leadCreate') }}" class="btn btn-success shadow-sm"><i class="fas fa-plus"></i>
-                        Create New</a>
-                </div>
+@include('user.layouts.alert')
+<div class="card shadow-sm border-0">
+    <div class="card-body p-4">
+
+        <!-- Page Header -->
+        <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3 mb-4">
+            <div>
+                <h3 class="fw-bold text-dark mb-1">CRM Leads & Sales Pipeline</h3>
+                <p class="text-muted small mb-0">Track prospect conversations, follow-up reminders, and sales representative assignments</p>
             </div>
-            <div class="table-responsive ">
-                <table class="table  table-bordered table-hover">
-                    <thead class="table-dark">
-                        <tr>
-                            <th>S.No</th>                            
-                            <th>Employee Name</th>
-                            <th>Name</th>
-                            <th>Company Name</th>
-                            <th>Email</th>
-                            <th>Phone</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @forelse ($leads as $index => $lead)
-                            <tr>
-                                <!-- First index starts at 1 -->
-                                <td>{{ $index + 1 }}</td> <!-- Shows 1-based index -->
-                                <td>
-                                    {{ isset($lead->employee->name)?$lead->employee->name:'' }}
-                                </td>
-                                <td>
-                                    {{ $lead->name }}
-                                </td>
-                                <td>{{ $lead->company_name }}</td>
-                                <td>{{ $lead->email }}</td>
-                                <td>
-                                    {{ $lead->phone }}
-                                </td>
-                                <td>
-                                    <a href="{{ route('leadEdit', $lead->id) }}" class="btn btn-warning btn-sm"><i
-                                            class="fas fa-edit"></i></a>
-                                    <a href="{{ route('leadFollowup', $lead->id) }}" class="btn btn-primary btn-sm"><i
-                                            class="fas fa-plus"></i></a>
-
-                                    <!-- Delete Form with Confirmation -->
-                                    <form id="delete-form-{{ $lead->id }}"
-                                        action="{{ route('leadDelete', $lead->id) }}" method="POST"
-                                        style="display: inline;">
-                                        @csrf
-                                        @method('DELETE')
-                                        <!-- <button type="button" class="btn btn-danger btn-sm"
-                                            onclick="confirmDelete(event, {{ $lead->id }})"><i
-                                                class="fas fa-trash"></i></button> -->
-                                    </form>
-                                </td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="5" class="text-center">No records found.</td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-
-                </table>
+            <div class="d-flex align-items-center gap-2">
+                <a href="{{ route('leadCreate') }}" class="btn btn-primary px-3 py-2">
+                    <i class="fa-solid fa-plus me-1"></i> Add New Lead
+                </a>
             </div>
         </div>
+
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-dark">
+                    <tr>
+                        <th style="width: 70px;" class="text-center">S.No</th>                            
+                        <th style="width: 220px;">Lead Contact</th>
+                        <th style="width: 200px;">Company / Business</th>
+                        <th>Email Address</th>
+                        <th style="width: 150px;">Phone</th>
+                        <th style="width: 180px;">Assigned Rep</th>
+                        <th style="width: 130px;" class="text-center">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse ($leads as $index => $lead)
+                        <tr>
+                            <td class="text-center text-muted fw-semibold">{{ $index + 1 }}</td>
+                            <td>
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="rounded-circle d-flex align-items-center justify-content-center bg-primary bg-opacity-10 text-primary fw-bold" style="width: 36px; height: 36px; font-size: 0.85rem; flex-shrink: 0;">
+                                        {{ strtoupper(substr($lead->name ?? 'L', 0, 1)) }}
+                                    </div>
+                                    <span class="fw-bold text-dark">{{ $lead->name }}</span>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="fw-semibold text-dark">{{ $lead->company_name ?: '—' }}</span>
+                            </td>
+                            <td>
+                                <span class="text-muted">{{ $lead->email ?: '—' }}</span>
+                            </td>
+                            <td>
+                                <span class="text-muted">{{ $lead->phone ?: '—' }}</span>
+                            </td>
+                            <td>
+                                @if(isset($lead->employee->name))
+                                    <span class="badge-stafo badge-stafo-info">
+                                        <i class="fa-solid fa-user-tie me-1"></i> {{ $lead->employee->name }}
+                                    </span>
+                                @else
+                                    <span class="badge-stafo badge-stafo-secondary">Unassigned</span>
+                                @endif
+                            </td>
+                            <td class="text-center">
+                                <div class="d-flex align-items-center justify-content-center gap-1">
+                                    <a href="{{ route('leadFollowup', $lead->id) }}" 
+                                       class="btn btn-sm btn-outline-success p-0" 
+                                       style="width: 32px; height: 32px; border-radius: 8px;"
+                                       title="Add Follow-up">
+                                        <i class="fa-solid fa-calendar-plus"></i>
+                                    </a>
+
+                                    <a href="{{ route('leadEdit', $lead->id) }}" 
+                                       class="btn btn-sm btn-outline-warning p-0" 
+                                       style="width: 32px; height: 32px; border-radius: 8px;"
+                                       title="Edit Lead">
+                                        <i class="fa-solid fa-pen-to-square"></i>
+                                    </a>
+
+                                    <form id="delete-form-{{ $lead->id }}"
+                                        action="{{ route('leadDelete', $lead->id) }}" method="POST"
+                                        style="display: none;">
+                                        @csrf
+                                        @method('DELETE')
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="7" class="text-center py-5 text-muted">
+                                <i class="fa-solid fa-bullhorn fs-2 mb-2 d-block opacity-50"></i>
+                                No CRM leads found. Click "Add New Lead" to create your first prospect!
+                            </td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+
     </div>
-
-    <script>
-        function confirmDelete(event, salarytypeId) {
-            event.preventDefault(); // Prevent form submission
-
-            // Show SweetAlert confirmation dialog
-            Swal.fire({
-                title: 'Are you sure?',
-                text: "You won't be able to revert this!",
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#3085d6',
-                cancelButtonColor: '#d33',
-                confirmButtonText: 'Yes, delete it!'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    // If confirmed, submit the delete form
-                    document.getElementById(`delete-form-${salarytypeId}`).submit();
-                }
-            });
-        }
-    </script>
+</div>
 @endsection

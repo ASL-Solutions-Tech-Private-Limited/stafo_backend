@@ -58,21 +58,22 @@ class UserAttendanceController extends Controller
     public function export(Request $request)
     {
         $companyId = Auth::id();
-        $startDate = $request->from_date;
-        $endDate = $request->to_date;
+        $date = $request->date;
+        $startDate = $request->from_date ?: $date;
+        $endDate = $request->to_date ?: $date;
         $departmentId = $request->department;
         $branchId = $request->branch_id;
         $employeeId = $request->employee_id;
 
         if(!empty($startDate) && !empty($endDate)) {
-            $export = new AttendanceExport($startDate, $endDate, $companyId, $departmentId, $branchId,$employeeId );
+            $export = new AttendanceExport($startDate, $endDate, $companyId, $departmentId, $branchId, $employeeId);
             return $export->export();
         }
-        
 
         $query = Attendance::query()
             ->with(['company', 'branch', 'employee'])
             ->where('company_id', $companyId)
+            ->when($request->date, fn($q) => $q->where('date', $request->date))
             ->when($request->from_date && $request->to_date, fn($q) => $q->whereBetween('date', [$request->from_date, $request->to_date]))
             ->when($request->branch_id, fn($q) => $q->where('branch_id', $request->branch_id))
             ->when($request->attendance, fn($q) => $q->where('attendance', $request->attendance))
@@ -126,30 +127,73 @@ class UserAttendanceController extends Controller
 
     public function index(Request $request)
     {
-
         $is_verified = Auth::user()->is_verified;
         if ($is_verified == 'No') {
             return view('user.verify_check');
         }
-        $employeeId = $request->get('employee_id');
-        $attendanceStatus = $request->get('attendance');
-        $date = $request->get('date');
-
 
         $companyId = Auth::id();
+        $employeeId = $request->get('employee_id');
+        $attendanceStatus = $request->get('attendance');
 
-        $attendances = Attendance::with(['employee', 'company', 'branch', 'department'])
+        $currentDate = Carbon::today()->format('Y-m-d');
+        $allDates = $request->has('all_dates') && $request->get('all_dates') == '1';
+
+        $fromDate = $request->get('from_date');
+        $toDate = $request->get('to_date');
+        $date = $request->get('date');
+
+        // If not filtering, default date to current date
+        if ($allDates) {
+            $date = null;
+            $fromDate = null;
+            $toDate = null;
+        } elseif (!$request->filled('date') && !$request->filled('from_date') && !$request->filled('to_date')) {
+            $date = $currentDate;
+        }
+
+        $attendancesQuery = Attendance::with(['employee', 'company', 'branch', 'department'])
             ->where('company_id', $companyId)
             ->when($employeeId, fn($query) => $query->where('employee_id', $employeeId))
-            ->when($attendanceStatus, fn($query) => $query->where('attendance', $attendanceStatus))
-            ->when($request->from_date && $request->to_date, fn($q) => $q->whereBetween('date', [$request->from_date, $request->to_date]))
-            ->orderBy('date', 'desc')
-            ->paginate(10);
+            ->when($attendanceStatus, fn($query) => $query->where('attendance', $attendanceStatus));
+
+        if ($fromDate && $toDate) {
+            $attendancesQuery->whereBetween('date', [$fromDate, $toDate]);
+        } elseif ($fromDate) {
+            $attendancesQuery->where('date', '>=', $fromDate);
+        } elseif ($toDate) {
+            $attendancesQuery->where('date', '<=', $toDate);
+        } elseif ($date) {
+            $attendancesQuery->where('date', $date);
+        }
+
+        // Summary counts for the current filter
+        $summaryCounts = (clone $attendancesQuery)->select(
+            DB::raw('count(*) as total'),
+            DB::raw("sum(case when attendance = 'Present' then 1 else 0 end) as present"),
+            DB::raw("sum(case when attendance = 'Absent' then 1 else 0 end) as absent"),
+            DB::raw("sum(case when attendance = 'Leave' then 1 else 0 end) as leave_count"),
+            DB::raw("sum(case when halfday = 1 then 1 else 0 end) as halfday")
+        )->first();
+
+        $attendances = $attendancesQuery->orderBy('date', 'desc')
+            ->orderBy('id', 'desc')
+            ->paginate(10)
+            ->withQueryString();
 
         // Fetch employees for the filter dropdown
-        $employees = Employee::where('company_id', $companyId)->get(); // Ensure employees belong to the company
+        $employees = Employee::where('company_id', $companyId)->orderBy('name', 'asc')->get();
 
-        return view('user.attendance.index', compact('attendances', 'employees'));
+        return view('user.attendance.index', compact(
+            'attendances',
+            'employees',
+            'date',
+            'fromDate',
+            'toDate',
+            'currentDate',
+            'allDates',
+            'summaryCounts'
+        ));
     }
 
 

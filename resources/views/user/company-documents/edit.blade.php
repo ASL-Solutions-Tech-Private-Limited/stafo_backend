@@ -1,60 +1,74 @@
 @extends('user.layouts.app')
 
-@section('title', 'Edit Document') <!-- Custom title -->
+@section('title', 'Edit Company Document | STAFO HRMS')
 
 @section('content')
-    <div class="card mt-4 p-3">
-        <h5>Edit Document</h5>
-        <div class="container">
-            <div class="row">
-                <div class="col-lg-12">
-                    <a href="{{ route('company-documents.index') }}" class="btn btn-primary" style="float: right;">Document
-                        List</a>
+@include('user.layouts.alert')
+<div class="card shadow-sm border-0">
+    <div class="card-body p-4">
+
+        <!-- Page Header -->
+        <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3 mb-4 pb-3 border-bottom">
+            <div>
+                <h3 class="fw-bold text-dark mb-1">Edit Company Document</h3>
+                <p class="text-muted small mb-0">Update document classification or upload a replacement file</p>
+            </div>
+            <a href="{{ route('company-documents.index') }}" class="btn btn-outline-secondary px-3 py-2">
+                <i class="fa-solid fa-arrow-left me-1"></i> Back to Documents
+            </a>
+        </div>
+
+        <form action="{{ route('company-documents.update', $document->id) }}" method="POST" enctype="multipart/form-data">
+            @csrf
+            @method('PUT')
+            
+            <div class="p-3 bg-light rounded-4 border mb-4">
+                <div class="row g-3">
+                    <div class="col-12 col-md-6">
+                        <label for="document_type_id" class="form-label fw-semibold text-dark">
+                            Document Category <span class="text-danger">*</span>
+                        </label>
+                        <select name="document_type_id" id="document_type_id" class="form-select" required>
+                            <option value="">-- Select Document Category --</option>
+                            @foreach ($documentTypes as $documentType)
+                                <option value="{{ $documentType->id }}"
+                                    {{ old('document_type_id', $document->document_type_id) == $documentType->id ? 'selected' : '' }}>
+                                    {{ $documentType->document_name }}
+                                </option>
+                            @endforeach
+                        </select>
+                        @error('document_type_id')
+                            <div class="text-danger small mt-1">{{ $message }}</div>
+                        @enderror
+                    </div>
+
+                    <div class="col-12 col-md-6">
+                        <label for="document" class="form-label fw-semibold text-dark">
+                            Upload Replacement File <span class="text-muted fw-normal">(optional)</span>
+                        </label>
+                        <input type="file" name="document" id="document" class="form-control">
+                        @if ($document->document)
+                            <div class="mt-2">
+                                <small class="text-muted">Current file: </small>
+                                <a href="{{ asset('uploads/company_documents/' . $document->document) }}" target="_blank" class="small fw-semibold text-primary">
+                                    <i class="fa-solid fa-file-lines me-1"></i> View Existing File
+                                </a>
+                            </div>
+                        @endif
+                        @error('document')
+                            <div class="text-danger small mt-1">{{ $message }}</div>
+                        @enderror
+                    </div>
                 </div>
             </div>
 
-            <form action="{{ route('company-documents.update', $document->id) }}" method="POST" enctype="multipart/form-data">
-                @csrf
-                @method('PUT')
-                <div class="row">
-
-                    <!-- Document Type Dropdown -->
-                    <div class="col-md-6 mb-3">
-                        <div class="form-group">
-                            <label for="document_type_id">Document Type</label>
-                            <select name="document_type_id" id="document_type_id" class="form-control" required>
-                                <option value="">Select Document Type</option>
-                                @foreach ($documentTypes as $documentType)
-                                    <option value="{{ $documentType->id }}"
-                                        {{ old('document_type_id', $document->document_type_id) == $documentType->id ? 'selected' : '' }}>
-                                        {{ $documentType->document_name }}
-                                    </option>
-                                @endforeach
-                            </select>
-                        </div>
-                    </div>
-
-                    <!-- Document Upload (existing document shown) -->
-                    <div class="col-md-6 mb-3">
-                        <div class="form-group">
-                            <label for="document">Upload New Document</label>
-                            <input type="file" name="document" class="form-control">
-                            @if ($document->document)
-                                <p>Current Document: <a href="{{ asset('company_documents/' . $document->document) }}"
-                                        target="_blank">View</a></p>
-                            @endif
-                            @error('document')
-                                <div class="text-danger">{{ $message }}</div>
-                            @enderror
-                        </div>
-                    </div>
-
-                    <!-- Save Button -->
-                    <div class="col-md-2 mb-3">
-                        <button type="submit" class="btn btn-success w-100">Update</button>
-                    </div>
-                </div>
-            </form>
-        </div>
+            <div class="d-flex justify-content-end align-items-center gap-2 pt-3 border-top">
+                <a href="{{ route('company-documents.index') }}" class="btn btn-outline-secondary px-4">Cancel</a>
+                <button type="submit" class="btn btn-primary px-5 fw-bold">
+                    <i class="fa-solid fa-floppy-disk me-1"></i> Update Document
+                </button>
+            </div>
+        </form>
     </div>
+</div>
 @endsection

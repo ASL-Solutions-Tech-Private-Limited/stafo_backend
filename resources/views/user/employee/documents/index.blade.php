@@ -129,13 +129,13 @@
             event.preventDefault();
 
             Swal.fire({
-                title: 'Are you sure?',
-                text: "You won't be able to revert this!",
+                title: 'Delete Employee & All Associated Data?',
+                text: "This will permanently delete this employee and ALL related records (attendance, leaves, payroll, documents, tasks, expenses, etc.)!",
                 icon: 'warning',
                 showCancelButton: true,
-                confirmButtonColor: '#3085d6',
-                cancelButtonColor: '#d33',
-                confirmButtonText: 'Yes, delete it!'
+                confirmButtonColor: '#ef4444',
+                cancelButtonColor: '#6b7280',
+                confirmButtonText: 'Yes, delete everything!'
             }).then((result) => {
                 if (result.isConfirmed) {
                     document.getElementById(`delete-form-${employeeId}`).submit();

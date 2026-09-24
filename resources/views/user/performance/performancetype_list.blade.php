@@ -1,84 +1,108 @@
 @extends('user.layouts.app')
-@section('title', 'Performance Type List') <!-- Set your custom title here -->
+@section('title', 'Performance KPI Types | STAFO HRMS')
 
 @section('content')
-    <div class="card mt-4 p-3 shadow-sm border-0">
-        <div>
-            <div class="row mb-3">
-                <div class="col-md-9 col-6">
-                    <h2 class="fw-bold">Performance Types</h2>
-                </div>
-                <div class="col-md-3 col-6 text-end">
-                    <a href="{{ route('performancetypeCreate') }}" class="btn btn-success shadow-sm"><i class="fas fa-plus"></i>
-                        Create New</a>
-                </div>
-            </div>
-            <div class="table-responsive table-same">
-                <table class="table  table-bordered table-hover">
-                    <thead class="table-dark">
-                        <tr>
-                            <th>S.No</th>
-                            <th>Performance Type</th>
-                            <th>Description</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @forelse ($performancetypes as $index => $performancetype)
-                            <tr>
-                                <!-- First index starts at 1 -->
-                                <td>{{ $index + 1 }}</td> <!-- Shows 1-based index -->
-                                <td>{{ $performancetype->name }}</td>
-                                <td>{{ $performancetype->description }}</td>
-                                
-                                <td>
-                                    <a href="{{ route('performancetypeEdit', $performancetype->id) }}" class="btn btn-warning btn-sm"><i
-                                            class="fas fa-edit"></i></a>
-                                    <!-- Delete Form with Confirmation -->
-                                    <form id="delete-form-{{ $performancetype->id }}"
-                                        action="{{ route('performancetypeDelete', $performancetype->id) }}" method="POST"
-                                        style="display: inline;">
-                                        @csrf
-                                        @method('DELETE')  
-                                        <button type="submit" class="btn btn-danger btn-sm"
-                                        onclick="confirmDelete(event, {{ $performancetype->id }})" title="Delete">
-                                            <i class="fas fa-trash-alt"></i> 
-                                        </button>                                      
-                                    </form>
-                                    
-                                </td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="5" class="text-center">No records found.</td>
-                            </tr>
-                        @endforelse
-                    </tbody>
+@include('user.layouts.alert')
+<div class="card shadow-sm border-0">
+    <div class="card-body p-4">
 
-                </table>
+        <!-- Page Header -->
+        <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3 mb-4">
+            <div>
+                <h3 class="fw-bold text-dark mb-1">Performance KPI Types</h3>
+                <p class="text-muted small mb-0">Define evaluation metrics, productivity benchmarks, and appraisal parameters</p>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <a href="{{ route('performancetypeCreate') }}" class="btn btn-primary px-3 py-2">
+                    <i class="fa-solid fa-plus me-1"></i> Create Performance Type
+                </a>
             </div>
         </div>
+
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-dark">
+                    <tr>
+                        <th style="width: 70px;" class="text-center">S.No</th>
+                        <th style="width: 280px;">KPI Name</th>
+                        <th>Description</th>
+                        <th style="width: 140px;" class="text-center">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse ($performancetypes as $index => $performancetype)
+                        <tr>
+                            <td class="text-center text-muted fw-semibold">{{ $index + 1 }}</td>
+                            <td>
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="rounded-3 d-flex align-items-center justify-content-center bg-primary bg-opacity-10 text-primary fw-bold" style="width: 36px; height: 36px; font-size: 0.85rem; flex-shrink: 0;">
+                                        <i class="fa-solid fa-chart-line"></i>
+                                    </div>
+                                    <span class="fw-bold text-dark">{{ $performancetype->name }}</span>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="text-muted">{{ $performancetype->description ?: '—' }}</span>
+                            </td>
+                            <td class="text-center">
+                                <div class="d-flex align-items-center justify-content-center gap-1">
+                                    <a href="{{ route('performancetypeEdit', $performancetype->id) }}" 
+                                       class="btn btn-sm btn-outline-warning p-0" 
+                                       style="width: 32px; height: 32px; border-radius: 8px;"
+                                       title="Edit KPI">
+                                        <i class="fa-solid fa-pen-to-square"></i>
+                                    </a>
+                                    
+                                    <button type="button" 
+                                            class="btn btn-sm btn-outline-danger p-0" 
+                                            style="width: 32px; height: 32px; border-radius: 8px;"
+                                            title="Delete KPI"
+                                            onclick="confirmDelete(event, {{ $performancetype->id }})">
+                                        <i class="fa-solid fa-trash-can"></i>
+                                    </button>
+                                    <form id="delete-form-{{ $performancetype->id }}"
+                                        action="{{ route('performancetypeDelete', $performancetype->id) }}" method="POST"
+                                        style="display: none;">
+                                        @csrf
+                                        @method('DELETE')  
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="4" class="text-center py-5 text-muted">
+                                <i class="fa-solid fa-chart-line fs-2 mb-2 d-block opacity-50"></i>
+                                No performance types defined yet.
+                            </td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+
     </div>
+</div>
+@endsection
 
-    <script>
-        function confirmDelete(event, Id) {
-            event.preventDefault(); // Prevent form submission
+@section('js')
+<script>
+    function confirmDelete(event, Id) {
+        event.preventDefault();
 
-            // Show SweetAlert confirmation dialog
-            Swal.fire({
-                title: 'Are you sure?',
-                text: "You won't be able to revert this!",
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#3085d6',
-                cancelButtonColor: '#d33',
-                confirmButtonText: 'Yes, delete it!'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    // If confirmed, submit the delete form
-                    document.getElementById(`delete-form-${Id}`).submit();
-                }
-            });
-        }
-    </script>
+        Swal.fire({
+            title: 'Are you sure?',
+            text: "You won't be able to revert this!",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#4f46e5',
+            cancelButtonColor: '#ef4444',
+            confirmButtonText: 'Yes, delete it!'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                document.getElementById(`delete-form-${Id}`).submit();
+            }
+        });
+    }
+</script>
 @endsection

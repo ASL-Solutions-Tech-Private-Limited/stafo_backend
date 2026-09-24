@@ -1,12 +1,13 @@
-<footer class="py-7" style="background-color:#152836 !important">
+<footer class="py-7" style="background-color:#15152a !important; border-top: 1px solid #23233c;">
       <div class="container">
         <div class="row">
           <div class="col-12 col-lg-5 col-xl-4 me-auto mb-5 mb-lg-0">
-            <a class="footer-logo h2 text-primary mb-0 font-w-7" href="index.html">
-              <img src="assets/images/icon/c_logo.png" width="80" height="80" alt="logo">
+            <a class="footer-logo d-inline-block text-decoration-none mb-3" href="{{ route('index') }}">
+              <div class="bg-white p-1 rounded-3 shadow-sm d-inline-flex align-items-center justify-content-center" style="width: 62px; height: 62px;">
+                <img src="{{ asset('assets/images/icon/c_logo.png') }}" width="52" height="52" alt="STAFO Logo" class="img-fluid">
+              </div>
             </a>
-            <p class="my-3 text-light">Stay connected with STAFO <br /> Follow us on social media for updates, tips, and
-              support.</p>
+            <p class="my-3 text-light" style="color: #94a3b8 !important; font-size: 0.92rem;">Stay connected with STAFO <br /> India's trusted HRMS for automated attendance, payroll, and field workforce operations.</p>
             <ul class="list-inline">
               <li class="list-inline-item"><a class="border rounded px-2 py-1 text-light"
                   href="https://www.facebook.com/profile.php?id=61574194070459"><i class="la la-facebook"></i></a>
@@ -79,21 +80,20 @@
         </div>
         <div class="row align-items-center">
           <div class="col-md-6 text-white">
-            Copyright ©2025 All rights reserved | Powered by &nbsp; <i
-              class="lar la-heart text-primary links heartBeat2"></i>
-            <a class="text-primary fs-6 links" href="https://www.aslsolutiontech.com/">ASL Solutions Tech Pvt Ltd</a>
+            Copyright ©{{ date('Y') }} STAFO. All rights reserved | Powered by &nbsp; <i
+              class="lar la-heart text-success links heartBeat2"></i>
+            <a class="text-success fs-6 links" href="https://www.aslsolutiontech.com/" target="_blank">ASL Solutions Tech Pvt Ltd</a>
           </div>
           <div class="col-md-6 text-md-end mt-3 mt-md-0">
             <ul class="list-inline mb-0">
-              </li>
               <li class="me-3 list-inline-item"> <a class="list-group-item-action text-light"
-                  href="privacy-policy.html">
+                  href="{{ route('privacy') }}">
                   Privacy Policy
                 </a>
               </li>
               <li class="list-inline-item"> <a class="list-group-item-action text-light"
-                  href="terms-and-conditions.html">
-                  Support
+                  href="{{ route('terms') }}">
+                  Terms & Support
                 </a>
               </li>
             </ul>

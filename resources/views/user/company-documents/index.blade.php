@@ -1,97 +1,119 @@
 @extends('user.layouts.app')
-@section('title', 'Company Documents list') <!-- Set your custom title here -->
-
-@section('css')
-
-@endsection
+@section('title', 'Company Documents | STAFO HRMS')
 
 @section('content')
-    <!-- Show success or error message -->
-    @if (session('success'))
-        <div class="alert alert-success">
-            {{ session('success') }}
-        </div>
-    @elseif(session('error'))
-        <div class="alert alert-danger">
-            {{ session('error') }}
-        </div>
-    @endif
+@include('user.layouts.alert')
+<div class="card shadow-sm border-0">
+    <div class="card-body p-4">
 
-    <div class="card mt-4 p-3 shadow-sm border-0">
-        <div class="row">
-            <div class="col-md-9 ">
-                <h2 class="fw-bold">Company Documents</h2>
+        <!-- Page Header -->
+        <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3 mb-4">
+            <div>
+                <h3 class="fw-bold text-dark mb-1">Company Documents</h3>
+                <p class="text-muted small mb-0">Manage corporate certificates, registration papers, tax forms, and policies</p>
             </div>
-            <div class="col-md-3 ">
-                <div class="text-end">
-                    <a href="{{ route('company-documents.create') }}" class="btn btn-success shadow-sm"><i
-                            class="fas fa-plus me-1 "></i> Create</a>
-                </div>
+            <div class="d-flex align-items-center gap-2">
+                <a href="{{ route('company-documents.create') }}" class="btn btn-primary px-3 py-2">
+                    <i class="fa-solid fa-plus me-1"></i> Upload Document
+                </a>
             </div>
         </div>
-        <div class="container mt-3 px-0">
-            <div class="table-responsive table-same">
-                <table class="table table-bordered table-hover">
-                    <thead class="table-dark">
+
+        <!-- Table -->
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-dark">
+                    <tr>
+                        <th style="width: 70px;" class="text-center">S.No</th>
+                        <th style="width: 320px;">Document Category</th>
+                        <th>File Attachment</th>
+                        <th style="width: 140px;" class="text-center">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse ($documents as $index => $document)
                         <tr>
-                            <th>S.no</th>
-                            <th>Document Type</th>
-                            <th>Document</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach ($documents as $document)
-                            <tr>
-                                <td>{{ $loop->iteration }}</td>
-                                <td>{{ $document->documentType->document_name }}</td>
-                                <td><a href="{{ asset('uploads/company_documents/' . $document->document) }}"
-                                        target="_blank">View</a>
-                                </td>
-                                <td>
-                                    <a href="{{ route('company-documents.edit', $document->id) }}"
-                                        class="btn btn-warning btn-sm"><i class="fas fa-edit"></i></a>
+                            <td class="text-center text-muted fw-semibold">{{ $index + 1 }}</td>
+                            <td>
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="rounded-3 d-flex align-items-center justify-content-center bg-primary bg-opacity-10 text-primary fw-bold" style="width: 38px; height: 38px; font-size: 0.9rem; flex-shrink: 0;">
+                                        <i class="fa-solid fa-file-contract"></i>
+                                    </div>
+                                    <span class="fw-bold text-dark">{{ $document->documentType->document_name ?? 'Document' }}</span>
+                                </div>
+                            </td>
+                            <td>
+                                @if($document->document)
+                                    <a href="{{ asset('uploads/company_documents/' . $document->document) }}" 
+                                       target="_blank" 
+                                       class="btn btn-sm btn-outline-primary px-3 py-1"
+                                       style="border-radius: 8px;">
+                                        <i class="fa-solid fa-arrow-up-right-from-square me-1"></i> View Document
+                                    </a>
+                                @else
+                                    <span class="text-muted">—</span>
+                                @endif
+                            </td>
+                            <td class="text-center">
+                                <div class="d-flex align-items-center justify-content-center gap-1">
+                                    <a href="{{ route('company-documents.edit', $document->id) }}" 
+                                       class="btn btn-sm btn-outline-warning p-0" 
+                                       style="width: 32px; height: 32px; border-radius: 8px;"
+                                       title="Edit Document">
+                                        <i class="fa-solid fa-pen-to-square"></i>
+                                    </a>
 
-                                    <!-- Delete button with Swal confirmation -->
-                                    <button onclick="confirmDelete(event, {{ $document->id }})"
-                                        class="btn btn-danger btn-sm"><i class="fas fa-trash"></i></button>
+                                    <button type="button" 
+                                            class="btn btn-sm btn-outline-danger p-0" 
+                                            style="width: 32px; height: 32px; border-radius: 8px;"
+                                            title="Delete Document"
+                                            onclick="confirmDelete(event, {{ $document->id }})">
+                                        <i class="fa-solid fa-trash-can"></i>
+                                    </button>
 
-                                    <!-- Form for delete action (hidden and triggered by Swal) -->
                                     <form id="delete-form-{{ $document->id }}"
-                                        action="{{ route('company-documents.destroy', $document->id) }}" method="POST"
-                                        style="display:inline;">
+                                          action="{{ route('company-documents.destroy', $document->id) }}" method="POST"
+                                          style="display:none;">
                                         @csrf
                                         @method('DELETE')
                                     </form>
-                                </td>
-                            </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            </div>
+                                </div>
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="4" class="text-center py-5 text-muted">
+                                <i class="fa-solid fa-folder-open fs-2 mb-2 d-block opacity-50"></i>
+                                No company documents uploaded yet.
+                            </td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
         </div>
+
     </div>
+</div>
+@endsection
 
-    <!-- Swal confirmation script -->
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script>
-        function confirmDelete(event, documentId) {
-            event.preventDefault();
+@section('js')
+<script>
+    function confirmDelete(event, documentId) {
+        event.preventDefault();
 
-            Swal.fire({
-                title: 'Are you sure?',
-                text: "You won't be able to revert this!",
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#3085d6',
-                cancelButtonColor: '#d33',
-                confirmButtonText: 'Yes, delete it!'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    // Submit the delete form
-                    document.getElementById(`delete-form-${documentId}`).submit();
-                }
-            });
-        }
-    </script>
+        Swal.fire({
+            title: 'Are you sure?',
+            text: "You won't be able to revert this!",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#4f46e5',
+            cancelButtonColor: '#ef4444',
+            confirmButtonText: 'Yes, delete it!'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                document.getElementById(`delete-form-${documentId}`).submit();
+            }
+        });
+    }
+</script>
 @endsection

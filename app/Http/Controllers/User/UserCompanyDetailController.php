@@ -12,6 +12,7 @@ use App\Models\HelpContent;
 use App\Models\TicketReply;
 use App\Models\BusinessType;
 use App\Models\Employee;
+use App\Models\DeviceSession;
 use Illuminate\Http\Request;
 use App\Models\CompanyDetail;
 use App\Models\ProprietorDetail;
@@ -246,38 +247,93 @@ class UserCompanyDetailController extends Controller
         return view('user.company.referral', compact('company','rcount','rlist'));
     }
 
-    public function deviceList(Request $request){
-        $company_id =  Auth::id();
+    public function deviceList(Request $request)
+    {
+        $company_id = Auth::id();
         $statusFilter = $request->status;
-        $query = Employee::whereNotNull('device_status')->where('company_id',$company_id);
-        
+
+        $query = Employee::with(['department', 'branch'])
+            ->where('company_id', $company_id)
+            ->where(function ($q) {
+                $q->whereNotNull('device_status')
+                  ->orWhereNotNull('device_id');
+            });
+
         if ($statusFilter) {
-            $query->where('device_status', $statusFilter);
+            if ($statusFilter === 'approved') {
+                $query->where(function ($q) {
+                    $q->where('device_status', 'approved')
+                      ->orWhere('device_status', 'approve');
+                });
+            } else {
+                $query->where('device_status', $statusFilter);
+            }
         }
-        $deviceRequests = $query->get();
-        
-        return view('user.company.devicelist', compact('deviceRequests'));
+
+        $allRequests = Employee::where('company_id', $company_id)
+            ->where(function ($q) {
+                $q->whereNotNull('device_status')
+                  ->orWhereNotNull('device_id');
+            })->get();
+
+        $pendingCount = $allRequests->where('device_status', 'pending')->count();
+        $approvedCount = $allRequests->filter(function ($e) {
+            return in_array(strtolower($e->device_status ?? ''), ['approve', 'approved']) || (!empty($e->device_id) && $e->device_status !== 'pending');
+        })->count();
+        $rejectedCount = $allRequests->where('device_status', 'rejected')->count();
+
+        $deviceRequests = $query->latest('updated_at')->paginate(15)->withQueryString();
+
+        // Attach latest DeviceSession for each employee
+        foreach ($deviceRequests as $emp) {
+            $emp->latest_session = DeviceSession::where('employee_id', $emp->id)->latest()->first();
+        }
+
+        return view('user.company.devicelist', compact(
+            'deviceRequests',
+            'pendingCount',
+            'approvedCount',
+            'rejectedCount',
+            'statusFilter'
+        ));
     }
 
     public function approveDevice(Request $request, $id)
     {
-        $employee = Employee::findOrFail($id);
-        $employee->device_status = 'approve';
+        $company_id = Auth::id();
+        $employee = Employee::where('company_id', $company_id)->findOrFail($id);
+
+        $device = DeviceSession::where('employee_id', $employee->id)->latest()->first();
+        $employee->device_status = 'approved';
+        if ($device && !empty($device->employee_device_id)) {
+            $employee->device_id = $device->employee_device_id;
+        }
         $employee->save();
 
         Alert::success('Success', 'Device request approved successfully.');
-        return redirect()->route('deviceList');
-
+        return redirect()->route('deviceList')->with('success', 'Device request approved successfully.');
     }
 
     public function rejectDevice(Request $request, $id)
     {
-        $employee = Employee::findOrFail($id);
+        $company_id = Auth::id();
+        $employee = Employee::where('company_id', $company_id)->findOrFail($id);
         $employee->device_status = 'rejected';
         $employee->save();
 
-        Alert::success('Success', 'Device request rejected successfully.');
-        return redirect()->route('deviceList');
+        Alert::info('Rejected', 'Device request rejected successfully.');
+        return redirect()->route('deviceList')->with('success', 'Device request rejected.');
+    }
 
+    public function resetDevice(Request $request, $id)
+    {
+        $company_id = Auth::id();
+        $employee = Employee::where('company_id', $company_id)->findOrFail($id);
+        $employee->device_id = null;
+        $employee->device_status = null;
+        $employee->save();
+
+        Alert::success('Reset', 'Device binding reset successfully for ' . $employee->name . '. Employee can now register a fresh device.');
+        return redirect()->route('deviceList')->with('success', 'Device binding reset successfully.');
     }
 }

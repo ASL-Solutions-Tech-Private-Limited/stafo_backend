@@ -1,445 +1,276 @@
 @extends('user.layouts.app')
 
-@section('title', 'Download Monthly Report')
-
-@section('css')
-
-    <style>
-        .card-header {
-            background-color: #007bff;
-            color: white;
-        }
-
-        .nav-tabs .nav-link {
-            border-radius: 0;
-        }
-
-        .nav-tabs .nav-item.show .nav-link,
-        .nav-tabs .nav-link.active {
-            background-color: #007bff;
-            color: white;
-        }
-
-        .btn-icon {
-            margin-right: 8px;
-        }
-
-        .tab-content {
-            margin-top: 1rem;
-        }
-
-        .form-group {
-            margin-bottom: .8rem;
-        }
-
-        .form-group label {
-            font-weight: bold;
-        }
-
-        .footer {
-            margin-top: 2rem;
-            text-align: center;
-            font-size: 14px;
-        }
-    </style>
-@endsection
+@section('title', 'Download Reports Hub | STAFO HRMS')
 
 @section('content')
-    <div class="container">
-        <h2 class="text-center mb-4">Download Monthly Reports</h2>
+@include('user.layouts.alert')
+<div class="card shadow-sm border-0">
+    <div class="card-body p-4">
 
-
-        <div class="card">
-            <div class="card-body">
-                <!-- Tab Navigation -->
-                <ul class="nav nav-tabs" id="reportTabs" role="tablist">
-                    <li class="nav-item" role="presentation">
-                        <a class="nav-link active" id="employee-tab" data-toggle="tab" href="#employee" role="tab"
-                            aria-controls="employee" aria-selected="true">Employee</a>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                        <a class="nav-link" id="attendance-tab" data-toggle="tab" href="#attendance" role="tab"
-                            aria-controls="attendance" aria-selected="false">Attendance</a>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                        <a class="nav-link" id="leave-tab" data-toggle="tab" href="#leave" role="tab"
-                            aria-controls="leave" aria-selected="false">Leave</a>
-                    </li>
-                </ul>
-
-                <!-- Tab Content -->
-                <div class="tab-content" id="reportTabsContent">
-                    <!-- Employee Tab -->
-                    <div class="tab-pane fade show active" id="employee" role="tabpanel" aria-labelledby="employee-tab">
-                        <div class=" mt-1">
-                            <h3 class="card-header mb-3">Employee Report</h3>
-                            <div class="card-body">
-                                <form action="{{ route('report.exportEmployee') }}" method="GET">
-                                    <div class="row">
-                                        <div class="col-lg-6">
-                                            <div class="form-group">
-                                                <label for="department">Department:</label>
-                                                <select name="department" id="department" class="form-control">
-                                                    <option value="">Select Department</option>
-                                                    @foreach ($departments as $department)
-                                                        <option value="{{ $department->id }}">{{ $department->name }}
-                                                        </option>
-                                                    @endforeach
-                                                </select>
-                                            </div>
-                                        </div>
-                                        <div class="col-lg-6">
-                                            <div class="form-group">
-                                                <label for="branch">Branch:</label>
-                                                <select name="branch" id="branch" class="form-control">
-                                                    <option value="">Select Branch</option>
-                                                    @foreach ($branches as $branch)
-                                                        <option value="{{ $branch->id }}">{{ $branch->branch_name }}
-                                                        </option>
-                                                    @endforeach
-                                                </select>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    {{-- <div class="row">
-                                <div class="col-lg-6">
-                                    <div class="form-group">
-                                        <label for="month">Month: <span class="text-danger">*</span></label>
-                                        <select name="month" id="month" class="form-control" required>
-                                            @for ($i = 1; $i <= 12; $i++)
-                                                <option value="{{ $i }}">
-                                                    {{ \Carbon\Carbon::create()->month($i)->format('F') }}</option>
-                                            @endfor
-                                        </select>
-                                    </div>
-                                </div>
-
-                                <div class="col-lg-6">
-                                    <div class="form-group">
-                                        <label for="year">Year: <span class="text-danger">*</span></label>
-                                        <input type="number" name="year" id="year" value="{{ date('Y') }}"
-                                            class="form-control" required>
-                                    </div>
-                                </div>
-                            </div> --}}
-
-                                    <div class="row">
-                                        <div class="col-lg-6">
-                                            <div class="form-group">
-                                                <label for="start_date">Start Date: <span
-                                                        class="text-danger">*</span></label>
-                                                <input type="date" name="start_date" id="start_date" class="form-control"
-                                                    required>
-                                            </div>
-                                        </div>
-                                        <div class="col-lg-6">
-                                            <div class="form-group">
-                                                <label for="end_date">End Date: <span class="text-danger">*</span></label>
-                                                <input type="date" name="end_date" id="end_date" class="form-control"
-                                                    required>
-                                            </div>
-                                        </div>
-                                    </div>
-
-
-                                    <!-- Custom dropdown for selecting format -->
-                                    <div class="row">
-                                        <div class="col-lg-6">
-                                            <div class="form-group">
-                                                <label for="format">Select Format: <span
-                                                        class="text-danger">*</span></label>
-                                                <!-- For the Employee Tab -->
-                                                <div class="dropdown">
-                                                    <button class="btn btn-warning dropdown-toggle form-control"
-                                                        type="button" id="employee-dropdownMenuButton"
-                                                        data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                                        Select Format
-                                                    </button>
-                                                    <div class="dropdown-menu"
-                                                        aria-labelledby="employee-dropdownMenuButton">
-                                                        <a class="dropdown-item" href="#" data-value="excel">
-                                                            <i class="fas fa-file-excel btn-icon"></i> Excel
-                                                        </a>
-                                                        <a class="dropdown-item" href="#" data-value="pdf">
-                                                            <i class="fas fa-file-pdf btn-icon"></i> PDF
-                                                        </a>
-                                                    </div>
-                                                </div>
-                                                <input type="hidden" name="format" id="employee-format">
-                                            </div>
-                                        </div>
-                                        <div class="col-lg-6">
-                                            <div class="form-group" style="margin-top: 24px">
-                                                <button type="submit" class="btn btn-primary">Download Employee
-                                                    Report</button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </form>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Attendance Tab -->
-                    <div class="tab-pane fade" id="attendance" role="tabpanel" aria-labelledby="attendance-tab">
-                        <div class="mt-1">
-                            <h3 class="card-header mb-3">Attendance Report</h3>
-                            <div class="card-body">
-                                <form action="{{ route('report.exportAttendance') }}" method="GET">
-                                    <div class="row">
-                                        <div class="col-lg-6">
-                                            <div class="form-group">
-                                                <label for="department">Department:</label>
-                                                <select name="department" id="department" class="form-control">
-                                                    <option value="">Select Department</option>
-                                                    @foreach ($departments as $department)
-                                                        <option value="{{ $department->id }}">{{ $department->name }}
-                                                        </option>
-                                                    @endforeach
-                                                </select>
-                                            </div>
-                                        </div>
-                                        <div class="col-lg-6">
-                                            <div class="form-group">
-                                                <label for="branch">Branch:</label>
-                                                <select name="branch" id="branch" class="form-control">
-                                                    <option value="">Select Branch</option>
-                                                    @foreach ($branches as $branch)
-                                                        <option value="{{ $branch->id }}">{{ $branch->branch_name }}
-                                                        </option>
-                                                    @endforeach
-                                                </select>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    {{-- <div class="row">
-                                        <div class="col-lg-6">
-                                            <div class="form-group">
-                                                <label for="month">Month: <span class="text-danger">*</span></label>
-                                                <select name="month" id="attendance-month" class="form-control"
-                                                    required>
-                                                    @for ($i = 1; $i <= 12; $i++)
-                                                        <option value="{{ $i }}">
-                                                            {{ \Carbon\Carbon::create()->month($i)->format('F') }}</option>
-                                                    @endfor
-                                                </select>
-                                            </div>
-                                        </div>
-                                        <div class="col-lg-6">
-                                            <div class="form-group">
-                                                <label for="year">Year: <span class="text-danger">*</span></label>
-                                                <input type="number" name="year" id="attendance-year"
-                                                    value="{{ date('Y') }}" class="form-control" required>
-                                            </div>
-                                        </div>
-                                    </div> --}}
-
-                                    <div class="row">
-                                        <div class="col-lg-6">
-                                            <div class="form-group">
-                                                <label for="start_date">Start Date: <span
-                                                        class="text-danger">*</span></label>
-                                                <input type="date" name="start_date" id="start_date"
-                                                    class="form-control" required>
-                                            </div>
-                                        </div>
-                                        <div class="col-lg-6">
-                                            <div class="form-group">
-                                                <label for="end_date">End Date: <span class="text-danger">*</span></label>
-                                                <input type="date" name="end_date" id="end_date"
-                                                    class="form-control" required>
-                                            </div>
-                                        </div>
-                                    </div>
-
-
-                                    <!-- Custom dropdown for selecting format -->
-                                    <div class="row">
-                                        <div class="col-lg-6">
-                                            <div class="form-group">
-                                                <label for="format">Select Format: <span
-                                                        class="text-danger">*</span></label>
-                                                <div class="dropdown">
-                                                    <button class="btn btn-warning dropdown-toggle form-control"
-                                                        type="button" id="attendance-dropdownMenuButton"
-                                                        data-toggle="dropdown" aria-haspopup="true"
-                                                        aria-expanded="false">
-                                                        Select Format
-                                                    </button>
-                                                    <div class="dropdown-menu"
-                                                        aria-labelledby="attendance-dropdownMenuButton">
-                                                        <a class="dropdown-item" href="#" data-value="excel">
-                                                            <i class="fas fa-file-excel btn-icon"></i> Excel
-                                                        </a>
-                                                        <a class="dropdown-item" href="#" data-value="pdf">
-                                                            <i class="fas fa-file-pdf btn-icon"></i> PDF
-                                                        </a>
-                                                    </div>
-                                                </div>
-
-                                                <input type="hidden" name="format" id="attendance-format">
-                                            </div>
-                                        </div>
-                                        <div class="col-lg-6">
-                                            <div class="form-group" style="margin-top: 24px">
-                                                <button type="submit" class="btn btn-primary">Download Attendance
-                                                    Report</button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </form>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Leave Tab -->
-                    <div class="tab-pane fade" id="leave" role="tabpanel" aria-labelledby="leave-tab">
-                        <div class="mt-1">
-                            <h3 class="card-header mb-3">Leave Report</h3>
-                            <div class="card-body">
-                                <form action="{{ route('report.exportLeave') }}" method="GET">
-                                    <div class="row">
-                                        <div class="col-lg-6">
-                                            <div class="form-group">
-                                                <label for="department">Department:</label>
-                                                <select name="department" id="department" class="form-control">
-                                                    <option value="">Select Department</option>
-                                                    @foreach ($departments as $department)
-                                                        <option value="{{ $department->id }}">{{ $department->name }}
-                                                        </option>
-                                                    @endforeach
-                                                </select>
-                                            </div>
-                                        </div>
-                                        <div class="col-lg-6">
-                                            <div class="form-group">
-                                                <label for="branch">Branch:</label>
-                                                <select name="branch" id="branch" class="form-control">
-                                                    <option value="">Select Branch</option>
-                                                    @foreach ($branches as $branch)
-                                                        <option value="{{ $branch->id }}">{{ $branch->branch_name }}
-                                                        </option>
-                                                    @endforeach
-                                                </select>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    {{-- <div class="row">
-                                        <div class="col-lg-6">
-                                            <div class="form-group">
-                                                <label for="month">Month: <span class="text-danger">*</span></label>
-                                                <select name="month" id="leave-month" class="form-control" required>
-                                                    @for ($i = 1; $i <= 12; $i++)
-                                                        <option value="{{ $i }}">
-                                                            {{ \Carbon\Carbon::create()->month($i)->format('F') }}</option>
-                                                    @endfor
-                                                </select>
-                                            </div>
-                                        </div>
-                                        <div class="col-lg-6">
-                                            <div class="form-group">
-                                                <label for="year">Year: <span class="text-danger">*</span></label>
-                                                <input type="number" name="year" id="leave-year"
-                                                    value="{{ date('Y') }}" class="form-control" required>
-                                            </div>
-                                        </div>
-                                    </div> --}}
-
-                                    <div class="row">
-                                        <div class="col-lg-6">
-                                            <div class="form-group">
-                                                <label for="start_date">Start Date: <span
-                                                        class="text-danger">*</span></label>
-                                                <input type="date" name="start_date" id="start_date"
-                                                    class="form-control" required>
-                                            </div>
-                                        </div>
-                                        <div class="col-lg-6">
-                                            <div class="form-group">
-                                                <label for="end_date">End Date: <span class="text-danger">*</span></label>
-                                                <input type="date" name="end_date" id="end_date"
-                                                    class="form-control" required>
-                                            </div>
-                                        </div>
-                                    </div>
-
-
-                                    <div class="row">
-                                        <div class="col-lg-6">
-                                            <div class="form-group">
-                                                <label for="format">Select Format: <span
-                                                        class="text-danger">*</span></label>
-                                                <div class="dropdown">
-                                                    <button class="btn btn-warning dropdown-toggle form-control"
-                                                        type="button" id="leave-dropdownMenuButton"
-                                                        data-toggle="dropdown" aria-haspopup="true"
-                                                        aria-expanded="false">
-                                                        Select Format
-                                                    </button>
-                                                    <div class="dropdown-menu" aria-labelledby="leave-dropdownMenuButton">
-                                                        <a class="dropdown-item" href="#" data-value="excel">
-                                                            <i class="fas fa-file-excel btn-icon"></i> Excel
-                                                        </a>
-                                                        <a class="dropdown-item" href="#" data-value="pdf">
-                                                            <i class="fas fa-file-pdf btn-icon"></i> PDF
-                                                        </a>
-                                                    </div>
-                                                </div>
-                                                <input type="hidden" name="format" id="leave-format">
-                                            </div>
-                                        </div>
-                                        <div class="col-lg-6">
-                                            <div class="form-group" style="margin-top: 24px">
-                                                <button type="submit" class="btn btn-primary">Download Leave
-                                                    Report</button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </form>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+        <!-- Page Header -->
+        <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3 mb-4 pb-3 border-bottom">
+            <div>
+                <h3 class="fw-bold text-dark mb-1">Download Reports Hub</h3>
+                <p class="text-muted small mb-0">Export organizational data, attendance logs, and leave statistics to Excel or PDF</p>
             </div>
         </div>
 
+        <!-- Modern Pill Tabs -->
+        <ul class="nav nav-pills gap-2 mb-4 bg-light p-2 rounded-4 border" id="reportTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active px-4 py-2 rounded-3 fw-semibold" id="employee-tab" data-bs-toggle="pill" data-bs-target="#employee" type="button" role="tab" aria-controls="employee" aria-selected="true">
+                    <i class="fa-solid fa-users me-2"></i> Employee Report
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link px-4 py-2 rounded-3 fw-semibold" id="attendance-tab" data-bs-toggle="pill" data-bs-target="#attendance" type="button" role="tab" aria-controls="attendance" aria-selected="false">
+                    <i class="fa-solid fa-calendar-check me-2"></i> Attendance Report
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link px-4 py-2 rounded-3 fw-semibold" id="leave-tab" data-bs-toggle="pill" data-bs-target="#leave" type="button" role="tab" aria-controls="leave" aria-selected="false">
+                    <i class="fa-solid fa-plane-departure me-2"></i> Leave Report
+                </button>
+            </li>
+        </ul>
+
+        <!-- Tab Content -->
+        <div class="tab-content" id="reportTabsContent">
+            
+            <!-- Employee Tab -->
+            <div class="tab-pane fade show active" id="employee" role="tabpanel" aria-labelledby="employee-tab">
+                <div class="p-4 bg-light rounded-4 border">
+                    <h5 class="fw-bold text-dark mb-3 d-flex align-items-center gap-2">
+                        <i class="fa-solid fa-file-export text-primary"></i> Export Employee Directory
+                    </h5>
+                    <form action="{{ route('report.exportEmployee') }}" method="GET">
+                        <div class="row g-3">
+                            <div class="col-12 col-md-6">
+                                <label for="department" class="form-label fw-semibold text-dark">Department</label>
+                                <select name="department" id="department" class="form-select">
+                                    <option value="">All Departments</option>
+                                    @foreach ($departments as $department)
+                                        <option value="{{ $department->id }}">{{ $department->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-12 col-md-6">
+                                <label for="branch" class="form-label fw-semibold text-dark">Branch</label>
+                                <select name="branch" id="branch" class="form-select">
+                                    <option value="">All Branches</option>
+                                    @foreach ($branches as $branch)
+                                        <option value="{{ $branch->id }}">{{ $branch->branch_name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-12 col-md-6">
+                                <label for="start_date" class="form-label fw-semibold text-dark">From Date <span class="text-danger">*</span></label>
+                                <input type="date" name="start_date" id="start_date" class="form-control" required>
+                            </div>
+                            <div class="col-12 col-md-6">
+                                <label for="end_date" class="form-label fw-semibold text-dark">To Date <span class="text-danger">*</span></label>
+                                <input type="date" name="end_date" id="end_date" class="form-control" required>
+                            </div>
+
+                            <div class="col-12 col-md-6">
+                                <label class="form-label fw-semibold text-dark">Export Format <span class="text-danger">*</span></label>
+                                <div class="dropdown">
+                                    <button class="btn btn-white border dropdown-toggle w-100 text-start d-flex justify-content-between align-items-center py-2"
+                                            type="button" id="employee-dropdownMenuButton"
+                                            data-bs-toggle="dropdown" aria-expanded="false">
+                                        <span id="employee-format-text"><i class="fa-solid fa-file-excel text-success me-2"></i> Excel (.xlsx)</span>
+                                    </button>
+                                    <ul class="dropdown-menu w-100 shadow-sm" aria-labelledby="employee-dropdownMenuButton">
+                                        <li>
+                                            <a class="dropdown-item py-2" href="javascript:void(0)" data-value="excel" data-target="employee">
+                                                <i class="fa-solid fa-file-excel text-success me-2"></i> Excel (.xlsx)
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a class="dropdown-item py-2" href="javascript:void(0)" data-value="pdf" data-target="employee">
+                                                <i class="fa-solid fa-file-pdf text-danger me-2"></i> PDF Document (.pdf)
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </div>
+                                <input type="hidden" name="format" id="employee-format" value="excel">
+                            </div>
+
+                            <div class="col-12 col-md-6 d-flex align-items-end">
+                                <button type="submit" class="btn btn-primary w-100 py-2 fw-bold">
+                                    <i class="fa-solid fa-download me-1"></i> Download Employee Report
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Attendance Tab -->
+            <div class="tab-pane fade" id="attendance" role="tabpanel" aria-labelledby="attendance-tab">
+                <div class="p-4 bg-light rounded-4 border">
+                    <h5 class="fw-bold text-dark mb-3 d-flex align-items-center gap-2">
+                        <i class="fa-solid fa-calendar-check text-primary"></i> Export Attendance Logs
+                    </h5>
+                    <form action="{{ route('report.exportAttendance') }}" method="GET">
+                        <div class="row g-3">
+                            <div class="col-12 col-md-6">
+                                <label for="attendance_department" class="form-label fw-semibold text-dark">Department</label>
+                                <select name="department" id="attendance_department" class="form-select">
+                                    <option value="">All Departments</option>
+                                    @foreach ($departments as $department)
+                                        <option value="{{ $department->id }}">{{ $department->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-12 col-md-6">
+                                <label for="attendance_branch" class="form-label fw-semibold text-dark">Branch</label>
+                                <select name="branch" id="attendance_branch" class="form-select">
+                                    <option value="">All Branches</option>
+                                    @foreach ($branches as $branch)
+                                        <option value="{{ $branch->id }}">{{ $branch->branch_name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-12 col-md-6">
+                                <label for="attendance_start_date" class="form-label fw-semibold text-dark">From Date <span class="text-danger">*</span></label>
+                                <input type="date" name="start_date" id="attendance_start_date" class="form-control" required>
+                            </div>
+                            <div class="col-12 col-md-6">
+                                <label for="attendance_end_date" class="form-label fw-semibold text-dark">To Date <span class="text-danger">*</span></label>
+                                <input type="date" name="end_date" id="attendance_end_date" class="form-control" required>
+                            </div>
+
+                            <div class="col-12 col-md-6">
+                                <label class="form-label fw-semibold text-dark">Export Format <span class="text-danger">*</span></label>
+                                <div class="dropdown">
+                                    <button class="btn btn-white border dropdown-toggle w-100 text-start d-flex justify-content-between align-items-center py-2"
+                                            type="button" id="attendance-dropdownMenuButton"
+                                            data-bs-toggle="dropdown" aria-expanded="false">
+                                        <span id="attendance-format-text"><i class="fa-solid fa-file-excel text-success me-2"></i> Excel (.xlsx)</span>
+                                    </button>
+                                    <ul class="dropdown-menu w-100 shadow-sm" aria-labelledby="attendance-dropdownMenuButton">
+                                        <li>
+                                            <a class="dropdown-item py-2" href="javascript:void(0)" data-value="excel" data-target="attendance">
+                                                <i class="fa-solid fa-file-excel text-success me-2"></i> Excel (.xlsx)
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a class="dropdown-item py-2" href="javascript:void(0)" data-value="pdf" data-target="attendance">
+                                                <i class="fa-solid fa-file-pdf text-danger me-2"></i> PDF Document (.pdf)
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </div>
+                                <input type="hidden" name="format" id="attendance-format" value="excel">
+                            </div>
+
+                            <div class="col-12 col-md-6 d-flex align-items-end">
+                                <button type="submit" class="btn btn-primary w-100 py-2 fw-bold">
+                                    <i class="fa-solid fa-download me-1"></i> Download Attendance Report
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Leave Tab -->
+            <div class="tab-pane fade" id="leave" role="tabpanel" aria-labelledby="leave-tab">
+                <div class="p-4 bg-light rounded-4 border">
+                    <h5 class="fw-bold text-dark mb-3 d-flex align-items-center gap-2">
+                        <i class="fa-solid fa-plane-departure text-primary"></i> Export Leave History
+                    </h5>
+                    <form action="{{ route('report.exportLeave') }}" method="GET">
+                        <div class="row g-3">
+                            <div class="col-12 col-md-6">
+                                <label for="leave_department" class="form-label fw-semibold text-dark">Department</label>
+                                <select name="department" id="leave_department" class="form-select">
+                                    <option value="">All Departments</option>
+                                    @foreach ($departments as $department)
+                                        <option value="{{ $department->id }}">{{ $department->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-12 col-md-6">
+                                <label for="leave_branch" class="form-label fw-semibold text-dark">Branch</label>
+                                <select name="branch" id="leave_branch" class="form-select">
+                                    <option value="">All Branches</option>
+                                    @foreach ($branches as $branch)
+                                        <option value="{{ $branch->id }}">{{ $branch->branch_name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-12 col-md-6">
+                                <label for="leave_start_date" class="form-label fw-semibold text-dark">From Date <span class="text-danger">*</span></label>
+                                <input type="date" name="start_date" id="leave_start_date" class="form-control" required>
+                            </div>
+                            <div class="col-12 col-md-6">
+                                <label for="leave_end_date" class="form-label fw-semibold text-dark">To Date <span class="text-danger">*</span></label>
+                                <input type="date" name="end_date" id="leave_end_date" class="form-control" required>
+                            </div>
+
+                            <div class="col-12 col-md-6">
+                                <label class="form-label fw-semibold text-dark">Export Format <span class="text-danger">*</span></label>
+                                <div class="dropdown">
+                                    <button class="btn btn-white border dropdown-toggle w-100 text-start d-flex justify-content-between align-items-center py-2"
+                                            type="button" id="leave-dropdownMenuButton"
+                                            data-bs-toggle="dropdown" aria-expanded="false">
+                                        <span id="leave-format-text"><i class="fa-solid fa-file-excel text-success me-2"></i> Excel (.xlsx)</span>
+                                    </button>
+                                    <ul class="dropdown-menu w-100 shadow-sm" aria-labelledby="leave-dropdownMenuButton">
+                                        <li>
+                                            <a class="dropdown-item py-2" href="javascript:void(0)" data-value="excel" data-target="leave">
+                                                <i class="fa-solid fa-file-excel text-success me-2"></i> Excel (.xlsx)
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a class="dropdown-item py-2" href="javascript:void(0)" data-value="pdf" data-target="leave">
+                                                <i class="fa-solid fa-file-pdf text-danger me-2"></i> PDF Document (.pdf)
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </div>
+                                <input type="hidden" name="format" id="leave-format" value="excel">
+                            </div>
+
+                            <div class="col-12 col-md-6 d-flex align-items-end">
+                                <button type="submit" class="btn btn-primary w-100 py-2 fw-bold">
+                                    <i class="fa-solid fa-download me-1"></i> Download Leave Report
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+        </div>
 
     </div>
-
-    <div class="footer">
-        <p>© {{ date('Y') }} All rights reserved.</p>
-    </div>
+</div>
 @endsection
 
 @section('js')
-    <!-- Include jQuery and Bootstrap JS (optional if not already included) -->
-    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.bundle.min.js"></script>
-
-
-    <script>
-        document.querySelectorAll('.dropdown-item').forEach(item => {
-            item.addEventListener('click', function() {
-                var selectedValue = this.getAttribute('data-value');
-                var formatText = this.innerText.trim();
-                if (this.closest('#employee')) {
-                    document.getElementById('employee-dropdownMenuButton').innerHTML =
-                        `<i class="fas ${this.querySelector('i').classList[1]}"></i> ${formatText}`;
-                    document.getElementById('employee-format').value = selectedValue;
-                } else if (this.closest('#attendance')) {
-                    document.getElementById('attendance-dropdownMenuButton').innerHTML =
-                        `<i class="fas ${this.querySelector('i').classList[1]}"></i> ${formatText}`;
-                    document.getElementById('attendance-format').value = selectedValue;
-                } else if (this.closest('#leave')) {
-                    document.getElementById('leave-dropdownMenuButton').innerHTML =
-                        `<i class="fas ${this.querySelector('i').classList[1]}"></i> ${formatText}`;
-                    document.getElementById('leave-format').value = selectedValue;
-                }
-            });
+<script>
+    document.querySelectorAll('.dropdown-item').forEach(item => {
+        item.addEventListener('click', function(e) {
+            e.preventDefault();
+            const selectedValue = this.getAttribute('data-value');
+            const target = this.getAttribute('data-target');
+            const iconClass = selectedValue === 'excel' ? 'fa-file-excel text-success' : 'fa-file-pdf text-danger';
+            const labelText = selectedValue === 'excel' ? 'Excel (.xlsx)' : 'PDF Document (.pdf)';
+            
+            if (target === 'employee') {
+                document.getElementById('employee-format-text').innerHTML = `<i class="fa-solid ${iconClass} me-2"></i> ${labelText}`;
+                document.getElementById('employee-format').value = selectedValue;
+            } else if (target === 'attendance') {
+                document.getElementById('attendance-format-text').innerHTML = `<i class="fa-solid ${iconClass} me-2"></i> ${labelText}`;
+                document.getElementById('attendance-format').value = selectedValue;
+            } else if (target === 'leave') {
+                document.getElementById('leave-format-text').innerHTML = `<i class="fa-solid ${iconClass} me-2"></i> ${labelText}`;
+                document.getElementById('leave-format').value = selectedValue;
+            }
         });
-    </script>
-
+    });
+</script>
 @endsection

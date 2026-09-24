@@ -199,11 +199,49 @@ class CompanyController extends Controller
 
     public function documentVerify(Request $request)
     {
+        // Prevent re-verification of already verified employee documents
+        if (!empty($request->employee_id)) {
+            $existingEmp = Employee::find($request->employee_id);
+            if ($existingEmp) {
+                $checkField = match ($request->type) {
+                    'pan' => 'pan_verify',
+                    'aadhar', 'aadhar-otp' => 'aadhar_verify',
+                    'voter' => 'voter_verify',
+                    'driving-license', 'driving_license' => 'dl_verify',
+                    default => null
+                };
 
-
-        if ($request->type == 'pan') {
-            $url = $this->verification_url . '/api/v1/pan/pan';
+                if ($checkField && ($existingEmp->{$checkField} === 'Yes' || $existingEmp->{$checkField} === '1' || strtolower((string)$existingEmp->{$checkField}) === 'yes')) {
+                    return response()->json([
+                        'status' => 'error',
+                        'code' => 400,
+                        'message' => 'This document is already verified and cannot be re-verified.'
+                    ], 400);
+                }
+            }
         }
+
+        // Prevent re-verification of already verified company documents
+        if (!empty($request->company_id)) {
+            $existingComp = CompanyDetail::find($request->company_id);
+            if ($existingComp) {
+                $checkField = match ($request->type) {
+                    'pan' => 'pan_verify',
+                    'registration_number' => 'registration_verify',
+                    'gstin' => 'gstn_verify',
+                    default => null
+                };
+
+                if ($checkField && ($existingComp->{$checkField} === 'Yes' || $existingComp->{$checkField} === '1' || strtolower((string)$existingComp->{$checkField}) === 'yes')) {
+                    return response()->json([
+                        'status' => 'error',
+                        'code' => 400,
+                        'message' => 'This document is already verified and cannot be re-verified.'
+                    ], 400);
+                }
+            }
+        }
+
         $data = [
             'key' => $this->verification_key,
             'id_number' => $request->number,
@@ -223,7 +261,9 @@ class CompanyController extends Controller
                 break;
             case 'aadhar-otp':
                 $url = $this->verification_url . '/api/v1/aadhaar-v2/submit-otp';
-                $data['request_id'] = $request->request_id;
+                $requestId = $request->request_id ?? $request->client_id;
+                $data['request_id'] = $requestId;
+                //$data['client_id'] = $requestId;
                 $data['otp'] = $request->otp;
                 $field_name = 'aadhar_verify';
                 $data_field = 'aadhar';
@@ -249,6 +289,7 @@ class CompanyController extends Controller
                 $response_field = 'gst_response';
                 break;
             case 'driving-license':
+            case 'driving_license':
                 $url = $this->verification_url . '/api/v1/driving-license/driving-license';
                 $data['dob'] = $request->dob;
                 $field_name = 'dl_verify';
@@ -263,32 +304,64 @@ class CompanyController extends Controller
         if ($data_field == 'aadhar') {
             unset($data['id_number']);
         }
+
         $result = $this->makeCurlRequest($url, $data);
-        $data = json_decode($result);
-        if ($data->status == 'success') {
+
+        \Illuminate\Support\Facades\Log::info("QuickEKYC documentVerify [{$request->type}]:", [
+            'url' => $url,
+            'payload' => array_diff_key($data, ['key' => '']),
+            'response' => $result
+        ]);
+
+        $resArray = json_decode($result, true);
+        $resObj = is_array($resArray) ? (object) $resArray : json_decode($result);
+
+        // Normalize request_id so frontend always receives it easily
+        if (is_array($resArray)) {
+            $extractedReqId = $resArray['request_id'] ?? $resArray['data']['client_id'] ?? $resArray['data']['request_id'] ?? null;
+            if ($extractedReqId && empty($resArray['request_id'])) {
+                $resArray['request_id'] = $extractedReqId;
+                $result = json_encode($resArray);
+                $resObj = (object) $resArray;
+            }
+        }
+
+        $isSuccess = false;
+        if (is_object($resObj)) {
+            $status = $resObj->status ?? null;
+            $code = $resObj->code ?? $resObj->status_code ?? null;
+            if ($status === 'success' || $status === true || (is_string($status) && strtolower($status) === 'success') || $code == 200) {
+                $isSuccess = true;
+            }
+        }
+
+        if ($isSuccess && !empty($field_name)) {
             $document_number = $request->number;
+            $datainfo = null;
             if ($request->employee_id != null) {
                 $datainfo = Employee::find($request->employee_id);
-            }
-            if ($request->company_id != null) {
+            } elseif ($request->company_id != null) {
                 $datainfo = CompanyDetail::find($request->company_id);
                 if ($data_field == 'pan') {
                     $data_field = 'pan_number';
                 }
             }
 
-            if ($field_name != '') {
+            if ($datainfo) {
+                if (empty($document_number) && !empty($datainfo->{$data_field})) {
+                    $document_number = $datainfo->{$data_field};
+                }
                 $datainfo->{$field_name} = 'Yes';
-                $datainfo->{$data_field} = $document_number;
-                //if ($data_field == 'aadhar') {
-                    $datainfo->is_verified = 'Yes';
-                //}
+                if (!empty($document_number)) {
+                    $datainfo->{$data_field} = $document_number;
+                }
+                $datainfo->is_verified = 'Yes';
                 $datainfo->{$response_field} = $result;
                 $datainfo->save();
             }
         }
 
-        return $result;
+        return response($result)->header('Content-Type', 'application/json');
     }
 
     // Generate QR code for company info

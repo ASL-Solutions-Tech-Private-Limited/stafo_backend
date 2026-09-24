@@ -1,73 +1,97 @@
 @extends('user.layouts.app')
 
-@section('title', 'Form Details')
+@section('title', 'Expense Form Details | STAFO HRMS')
 
 @section('content')
-    <div class="card mt-4 p-3 shadow-sm">
-        <div class="container">
+@include('user.layouts.alert')
+<div class="card shadow-sm border-0">
+    <div class="card-body p-4">
 
-            <div class="row mb-3">
-                <div class="col-md-6">
-                    <h2 class="mb-3 fw-bold">Form Details</h2>
-                </div>
-                <div class="col-md-6 text-end">
-                    <a href="{{ route('expenseformList') }}" class="btn btn-primary float-right">
-                        <i class="bi bi-building"></i> Form List
-                    </a>
-                </div>
+        <!-- Page Header -->
+        <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3 mb-4 pb-3 border-bottom">
+            <div>
+                <h3 class="fw-bold text-dark mb-1">Expense Form Details</h3>
+                <p class="text-muted small mb-0">Overview of configured form inputs, custom fields, and validation rules</p>
             </div>
-
-            <div class="mt-4">
-                <div class="container px-0">
-                    <div class="row align-items-end">
-                    
-                    
-                    <div class="col-md-6">
-                        <div class="col-md-12">
-                            <label for="name" class="form-label">Expense Type</label>
-                            {{ $expense->name}}
-                        </div>
-                        <div class="col-md-12">
-                            <label for="is_document_req" class="form-label">Accept attachment</label>
-                            {{ ($expense->is_document_req==0?'No':'Yes') }}
-                        </div>
-                    </div> 
-                    <!-- Description -->
-                    <div class="col-md-12 mb-3">
-                        <label for="description" class="form-label">Description</label>
-                        {{$expense->description }}
-                    </div>
-                    <!-- Attachment -->
-                 </div>
-                 
-                  @if(count($expense->expenseForms)>0)
-                
-                <div class="row" id="fieldSection">
-                    <div class="row">
-                        <div class="col-md-4 mb-3">
-                           <b>Field Name</b>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                           <b> Field Description </b>
-                        </div>
-                        
-                    </div>
-                    @foreach($expense->expenseForms as $field)
-                    <div class="row">
-                        <div class="col-md-4 mb-3">
-                            {{$field->field_name}}
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            {{$field->description}}
-                        </div>
-                        
-                    </div>
-                    @endforeach
-                </div>
-                @endif
-                </div>
+            <div class="d-flex align-items-center gap-2">
+                <a href="{{ route('expenseformList') }}" class="btn btn-outline-secondary px-3 py-2">
+                    <i class="fa-solid fa-arrow-left me-1"></i> Back to Form List
+                </a>
+                <a href="{{ route('expenseformEdit', $expense->id) }}" class="btn btn-primary px-3 py-2">
+                    <i class="fa-solid fa-pen-to-square me-1"></i> Edit Form
+                </a>
             </div>
-
         </div>
+
+        <!-- Details Grid -->
+        <div class="row g-4 mb-4">
+            <div class="col-12 col-md-6">
+                <div class="p-3 bg-light rounded-4 border h-100">
+                    <span class="text-muted small text-uppercase fw-semibold d-block mb-1">Expense Category</span>
+                    <h5 class="fw-bold text-dark mb-0">{{ $expense->name }}</h5>
+                </div>
+            </div>
+            <div class="col-12 col-md-6">
+                <div class="p-3 bg-light rounded-4 border h-100">
+                    <span class="text-muted small text-uppercase fw-semibold d-block mb-1">Receipt Attachment Requirement</span>
+                    @if($expense->is_document_req == 1)
+                        <span class="badge-stafo badge-stafo-info fs-6">
+                            <i class="fa-solid fa-paperclip me-1"></i> Mandatory Document / Bill Receipt
+                        </span>
+                    @else
+                        <span class="badge-stafo badge-stafo-secondary fs-6">
+                            <i class="fa-solid fa-minus me-1"></i> Optional Attachment
+                        </span>
+                    @endif
+                </div>
+            </div>
+            <div class="col-12">
+                <div class="p-3 bg-light rounded-4 border">
+                    <span class="text-muted small text-uppercase fw-semibold d-block mb-1">Description & Guidelines</span>
+                    <p class="text-dark mb-0">{{ $expense->description ?: 'No specific description provided.' }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Custom Fields Section -->
+        <div class="mt-4">
+            <h5 class="fw-bold text-dark mb-3 d-flex align-items-center gap-2">
+                <i class="fa-solid fa-list-check text-primary"></i> Configured Input Fields
+            </h5>
+
+            @if(count($expense->expenseForms) > 0)
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-dark">
+                            <tr>
+                                <th style="width: 70px;" class="text-center">#</th>
+                                <th style="width: 280px;">Field Name</th>
+                                <th>Field Description / Helper Text</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($expense->expenseForms as $idx => $field)
+                                <tr>
+                                    <td class="text-center text-muted fw-semibold">{{ $idx + 1 }}</td>
+                                    <td>
+                                        <span class="fw-bold text-dark">{{ $field->field_name }}</span>
+                                    </td>
+                                    <td>
+                                        <span class="text-muted">{{ $field->description ?: '—' }}</span>
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            @else
+                <div class="text-center py-4 bg-light rounded-4 border text-muted">
+                    <i class="fa-solid fa-circle-info fs-3 mb-2 d-block opacity-50"></i>
+                    No custom fields attached to this form yet.
+                </div>
+            @endif
+        </div>
+
     </div>
+</div>
 @endsection

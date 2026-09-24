@@ -150,6 +150,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('leave-list', [EmployeeController::class, 'leaveList'])->name('leaveList');
 
     Route::post('update-geo-status', [EmployeeController::class, 'updateGeoStatus'])->name('updateGeoStatus');
+    Route::post('accept-geo-tracking', [EmployeeController::class, 'acceptGeoTracking'])->name('acceptGeoTracking');
+    Route::post('reject-geo-tracking', [EmployeeController::class, 'rejectGeoTracking'])->name('rejectGeoTracking');
+    Route::match(['get', 'post'], 'get-geo-tracking-status', [EmployeeController::class, 'getGeoTrackingStatus'])->name('getGeoTrackingStatus');
     Route::post('store-geo-location', [EmployeeController::class, 'storeGeoLocation'])->name('storeGeoLocation');
     Route::post('get-geo-location', [EmployeeController::class, 'getGeoLocation'])->name('getGeoLocation');
     Route::post('set-attendance-type', [EmployeeController::class, 'setAttendanceType'])->name('setAttendanceType');

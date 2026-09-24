@@ -10,12 +10,17 @@ use App\Models\Branch;
 use App\Models\Country;
 use App\Models\Employee;
 use App\Models\Department;
+use App\Models\Designation;
+use App\Models\CompanyRole;
 use App\Models\BankAccount;
 use App\Models\PackageFeature;
 use Illuminate\Http\Request;
 use App\Models\CompanyDetail;
 use App\Models\EmployeeLeave;
 use App\Models\EmployeeGeoLocation;
+use App\Models\Attendance;
+use App\Models\Holiday;
+use App\Models\Notification;
 use Illuminate\Validation\Rule;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
@@ -53,7 +58,17 @@ class UserEmployeeController extends Controller
 
         // Apply filters if they exist
         if ($name) {
-            $employeesQuery->where('name', 'like', '%' . $name . '%');
+            $cleanDigits = preg_replace('/[^0-9]/', '', $name);
+            $employeesQuery->where(function ($q) use ($name, $cleanDigits) {
+                $q->where('name', 'like', '%' . $name . '%')
+                  ->orWhere('email', 'like', '%' . $name . '%')
+                  ->orWhere('phone', 'like', '%' . $name . '%')
+                  ->orWhere('emp_id', 'like', '%' . $name . '%');
+
+                if (!empty($cleanDigits) && strlen($cleanDigits) >= 3) {
+                    $q->orWhere('phone', 'like', '%' . $cleanDigits . '%');
+                }
+            });
         }
 
         if ($email) {
@@ -61,7 +76,13 @@ class UserEmployeeController extends Controller
         }
 
         if ($phone) {
-            $employeesQuery->where('phone', 'like', '%' . $phone . '%');
+            $cleanPhone = preg_replace('/[^0-9]/', '', $phone);
+            $employeesQuery->where(function ($q) use ($phone, $cleanPhone) {
+                $q->where('phone', 'like', '%' . $phone . '%');
+                if (!empty($cleanPhone)) {
+                    $q->orWhere('phone', 'like', '%' . $cleanPhone . '%');
+                }
+            });
         }
 
         if ($branchId) {
@@ -217,34 +238,52 @@ class UserEmployeeController extends Controller
         }
 
         // Get filter values from the request
-        $name = $request->input('name');
-        $email = $request->input('email');
-        $phone = $request->input('phone');
+        $name = trim($request->input('name') ?? $request->input('search') ?? '');
+        $email = trim($request->input('email') ?? '');
+        $phone = trim($request->input('phone') ?? '');
         $branchId = $request->input('branch_id');
         $departmentId = $request->input('department_id');
-
+        $kycStatus = $request->input('kyc_status');
 
         $branches = Branch::where('company_id', $userId)->get();
         $departments = Department::where('company_id', $userId)->get();
-
         $shifts = Shift::where('company_id', $userId)->get();
 
         $employeesQuery = Employee::where('company_id', $userId)
             ->with('branch')
             ->with('department')
+            ->with('designation')
+            ->with('companyRole')
             ->with('shifts')
+            ->with('shift')
             ->orderBy('created_at', 'desc');
 
-        if ($name) {
-            $employeesQuery->where('name', 'like', '%' . $name . '%');
+        if ($name !== '') {
+            $cleanDigits = preg_replace('/[^0-9]/', '', $name);
+            $employeesQuery->where(function ($q) use ($name, $cleanDigits) {
+                $q->where('name', 'like', '%' . $name . '%')
+                  ->orWhere('email', 'like', '%' . $name . '%')
+                  ->orWhere('phone', 'like', '%' . $name . '%')
+                  ->orWhere('emp_id', 'like', '%' . $name . '%');
+
+                if (!empty($cleanDigits) && strlen($cleanDigits) >= 3) {
+                    $q->orWhere('phone', 'like', '%' . $cleanDigits . '%');
+                }
+            });
         }
 
-        if ($email) {
+        if ($email !== '') {
             $employeesQuery->where('email', 'like', '%' . $email . '%');
         }
 
-        if ($phone) {
-            $employeesQuery->where('phone', 'like', '%' . $phone . '%');
+        if ($phone !== '') {
+            $cleanPhone = preg_replace('/[^0-9]/', '', $phone);
+            $employeesQuery->where(function ($q) use ($phone, $cleanPhone) {
+                $q->where('phone', 'like', '%' . $phone . '%');
+                if (!empty($cleanPhone)) {
+                    $q->orWhere('phone', 'like', '%' . $cleanPhone . '%');
+                }
+            });
         }
 
         if ($branchId) {
@@ -255,14 +294,72 @@ class UserEmployeeController extends Controller
             $employeesQuery->where('department_id', $departmentId);
         }
 
-        $employees = $employeesQuery->get();
+        if ($kycStatus === 'verified') {
+            $employeesQuery->where(function ($q) {
+                $q->where('aadhar_verify', 'Yes')
+                  ->orWhere('pan_verify', 'Yes')
+                  ->orWhere('voter_verify', 'Yes')
+                  ->orWhere('dl_verify', 'Yes');
+            });
+        } elseif ($kycStatus === 'unverified') {
+            $employeesQuery->where(function ($q) {
+                $q->where(function ($sub) {
+                    $sub->whereNull('aadhar_verify')->orWhere('aadhar_verify', '!=', 'Yes');
+                })->where(function ($sub) {
+                    $sub->whereNull('pan_verify')->orWhere('pan_verify', '!=', 'Yes');
+                })->where(function ($sub) {
+                    $sub->whereNull('voter_verify')->orWhere('voter_verify', '!=', 'Yes');
+                })->where(function ($sub) {
+                    $sub->whereNull('dl_verify')->orWhere('dl_verify', '!=', 'Yes');
+                });
+            });
+        }
 
+        $perPage = (int) $request->input('per_page', 10);
+        if ($perPage <= 0 || $perPage > 100) {
+            $perPage = 10;
+        }
+
+        $employees = $employeesQuery->paginate($perPage)->withQueryString();
+
+        // Calculate quick directory statistics
+        $totalEmployees = Employee::where('company_id', $userId)->count();
+        $activeEmployees = Employee::where('company_id', $userId)->where('status', '1')->count();
+        $verifiedEmployees = Employee::where('company_id', $userId)->where(function ($q) {
+            $q->where('aadhar_verify', 'Yes')
+              ->orWhere('pan_verify', 'Yes')
+              ->orWhere('voter_verify', 'Yes')
+              ->orWhere('dl_verify', 'Yes');
+        })->count();
+        $unverifiedEmployees = max(0, $totalEmployees - $verifiedEmployees);
 
         $assignedShifts = [];
         foreach ($employees as $employee) {
             $assignedShifts[$employee->id] = $employee->shifts->pluck('id')->toArray();
         }
-        return view('user.employee.index', compact('employees', 'branches', 'departments', 'shifts', 'assignedShifts'));
+
+        $allEmployeesList = Employee::where('company_id', $userId)->orderBy('name', 'asc')->get();
+        $calendarEmployeeId = $request->input('calendar_employee_id') ?: ($employees->first()->id ?? ($allEmployeesList->first()->id ?? null));
+        $calendarEmployee = $calendarEmployeeId ? Employee::with(['branch', 'department', 'shift', 'shifts'])->find($calendarEmployeeId) : null;
+        $currentMonth = date('m');
+        $currentYear = date('Y');
+
+        return view('user.employee.index', compact(
+            'employees',
+            'branches',
+            'departments',
+            'shifts',
+            'assignedShifts',
+            'totalEmployees',
+            'activeEmployees',
+            'verifiedEmployees',
+            'unverifiedEmployees',
+            'allEmployeesList',
+            'calendarEmployee',
+            'calendarEmployeeId',
+            'currentMonth',
+            'currentYear'
+        ));
     }
 
 
@@ -307,51 +404,61 @@ class UserEmployeeController extends Controller
 
         $branches = Branch::where('company_id', $userId)->get();
         $departments = Department::where('company_id', $userId)->get();
+        $designations = Designation::where('company_id', $userId)->where('status', 1)->orderBy('name', 'asc')->get();
+        $companyRoles = CompanyRole::where('company_id', $userId)->where('status', 1)->orderBy('name', 'asc')->get();
 
         if ($branches->isEmpty() || $departments->isEmpty()) {
             // Return the view with a flag to show the modal
             return view('user.employee.popup', ['showModal' => true]);
         }
 
-
-
-        return view('user.employee.create', compact('userId', 'branches', 'departments'));
+        return view('user.employee.create', compact('userId', 'branches', 'departments', 'designations', 'companyRoles'));
     }
 
     // Store a newly created employee in the database
     public function store(Request $request)
     {
+        $company_id = Auth::id();
 
         $request->validate([
             'name' => 'required|string|min:6|max:55',
             'email' => 'required|email|unique:employees,email',
             'phone' => 'required|digits:10|unique:employees,phone',
-
+            'designation_id' => 'nullable|exists:designations,id',
+            'company_role_id' => 'nullable|exists:company_roles,id',
+            'position' => 'nullable|string|max:255',
+            'salary' => 'nullable|numeric',
+            'attendance_type' => 'nullable|string|in:geo,selfie,qr code,qr',
         ]);
 
-        $company_id = Auth::id();
+        $position = $request->position;
+        if ($request->filled('designation_id')) {
+            $desig = Designation::where('company_id', $company_id)->find($request->designation_id);
+            if ($desig) {
+                $position = $desig->name;
+            }
+        }
+
         Employee::create([
             'name' =>  $request->name,
             'email' =>  $request->email,
             'phone' =>   $request->phone,
-            'position' =>   $request->position,
+            'designation_id' => $request->filled('designation_id') ? $request->designation_id : null,
+            'company_role_id' => $request->filled('company_role_id') ? $request->company_role_id : null,
+            'position' =>   $position,
             'salary' =>   $request->salary ?: 0,
+            'attendance_type' => $request->attendance_type ?: 'geo',
             'company_id' => $company_id,
-            // 'branch_id' => $request->branch_id ?? null,
-            // 'department_id' => $request->department_id ?? null,
             'status' => 1,
         ]);
 
-       $company = CompanyDetail::findOrFail($company_id); 
-       $company->increment('employee_added', 1);
-
+        $company = CompanyDetail::findOrFail($company_id); 
+        $company->increment('employee_added', 1);
 
         Alert::success('Success', 'Employee Details has been saved successfully.');
 
         return redirect()->route('employee.index')->with('success', 'Employee added successfully.');
     }
-
-
 
     public function show($id, Request $request)
     {
@@ -359,16 +466,38 @@ class UserEmployeeController extends Controller
         if ($is_verified == 'No') {
             return view('user.verify_check');
         }
-        // $employee = Employee::findOrFail($id);
-        $employee = Employee::with(['country', 'state', 'city'])->findOrFail($id);
+        $userId = Auth::id();
+        $employee = Employee::with([
+            'country', 'state', 'city',
+            'branch', 'department', 'designation', 'companyRole.permissions', 'permissionOverrides',
+            'shift', 'shifts', 'bankAccount', 'document.documentType', 'documents.documentType', 'employeeType', 'leaves'
+        ])->where('company_id', $userId)->findOrFail($id);
 
+        $employee->image_url = ($employee->image && file_exists(public_path('uploads/employees/' . $employee->image)))
+            ? asset('uploads/employees/' . $employee->image)
+            : null;
 
+        $employee->resume_url = null;
+        if ($employee->resume) {
+            if (file_exists(public_path('uploads/resumes/' . $employee->resume))) {
+                $employee->resume_url = asset('uploads/resumes/' . $employee->resume);
+            } elseif (file_exists(public_path('resumes/' . $employee->resume))) {
+                $employee->resume_url = asset('resumes/' . $employee->resume);
+            } else {
+                $employee->resume_url = asset('uploads/resumes/' . $employee->resume);
+            }
+        }
 
-        $employee->image_url = $employee->image ? asset('images/employees/' . $employee->image) : null;
-        $employee->resume_url = $employee->resume ? asset('resumes/' . $employee->resume) : null;
-        $employee->selfie_url = $employee->resume ? asset('uploads/employees/selfie' . $employee->selfie_image) : null;
+        $employee->selfie_url = null;
+        if ($employee->selfie_image) {
+            if (file_exists(public_path('uploads/employees/selfie/' . $employee->selfie_image))) {
+                $employee->selfie_url = asset('uploads/employees/selfie/' . $employee->selfie_image);
+            } else {
+                $employee->selfie_url = asset('uploads/employees/' . $employee->selfie_image);
+            }
+        }
 
-        $companyId = $request->query('company_id');
+        $companyId = $request->query('company_id', $userId);
 
         // Pass the data to the view
         return view('user.employee.show', compact('employee'));
@@ -378,10 +507,18 @@ class UserEmployeeController extends Controller
 
     public function destroy(Employee $employee)
     {
-        $employee->delete();
-        Alert::success('Success', 'Employee Details has been Deleted successfully.');
+        $userId = Auth::id();
+        if ($employee->company_id != $userId) {
+            abort(403, 'Unauthorized access to delete this employee.');
+        }
 
-        return redirect()->route('employee.index')->with('success', 'Employee deleted successfully.');
+        DB::transaction(function () use ($employee) {
+            $employee->delete();
+        });
+
+        Alert::success('Success', 'Employee records have been deleted successfully.');
+
+        return redirect()->route('employee.index')->with('success', 'Employee records deleted successfully.');
     }
 
     public function edit($id)
@@ -391,24 +528,44 @@ class UserEmployeeController extends Controller
             return view('user.verify_check');
         }
         $userId = Auth::id();
-        $employee = Employee::with(['branch', 'department'])->findOrFail($id);
+        $employee = Employee::with(['branch', 'department', 'shifts', 'shift', 'designation', 'companyRole'])
+            ->where('company_id', $userId)
+            ->findOrFail($id);
         $branches = Branch::where('company_id', $userId)->get();
         $departments = Department::where('company_id', $userId)->get();
-        return view('user.employee.edit', compact('employee', 'branches', 'departments'));
+        $shifts = Shift::where('company_id', $userId)->get();
+        $designations = Designation::where('company_id', $userId)->where('status', 1)->orderBy('name', 'asc')->get();
+        $companyRoles = CompanyRole::where('company_id', $userId)->where('status', 1)->orderBy('name', 'asc')->get();
+
+        $assignedShiftIds = $employee->shifts->pluck('id')->toArray();
+        if (empty($assignedShiftIds) && $employee->shift_id) {
+            $assignedShiftIds = [$employee->shift_id];
+        }
+
+        return view('user.employee.edit', compact('employee', 'branches', 'departments', 'shifts', 'assignedShiftIds', 'designations', 'companyRoles'));
     }
 
 
     public function update(Request $request, $id)
     {
+        $userId = Auth::id();
         // Validate the incoming data
         $request->validate([
             'name' => 'required|string|min:6|max:55',
             'email' => 'required|email|unique:employees,email,' . $id,
             'phone' => 'required|digits:10',
+            'branch_id' => 'nullable|exists:branches,id',
+            'department_id' => 'nullable|exists:departments,id',
+            'designation_id' => 'nullable|exists:designations,id',
+            'company_role_id' => 'nullable|exists:company_roles,id',
+            'position' => 'nullable|string|max:255',
+            'shift_ids' => 'nullable|array',
+            'shift_ids.*' => 'exists:shifts,id',
+            'attendance_type' => 'nullable|string|in:geo,selfie,qr code,qr',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'resume' => 'nullable|mimes:pdf,doc,docx|max:10240',
         ]);
-        $employee = Employee::findOrFail($id);
+        $employee = Employee::where('company_id', $userId)->findOrFail($id);
 
         // Prepare the data to be updated
         $data = $request->only([
@@ -424,7 +581,45 @@ class UserEmployeeController extends Controller
             'address',
             'date_of_joining',
             'date_of_leaving',
+            'attendance_type',
+            'designation_id',
+            'company_role_id',
         ]);
+
+        $data['attendance_type'] = $request->filled('attendance_type') ? $request->attendance_type : ($employee->attendance_type ?: 'geo');
+        $data['designation_id'] = $request->filled('designation_id') ? $request->designation_id : null;
+        $data['company_role_id'] = $request->filled('company_role_id') ? $request->company_role_id : null;
+
+        // If designation selected, auto-sync position
+        if ($request->filled('designation_id')) {
+            $desig = Designation::where('company_id', $userId)->find($request->designation_id);
+            if ($desig) {
+                $data['position'] = $desig->name;
+            }
+        }
+
+        // Branch and Department assignment
+        $data['branch_id'] = $request->filled('branch_id') ? $request->branch_id : null;
+        $data['department_id'] = $request->filled('department_id') ? $request->department_id : null;
+
+        // Shift assignment logic
+        if ($request->has('shift_ids')) {
+            $shiftIds = array_values(array_filter((array) $request->input('shift_ids', [])));
+            $data['shift_id'] = !empty($shiftIds) ? $shiftIds[0] : null;
+
+            $shifts = Shift::whereIn('id', $shiftIds)
+                ->where('company_id', $userId)
+                ->get();
+
+            $employee->shifts()->sync(
+                $shifts->mapWithKeys(function ($shift) use ($userId) {
+                    return [$shift->id => ['company_id' => $userId]];
+                })->toArray()
+            );
+        } else {
+            $data['shift_id'] = null;
+            $employee->shifts()->sync([]);
+        }
 
         if ($request->hasFile('image')) {
             $extension = $request->file('image')->getClientOriginalExtension();
@@ -433,20 +628,24 @@ class UserEmployeeController extends Controller
             $data['image'] = $imageName;
         }
 
-
         // Handling resume upload
         if ($request->hasFile('resume')) {
             // Check if a resume already exists, and delete it if needed
             if ($employee->resume && file_exists(public_path('uploads/resumes/' . $employee->resume))) {
                 unlink(public_path('uploads/resumes/' . $employee->resume));
             }
+            if ($employee->resume && file_exists(public_path('resumes/' . $employee->resume))) {
+                unlink(public_path('resumes/' . $employee->resume));
+            }
 
             $extension = $request->file('resume')->getClientOriginalExtension();
             $resumeName = 'employee_' . $id . '_resume_' . time() . '.' . $extension;
-            $request->file('resume')->move(public_path('resumes'), $resumeName);
+            if (!file_exists(public_path('uploads/resumes'))) {
+                mkdir(public_path('uploads/resumes'), 0777, true);
+            }
+            $request->file('resume')->move(public_path('uploads/resumes'), $resumeName);
             $data['resume'] = $resumeName;
         }
-
 
         // Update the employee data
         $employee->update($data);
@@ -715,12 +914,32 @@ class UserEmployeeController extends Controller
         $type = $request->type;
         $data = $request->data;
         $employee = Employee::find($id);
+
+        if (!$employee) {
+            return response()->json(['success' => false, 'message' => 'Employee not found.'], 404);
+        }
+
+        $verifyField = match ($type) {
+            'aadhar' => 'aadhar_verify',
+            'pan' => 'pan_verify',
+            'voter' => 'voter_verify',
+            'driving_license' => 'dl_verify',
+            default => null
+        };
+
+        if ($verifyField && ($employee->{$verifyField} === 'Yes' || $employee->{$verifyField} === '1')) {
+            return response()->json([
+                'success' => false,
+                'message' => 'This document is already verified and cannot be modified.'
+            ], 422);
+        }
+
         $employee->{$type} = $data;
         $employee->save();
-        return response()->json(['success' => true, 'message' => 'Document verified successfully']);
+        return response()->json(['success' => true, 'message' => 'Document saved successfully']);
     }
 
-    public function location(Request $request,$id)
+    public function location(Request $request, $id = null)
     {
         $company = Auth::user();
         $is_verified = $company->is_verified;
@@ -731,23 +950,613 @@ class UserEmployeeController extends Controller
         if ($request->has('date')) {
             $date = $request->input('date');
         }
-        $employee = Employee::where('company_id',$company->id)->find($id);
-        if (!$employee) {
-            return view('user.not_found', ['message' => 'Employee not found']);
+
+        $employees = Employee::where('company_id', $company->id)->orderBy('name', 'asc')->get();
+
+        if ($request->filled('employee_id')) {
+            $id = $request->input('employee_id');
         }
-        $geoLocations = EmployeeGeoLocation::where('employee_id', $id)->whereDate('created_at',$date)->get();
-        if ($geoLocations->isEmpty()) {
-            $latlng = [];
+
+        if ($id) {
+            $employee = Employee::with(['branch', 'shifts', 'shift'])->where('company_id', $company->id)->find($id);
         } else {
-            foreach ($geoLocations as $k => $location) {
-                $latlng[$k]['lat'] = (float)$location->latitude;
-                $latlng[$k]['lng'] = (float)$location->longitude;
+            // Prioritize employee who has active tracking (geo_status = '2'), or pending (geo_status = '1'), or first in list
+            $preferredEmp = $employees->firstWhere('geo_status', '2') 
+                ?? $employees->firstWhere('geo_status', '1') 
+                ?? $employees->first();
+
+            $employee = $preferredEmp 
+                ? Employee::with(['branch', 'shifts', 'shift'])->where('company_id', $company->id)->find($preferredEmp->id) 
+                : null;
+        }
+
+        if (!$employee && $employees->isEmpty()) {
+            return view('user.not_found', ['message' => 'No employees found in your company.']);
+        }
+
+        $latlng = [];
+        $rawPoints = [];
+        $halts = [];
+        $totalDistanceMeters = 0;
+        $startPoint = null;
+        $endPoint = null;
+        $journeyStats = null;
+
+        $shiftDetails = null;
+        if ($employee) {
+            $shiftDetails = $employee->getShiftWindowForDate($date);
+
+            // When date is today: Location is strictly visible ONLY when the employee has accepted tracking (geo_status == '2')
+            if ((string)$employee->geo_status !== '2' && $date === date('Y-m-d')) {
+                $geoLocations = collect();
+            } else {
+                $query = EmployeeGeoLocation::where('employee_id', $employee->id);
+
+                if ($shiftDetails && isset($shiftDetails['start']) && isset($shiftDetails['end'])) {
+                    // If this is a scheduled off-day, we can check if off-day
+                    if (!empty($shiftDetails['is_off_day'])) {
+                        // Off day: tracking is inactive
+                        $geoLocations = collect();
+                    } else {
+                        $query->whereBetween('created_at', [
+                            $shiftDetails['start']->toDateTimeString(),
+                            $shiftDetails['end']->toDateTimeString()
+                        ]);
+                        $geoLocations = $query->orderBy('created_at', 'asc')->get();
+                    }
+                } else {
+                    $query->whereBetween('created_at', [$date . ' 00:00:00', $date . ' 23:59:59']);
+                    $geoLocations = $query->orderBy('created_at', 'asc')->get();
+                }
+            }
+
+            if ($geoLocations->isNotEmpty()) {
+                foreach ($geoLocations as $loc) {
+                    $pt = [
+                        'lat' => (float)$loc->latitude,
+                        'lng' => (float)$loc->longitude,
+                        'time' => $loc->created_at->format('h:i A'),
+                        'time_full' => $loc->created_at->format('d M Y, h:i:s A'),
+                        'timestamp' => $loc->created_at->timestamp,
+                        'battery' => $loc->battery_status ?? null,
+                    ];
+                    $rawPoints[] = $pt;
+                    $latlng[] = ['lat' => $pt['lat'], 'lng' => $pt['lng']];
+                }
+
+                $totalPoints = count($rawPoints);
+                $startPoint = $rawPoints[0];
+                $endPoint = $rawPoints[$totalPoints - 1];
+
+                // Calculate point-by-point speeds and peak speed
+                $maxSpeedKmh = 0;
+                $rawPoints[0]['speed_kmh'] = 0;
+                for ($i = 1; $i < $totalPoints; $i++) {
+                    $prevPt = $rawPoints[$i - 1];
+                    $currPt = $rawPoints[$i];
+                    $stepDist = $this->calculateDistanceMeters($prevPt['lat'], $prevPt['lng'], $currPt['lat'], $currPt['lng']);
+                    $timeDeltaSec = max(1, $currPt['timestamp'] - $prevPt['timestamp']);
+                    $calcSpeed = round(($stepDist / $timeDeltaSec) * 3.6, 1);
+                    if ($calcSpeed > 130) {
+                        $calcSpeed = $rawPoints[$i - 1]['speed_kmh'] ?? 0;
+                    }
+                    $rawPoints[$i]['speed_kmh'] = $calcSpeed;
+                    if ($calcSpeed > $maxSpeedKmh) {
+                        $maxSpeedKmh = $calcSpeed;
+                    }
+                }
+
+                // Parameters for Stoppage / Pause detection
+                // A halt is when consecutive points remain within ~60m for 3+ minutes (180s)
+                $haltMinDuration = 180; // 3 minutes threshold
+                $clusterRadiusMeters = 60; // 60 meters radius threshold
+
+                $currentCluster = [$rawPoints[0]];
+
+                for ($i = 1; $i < $totalPoints; $i++) {
+                    $prev = $rawPoints[$i - 1];
+                    $curr = $rawPoints[$i];
+
+                    $stepDist = $this->calculateDistanceMeters($prev['lat'], $prev['lng'], $curr['lat'], $curr['lng']);
+                    $totalDistanceMeters += $stepDist;
+
+                    $distFromAnchor = $this->calculateDistanceMeters(
+                        $currentCluster[0]['lat'], $currentCluster[0]['lng'],
+                        $curr['lat'], $curr['lng']
+                    );
+
+                    if ($distFromAnchor <= $clusterRadiusMeters) {
+                        $currentCluster[] = $curr;
+                    } else {
+                        // Check if previous cluster was a stoppage/pause
+                        $firstPt = $currentCluster[0];
+                        $lastPt = end($currentCluster);
+                        $pauseSeconds = $lastPt['timestamp'] - $firstPt['timestamp'];
+
+                        if ($pauseSeconds >= $haltMinDuration) {
+                            $avgLat = array_sum(array_column($currentCluster, 'lat')) / count($currentCluster);
+                            $avgLng = array_sum(array_column($currentCluster, 'lng')) / count($currentCluster);
+
+                            $halts[] = [
+                                'stop_number' => count($halts) + 1,
+                                'lat' => round($avgLat, 6),
+                                'lng' => round($avgLng, 6),
+                                'start_time' => $firstPt['time'],
+                                'end_time' => $lastPt['time'],
+                                'start_time_full' => $firstPt['time_full'],
+                                'end_time_full' => $lastPt['time_full'],
+                                'duration_seconds' => $pauseSeconds,
+                                'duration_text' => $this->formatDurationText($pauseSeconds),
+                                'battery' => $lastPt['battery'] ?? $firstPt['battery'],
+                                'points_count' => count($currentCluster),
+                            ];
+                        }
+
+                        $currentCluster = [$curr];
+                    }
+                }
+
+                // Check final cluster at the destination / end of day
+                if (count($currentCluster) > 1) {
+                    $firstPt = $currentCluster[0];
+                    $lastPt = end($currentCluster);
+                    $pauseSeconds = $lastPt['timestamp'] - $firstPt['timestamp'];
+
+                    if ($pauseSeconds >= $haltMinDuration) {
+                        $avgLat = array_sum(array_column($currentCluster, 'lat')) / count($currentCluster);
+                        $avgLng = array_sum(array_column($currentCluster, 'lng')) / count($currentCluster);
+
+                        $halts[] = [
+                            'stop_number' => count($halts) + 1,
+                            'lat' => round($avgLat, 6),
+                            'lng' => round($avgLng, 6),
+                            'start_time' => $firstPt['time'],
+                            'end_time' => $lastPt['time'],
+                            'start_time_full' => $firstPt['time_full'],
+                            'end_time_full' => $lastPt['time_full'],
+                            'duration_seconds' => $pauseSeconds,
+                            'duration_text' => $this->formatDurationText($pauseSeconds),
+                            'battery' => $lastPt['battery'] ?? $firstPt['battery'],
+                            'points_count' => count($currentCluster),
+                        ];
+                    }
+                }
+
+                // Overall journey statistics
+                $totalTripSeconds = max(0, $endPoint['timestamp'] - $startPoint['timestamp']);
+                $totalHaltSeconds = array_sum(array_column($halts, 'duration_seconds'));
+                $movingSeconds = max(0, $totalTripSeconds - $totalHaltSeconds);
+                $avgSpeedKmh = $movingSeconds > 0 ? round(($totalDistanceMeters / 1000) / ($movingSeconds / 3600), 1) : 0;
+
+                $journeyStats = [
+                    'start_time' => $startPoint['time'],
+                    'end_time' => $endPoint['time'],
+                    'start_time_full' => $startPoint['time_full'],
+                    'end_time_full' => $endPoint['time_full'],
+                    'start_battery' => $startPoint['battery'],
+                    'end_battery' => $endPoint['battery'],
+                    'total_distance_km' => round($totalDistanceMeters / 1000, 2),
+                    'total_duration' => $this->formatDurationText($totalTripSeconds),
+                    'total_halt_duration' => $this->formatDurationText($totalHaltSeconds),
+                    'moving_duration' => $this->formatDurationText($movingSeconds),
+                    'total_stops' => count($halts),
+                    'total_points' => $totalPoints,
+                    'max_speed_kmh' => $maxSpeedKmh,
+                    'avg_speed_kmh' => $avgSpeedKmh,
+                ];
             }
         }
+
+        // Branch Geofence Data
+        $branchGeofence = null;
+        if ($employee && $employee->branch && $employee->branch->latitude && $employee->branch->longitude) {
+            $branchGeofence = [
+                'name' => $employee->branch->branch_name,
+                'address' => $employee->branch->branch_address ?? '',
+                'lat' => (float)$employee->branch->latitude,
+                'lng' => (float)$employee->branch->longitude,
+                'radius' => (int)($employee->branch->radar ?? 200),
+            ];
+        }
+        $branch_geofence_json = json_encode($branchGeofence);
+
         $map_view = $company->map_view;
-        //$map_view = "MapMyIndia";
         $location_info = json_encode($latlng);
-        //$location_info = $latlng;
-        return view('user.employee.location', compact('employee', 'location_info','date','map_view'));
+        $raw_points_json = json_encode($rawPoints);
+        $halts_json = json_encode($halts);
+        $start_point_json = json_encode($startPoint);
+        $end_point_json = json_encode($endPoint);
+
+        return view('user.employee.location', compact(
+            'employee',
+            'employees',
+            'location_info',
+            'raw_points_json',
+            'halts',
+            'halts_json',
+            'startPoint',
+            'endPoint',
+            'start_point_json',
+            'end_point_json',
+            'journeyStats',
+            'shiftDetails',
+            'date',
+            'map_view',
+            'branchGeofence',
+            'branch_geofence_json'
+        ));
+    }
+
+    public function getLiveLocation(Request $request, $id)
+    {
+        try {
+            $companyId = Auth::id();
+            $employee = Employee::where('company_id', $companyId)->find($id);
+
+            if (!$employee) {
+                return response()->json(['status' => false, 'message' => 'Employee not found'], 404);
+            }
+
+            if ((string)$employee->geo_status !== '2') {
+                return response()->json([
+                    'status' => false,
+                    'tracking_active' => false,
+                    'geo_status' => (string)$employee->geo_status,
+                    'message' => (string)$employee->geo_status === '1'
+                        ? 'Location tracking request is pending acceptance by employee.'
+                        : 'Tracking is turned off by company.'
+                ], 200);
+            }
+
+            $date = $request->input('date', date('Y-m-d'));
+            $lastTimestamp = $request->input('since_timestamp');
+
+            $query = EmployeeGeoLocation::where('employee_id', $employee->id)
+                ->whereDate('created_at', $date);
+
+            if ($lastTimestamp) {
+                $query->where('created_at', '>', Carbon::createFromTimestamp($lastTimestamp)->toDateTimeString());
+            }
+
+            $locations = $query->orderBy('created_at', 'asc')->get();
+
+            $newPoints = [];
+            foreach ($locations as $loc) {
+                $newPoints[] = [
+                    'lat' => (float)$loc->latitude,
+                    'lng' => (float)$loc->longitude,
+                    'time' => $loc->created_at->format('h:i A'),
+                    'time_full' => $loc->created_at->format('d M Y, h:i:s A'),
+                    'timestamp' => $loc->created_at->timestamp,
+                    'battery' => $loc->battery_status ?? null,
+                ];
+            }
+
+            return response()->json([
+                'status' => true,
+                'tracking_active' => true,
+                'total_new_points' => count($newPoints),
+                'new_points' => $newPoints,
+                'latest_timestamp' => count($newPoints) > 0 ? end($newPoints)['timestamp'] : $lastTimestamp,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['status' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
+
+    public function updateGeoStatus(Request $request)
+    {
+        try {
+            $request->validate([
+                'employee_id' => 'required',
+                'geo_status' => 'required'
+            ]);
+
+            $companyId = Auth::id();
+            $employee = Employee::where('company_id', $companyId)->find($request->employee_id);
+
+            if (!$employee) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Employee not found or does not belong to your company.',
+                ], 404);
+            }
+
+            $newGeoStatus = (string) $request->geo_status;
+            $employee->geo_status = $newGeoStatus;
+            $employee->save();
+
+            // When location tracking is requested/enabled (geo_status = 1), log in-app notification
+            if ($newGeoStatus === '1') {
+                Notification::create([
+                    'employee_id' => $employee->id,
+                    'company_id' => $companyId,
+                    'message' => 'Company has requested your real-time location tracking.',
+                    'status' => 'unread',
+                ]);
+            }
+
+            return response()->json([
+                'status' => true,
+                'message' => $newGeoStatus === '1' 
+                    ? 'Geo tracking request sent to employee successfully.' 
+                    : 'Geo tracking disabled successfully.',
+                'geo_status' => $employee->geo_status,
+                'employee_id' => $employee->id,
+                'employee_name' => $employee->name,
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => false,
+                'message' => 'An error occurred while updating status: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    private function calculateDistanceMeters($lat1, $lon1, $lat2, $lon2)
+    {
+        $earthRadius = 6371000; // in meters
+        $dLat = deg2rad($lat2 - $lat1);
+        $dLon = deg2rad($lon2 - $lon1);
+        $a = sin($dLat / 2) * sin($dLat / 2) +
+             cos(deg2rad($lat1)) * cos(deg2rad($lat2)) *
+             sin($dLon / 2) * sin($dLon / 2);
+        $c = 2 * atan2(sqrt($a), sqrt(1 - $a));
+        return $earthRadius * $c;
+    }
+
+    private function formatDurationText($seconds)
+    {
+        if ($seconds < 60) {
+            return $seconds . 's';
+        }
+        $minutes = round($seconds / 60);
+        if ($minutes < 60) {
+            return $minutes . ' min' . ($minutes > 1 ? 's' : '');
+        }
+        $hours = floor($minutes / 60);
+        $remMinutes = $minutes % 60;
+        if ($remMinutes == 0) {
+            return $hours . ' hr' . ($hours > 1 ? 's' : '');
+        }
+        return $hours . 'h ' . $remMinutes . 'm';
+    }
+
+    public function getMonthlyAttendance(Request $request, $id)
+    {
+        try {
+            $companyId = Auth::id();
+            $employee = Employee::with(['branch', 'department', 'shift', 'shifts'])
+                ->where('company_id', $companyId)
+                ->find($id);
+
+            if (!$employee) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Employee not found or does not belong to your company.'
+                ], 404);
+            }
+
+            $month = sprintf('%02d', (int) $request->input('month', date('m')));
+            $year = (int) $request->input('year', date('Y'));
+
+            // Attendance records for the month
+            $monthlyAttendances = Attendance::where('employee_id', $employee->id)
+                ->whereMonth('date', $month)
+                ->whereYear('date', $year)
+                ->get()
+                ->keyBy(function($item) {
+                    return Carbon::parse($item->date)->format('Y-m-d');
+                });
+
+            // Company Holidays for the month
+            $monthlyHolidays = Holiday::where('company_id', $companyId)
+                ->where(function($q) use ($year, $month) {
+                    $q->whereYear('start_date', $year)->whereMonth('start_date', $month)
+                      ->orWhere(function($sq) use ($year, $month) {
+                          $sq->whereYear('end_date', $year)->whereMonth('end_date', $month);
+                      });
+                })
+                ->get();
+
+            $holidayDates = [];
+            foreach ($monthlyHolidays as $h) {
+                $sDate = Carbon::parse($h->start_date);
+                $eDate = !empty($h->end_date) ? Carbon::parse($h->end_date) : $sDate;
+                for ($d = $sDate->copy(); $d->lte($eDate); $d->addDay()) {
+                    if ($d->format('m') == $month && $d->format('Y') == $year) {
+                        $holidayDates[$d->format('Y-m-d')] = [
+                            'title' => $h->title,
+                            'description' => $h->description ?? '',
+                        ];
+                    }
+                }
+            }
+
+            // Approved Leaves for the month
+            $approvedLeaves = EmployeeLeave::with('leavetype')
+                ->where('employee_id', $employee->id)
+                ->where('status', 'approved')
+                ->where(function($q) use ($year, $month) {
+                    $q->whereYear('from_date', $year)->whereMonth('from_date', $month)
+                      ->orWhere(function($sq) use ($year, $month) {
+                          $sq->whereYear('to_date', $year)->whereMonth('to_date', $month);
+                      });
+                })
+                ->get();
+
+            $leaveDates = [];
+            foreach ($approvedLeaves as $l) {
+                $sDate = Carbon::parse($l->from_date);
+                $eDate = !empty($l->to_date) ? Carbon::parse($l->to_date) : $sDate;
+                $leaveTitle = (!empty($l->leavetype->name)) ? $l->leavetype->name : ((!empty($l->leave_type) && !is_numeric($l->leave_type)) ? $l->leave_type : 'Approved Leave');
+                for ($d = $sDate->copy(); $d->lte($eDate); $d->addDay()) {
+                    if ($d->format('m') == $month && $d->format('Y') == $year) {
+                        $leaveDates[$d->format('Y-m-d')] = [
+                            'leave_type' => $leaveTitle,
+                            'reason' => $l->reason ?? '',
+                        ];
+                    }
+                }
+            }
+
+            // Days calculation
+            $startOfMonth = Carbon::createFromDate($year, (int)$month, 1)->startOfMonth();
+            $endOfMonth = Carbon::createFromDate($year, (int)$month, 1)->endOfMonth();
+            $daysInMonth = $endOfMonth->day;
+            $today = Carbon::today();
+
+            $days = [];
+            $presentCount = 0;
+            $halfDayCount = 0;
+            $leaveCount = 0;
+            $holidayCount = 0;
+            $weekendCount = 0;
+            $absentCount = 0;
+
+            for ($day = 1; $day <= $daysInMonth; $day++) {
+                $cur = Carbon::createFromDate($year, (int)$month, $day);
+                $dateStr = $cur->format('Y-m-d');
+                $isSunday = $cur->isSunday();
+                $isToday = $cur->isSameDay($today);
+                $isFuture = $cur->gt($today) && !$isToday;
+
+                $att = $monthlyAttendances[$dateStr] ?? null;
+                $hol = $holidayDates[$dateStr] ?? null;
+                $leave = $leaveDates[$dateStr] ?? null;
+
+                $status = 'none';
+                $statusText = 'No Record';
+                $badgeClass = 'bg-light text-muted';
+                $inTime = null;
+                $outTime = null;
+                $workDuration = null;
+
+                if ($att) {
+                    $inTime = $att->in_time ? Carbon::parse($att->in_time)->format('h:i A') : null;
+                    $outTime = $att->out_time ? Carbon::parse($att->out_time)->format('h:i A') : null;
+                    if ($att->in_time && $att->out_time) {
+                        $inCarbon = Carbon::parse($att->in_time);
+                        $outCarbon = Carbon::parse($att->out_time);
+                        if ($outCarbon->gte($inCarbon)) {
+                            $diffMin = $inCarbon->diffInMinutes($outCarbon);
+                            $h = intdiv($diffMin, 60);
+                            $m = $diffMin % 60;
+                            $workDuration = ($h > 0 ? "{$h}h " : "") . "{$m}m";
+                        }
+                    }
+
+                    if ((int)$att->halfday === 1 || strtolower($att->attendance) === 'half day' || strtolower($att->attendance) === 'halfday') {
+                        $status = 'halfday';
+                        $statusText = 'Half Day';
+                        $badgeClass = 'bg-warning text-dark';
+                        $halfDayCount++;
+                    } elseif (strtolower($att->attendance) === 'leave') {
+                        $status = 'leave';
+                        $statusText = 'Leave';
+                        $badgeClass = 'bg-info text-white';
+                        $leaveCount++;
+                    } elseif (strtolower($att->attendance) === 'absent') {
+                        $status = 'absent';
+                        $statusText = 'Absent';
+                        $badgeClass = 'bg-danger text-white';
+                        $absentCount++;
+                    } else {
+                        $status = 'present';
+                        $statusText = 'Present';
+                        $badgeClass = 'bg-success text-white';
+                        $presentCount++;
+                    }
+                } elseif ($hol) {
+                    $status = 'holiday';
+                    $statusText = $hol['title'];
+                    $badgeClass = 'bg-purple text-white';
+                    $holidayCount++;
+                } elseif ($leave) {
+                    $status = 'leave';
+                    $statusText = $leave['leave_type'];
+                    $badgeClass = 'bg-primary text-white';
+                    $leaveCount++;
+                } elseif ($isSunday) {
+                    $status = 'weekend';
+                    $statusText = 'Weekly Off';
+                    $badgeClass = 'bg-secondary text-white';
+                    $weekendCount++;
+                } elseif (!$isFuture) {
+                    // Past working day without attendance/holiday/leave
+                    if ($cur->lt($today)) {
+                        $status = 'absent';
+                        $statusText = 'Absent';
+                        $badgeClass = 'bg-danger text-white';
+                        $absentCount++;
+                    } else {
+                        // Today without punch yet
+                        $status = 'pending';
+                        $statusText = 'Pending Check-in';
+                        $badgeClass = 'bg-warning-subtle text-warning';
+                    }
+                } else {
+                    $status = 'future';
+                    $statusText = 'Upcoming';
+                    $badgeClass = 'bg-light text-muted';
+                }
+
+                $days[$dateStr] = [
+                    'day' => $day,
+                    'day_name' => $cur->format('D'),
+                    'full_date' => $cur->format('d M, Y'),
+                    'status' => $status,
+                    'status_text' => $statusText,
+                    'badge_class' => $badgeClass,
+                    'is_today' => $isToday,
+                    'is_future' => $isFuture,
+                    'is_weekend' => $isSunday,
+                    'in_time' => $inTime,
+                    'out_time' => $outTime,
+                    'work_duration' => $workDuration,
+                    'punchin_image' => $att && $att->punchin_image ? asset($att->punchin_image) : null,
+                    'punchout_image' => $att && $att->punchout_image ? asset($att->punchout_image) : null,
+                    'location_url' => route('employee.location', ['id' => $employee->id]) . '?date=' . $dateStr,
+                ];
+            }
+
+            return response()->json([
+                'status' => true,
+                'employee' => [
+                    'id' => $employee->id,
+                    'name' => $employee->name,
+                    'emp_id' => $employee->emp_id,
+                    'phone' => $employee->phone,
+                    'email' => $employee->email,
+                    'image' => ($employee->image && file_exists(public_path('uploads/employees/' . $employee->image))) ? asset('uploads/employees/' . $employee->image) : null,
+                    'initials' => strtoupper(substr($employee->name ?? 'E', 0, 2)),
+                    'branch' => $employee->branch->branch_name ?? 'Not Assigned',
+                    'department' => $employee->department->name ?? 'Not Assigned',
+                    'shift' => $employee->shift->shift_name ?? 'Not Assigned',
+                    'geo_status' => (string)$employee->geo_status,
+                ],
+                'month' => $month,
+                'month_name' => Carbon::createFromDate($year, (int)$month, 1)->format('F'),
+                'year' => $year,
+                'start_day_of_week' => $startOfMonth->dayOfWeekIso, // 1 (Mon) to 7 (Sun)
+                'days_in_month' => $daysInMonth,
+                'summary' => [
+                    'total_days' => $daysInMonth,
+                    'working_days' => max(0, $daysInMonth - $weekendCount - $holidayCount),
+                    'present_count' => $presentCount,
+                    'half_day_count' => $halfDayCount,
+                    'leave_count' => $leaveCount,
+                    'holiday_count' => $holidayCount,
+                    'weekend_count' => $weekendCount,
+                    'absent_count' => $absentCount,
+                ],
+                'days' => $days,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => false,
+                'message' => $e->getMessage()
+            ], 500);
+        }
     }
 }

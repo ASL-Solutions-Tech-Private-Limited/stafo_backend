@@ -11,368 +11,347 @@
     <meta property="og:description"
         content="STAFO is an advanced HRMS software with AI-driven payroll, attendance tracking, and leave management. Automate HR processes seamlessly. Try now!">
 
-    <title>@yield('title', 'Employee Dashboard')</title>
+    <title>@yield('title', 'Company Dashboard | STAFO HRMS')</title>
     <link rel="shortcut icon" href="{{ asset('main/images/favicon_io (1)/favicon-32x32.png') }}" type="image/x-icon">
-    <!-- <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"> -->
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Stylesheets -->
     <link rel="stylesheet" href="{{ asset('main/css/bootstrap.min-5.3.css') }}">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="{{ asset('main/css/dashboard.css') }}">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ asset('main/css/dashboard.css') }}?v={{ file_exists(public_path('main/css/dashboard.css')) ? filemtime(public_path('main/css/dashboard.css')) : time() }}">
+    <!-- Immediate Theme Setup (Prevents FOUC) -->
+    <script>
+        (function () {
+            const savedTheme = localStorage.getItem('stafo_theme') || 'light';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+            document.documentElement.setAttribute('data-bs-theme', savedTheme);
+        })();
+    </script>
+    <style>
+        :root {
+            --stafo-header-height: 58px;
+        }
+
+        .theme-toggle-btn {
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+        .theme-toggle-btn:hover {
+            background: rgba(255, 255, 255, 0.15) !important;
+            transform: scale(1.05);
+        }
+
+        /* Permanently lock top header to the top of the viewport */
+        header.top-header {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            width: 100% !important;
+            height: var(--stafo-header-height) !important;
+            z-index: 1030 !important;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%) !important;
+            box-shadow: 0 4px 12px -2px rgba(15, 23, 42, 0.15) !important;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+        }
+
+        header.top-header .container-fluid,
+        header.top-header .container-fluid > div {
+            height: 100% !important;
+        }
+
+        /* Ensure page content wrapper is pushed down below the fixed header */
+        .app-wrapper {
+            display: flex !important;
+            min-height: calc(100vh - var(--stafo-header-height)) !important;
+            margin-top: var(--stafo-header-height) !important;
+            background-color: var(--stafo-body-bg, #f8fafc) !important;
+        }
+
+        /* Permanently lock desktop sidebar to viewport under the fixed header */
+        @media (min-width: 992px) {
+            aside.desktop-sidebar {
+                position: fixed !important;
+                top: var(--stafo-header-height) !important;
+                left: 0 !important;
+                bottom: 0 !important;
+                width: 270px !important;
+                height: calc(100vh - var(--stafo-header-height)) !important;
+                z-index: 1010 !important;
+            }
+
+            .main-content-wrapper {
+                margin-left: 270px !important;
+            }
+        }
+
+        .topbar-dropdown-menu {
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+            min-width: 220px;
+        }
+        [data-theme="dark"] .topbar-dropdown-menu {
+            border: 1px solid #334155 !important;
+            background-color: #1e293b !important;
+        }
+    </style>
     @yield('css')
 </head>
 
 <body>
-    <div class="container-fluid stiky-added">
-        <div class="row">
-            <nav class="navbar navbar-expand-lg bg-theme py-0">
-                <div class="container-fluid">
-                    <a class="navbar-brand" href="#">
-                        <img src="{{ asset('main/images/logo.png') }}" alt="STAFO logo">
+    <!-- Top Sticky Header -->
+    <header class="top-header">
+        <div class="container-fluid px-3 px-md-4">
+            <div class="d-flex align-items-center justify-content-between py-2">
+                
+                <!-- Left: Mobile Toggle + Logo + Date -->
+                <div class="d-flex align-items-center gap-3">
+                    <button class="btn btn-outline-light d-lg-none p-2 border-0" type="button" 
+                            data-bs-toggle="offcanvas" data-bs-target="#userSidebarOffcanvas" 
+                            aria-controls="userSidebarOffcanvas" style="background: rgba(255,255,255,0.1); border-radius: 8px;">
+                        <i class="fa-solid fa-bars fs-5 text-white"></i>
+                    </button>
+                    
+                    <a class="navbar-brand m-0" href="{{ route('user.dashboard') }}">
+                        <img src="{{ asset('main/images/logo.png') }}" alt="STAFO logo" height="36">
                     </a>
-                    <button class="btn btn-outline-light hide-mob" type="button" data-bs-toggle="offcanvas"
-                        data-bs-target="#staticBackdrop" aria-controls="staticBackdrop">
-                        <i class="fa-solid fa-bars align-middle"></i>
+                    
+                    <!-- Realtime Date Badge (Desktop) -->
+                    <div class="topbar-date-pill d-none d-md-inline-flex">
+                        <i class="fa-regular fa-calendar-days" style="color: #38bdf8;"></i>
+                        <span>{{ date('D, d M Y') }}</span>
+                    </div>
+                </div>
+
+                <!-- Right Menu Items -->
+                <div class="d-flex align-items-center gap-3">
+                    
+                    <!-- Quick Portal Links (Desktop) -->
+                    <div class="d-none d-md-flex align-items-center gap-2">
+                        <a href="{{ route('company.helpList') }}" class="btn btn-sm btn-outline-light border-0 px-2 py-1 text-light-50" title="Help & Support" style="background: rgba(255,255,255,0.06); border-radius: 8px;">
+                            <i class="fa-solid fa-circle-question text-info"></i>
+                            <span class="d-none d-lg-inline ms-1 text-light" style="font-size: 0.8rem;">Help</span>
+                        </a>
+                        <a href="{{ route('chat.index') }}" class="btn btn-sm btn-outline-light border-0 px-2 py-1 text-light-50" title="Messages" style="background: rgba(255,255,255,0.06); border-radius: 8px;">
+                            <i class="fa-solid fa-comment-dots text-warning"></i>
+                            <span class="d-none d-lg-inline ms-1 text-light" style="font-size: 0.8rem;">Chat</span>
+                        </a>
+                    </div>
+
+                    <!-- Dark / Night Mode Toggle Button -->
+                    <button class="btn btn-sm btn-outline-light border-0 d-flex align-items-center gap-1 theme-toggle-btn px-2 py-1" 
+                            id="themeToggleBtn" type="button" onclick="toggleTheme()" 
+                            title="Toggle Light / Dark Mode" 
+                            style="background: rgba(255,255,255,0.08); border-radius: 8px; height: 34px;">
+                        <i class="fa-solid fa-moon text-info" id="themeToggleIcon" style="font-size: 0.9rem; transition: transform 0.3s ease;"></i>
+                        <span class="d-none d-lg-inline text-light" style="font-size: 0.8rem;" id="themeToggleText">Dark</span>
                     </button>
 
-                    <div class="collapse navbar-collapse" id="navbarSupportedContent">
-                        <ul class="navbar-nav ms-auto mb-2 mb-0">
-                            <li class="nav-item dropdown user">
-                                <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown"
-                                    aria-expanded="false">
-                                    @if (Auth::user()->image_name && file_exists(public_path('uploads/compnay_logo/' . Auth::user()->image_name)))
-                                        <img src="{{ asset('uploads/compnay_logo/' . Auth::user()->image_name) }}"
-                                            alt="Company Logo" class="ms-2" width="30px" height="30px" />
-                                    
-                                    @endif
-                                    <span class="text-capitalize fw-bold">{{ Auth::user()->company_name }}</span>
+                    <!-- User Profile Dropdown -->
+                    <div class="dropdown user">
+                        <a class="nav-link dropdown-toggle d-flex align-items-center gap-2 text-decoration-none" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            @if (Auth::user()->image_name && file_exists(public_path('uploads/compnay_logo/' . Auth::user()->image_name)))
+                                <img src="{{ asset('uploads/compnay_logo/' . Auth::user()->image_name) }}"
+                                    alt="Company Logo" class="user-avatar-top" />
+                            @else
+                                <div class="user-initials-top">
+                                    {{ strtoupper(substr(Auth::user()->company_name ?? 'C', 0, 2)) }}
+                                </div>
+                            @endif
+                            <div class="d-none d-sm-block text-start lh-1">
+                                <span class="text-capitalize fw-bold d-block text-white" style="font-size: 0.85rem;">{{ Str::limit(Auth::user()->company_name, 18) }}</span>
+                                <small class="text-success fw-semibold" style="font-size: 0.7rem;"><span class="user-status-dot me-1"></span>Online</small>
+                            </div>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end shadow-lg mt-2 topbar-dropdown-menu">
+                            <li class="px-3 py-2 border-bottom">
+                                <span class="fw-bold text-dark d-block" style="font-size: 0.875rem;">{{ Auth::user()->company_name }}</span>
+                                <small class="text-muted text-truncate d-block" style="font-size: 0.75rem;">{{ Auth::user()->email }}</small>
+                            </li>
+                            <li>
+                                <a href="{{ route('company.profile.edit') }}" class="dropdown-item py-2 mt-1">
+                                    <i class="fa-solid fa-user-gear text-primary me-2"></i> Company Profile
                                 </a>
-                                <ul class="dropdown-menu">
-                                    <li class="nav-item text-end"><a href="{{ route('logout') }}"
-                                            class="text-danger fw-bold">Log Out</a></li>
-                                </ul>
+                            </li>
+                            <li>
+                                <a href="{{ route('referralList') }}" class="dropdown-item py-2">
+                                    <i class="fa-solid fa-gift text-warning me-2"></i> My Referrals
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{{ route('company.feedback') }}" class="dropdown-item py-2">
+                                    <i class="fa-solid fa-comment-dots text-info me-2"></i> Feedback
+                                </a>
+                            </li>
+                            <li>
+                                <a href="javascript:void(0)" onclick="toggleTheme()" class="dropdown-item py-2 d-flex align-items-center justify-content-between">
+                                    <span>
+                                        <i class="fa-solid fa-circle-half-stroke text-primary me-2"></i> Theme Mode
+                                    </span>
+                                    <span class="badge bg-light text-muted border" id="dropdownThemeBadge" style="font-size: 0.7rem;">Light</span>
+                                </a>
+                            </li>
+                            <li><hr class="dropdown-divider my-1"></li>
+                            <li>
+                                <a href="{{ route('logout') }}" class="dropdown-item py-2 text-danger fw-semibold">
+                                    <i class="fa-solid fa-arrow-right-from-bracket me-2"></i> Log Out
+                                </a>
                             </li>
                         </ul>
                     </div>
-                </div>
-
-                <div class="offcanvas offcanvas-start hide-mob" data-bs-backdrop="static" tabindex="-1"
-                    id="staticBackdrop" aria-labelledby="staticBackdropLabel">
-                    <div class="offcanvas-header justify-content-end">
-                        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
-                    </div>
-                    <div class="offcanvas-body">
-                        <nav class="d-md-block sidebar overflow-y-scroll">
-                            <img src="{{ asset('main/images/logo.png') }}" alt="STAFO logo">
-                            <a href="{{ route('user.dashboard') }}"
-                                class="{{ request()->is('dashboard') ? 'active' : '' }}"><i
-                                    class="fas fa-tachometer-alt"></i> Dashboard</a>
-                            <a href="#" class="collapsed" data-bs-toggle="collapse" data-bs-target="#masterSection"><i
-                                    class="fas fa-cogs"></i> Employee <i class="fa-solid fa-caret-right"></i></a>
-                            <div id="masterSection"
-                                class="submenu collapse {{ request()->is('shift*') || request()->is('branch*') || request()->is('departments*') || request()->is('employee*') || request()->is('attendance*') || request()->is('leave-list*') ? 'show' : '' }}">
-                                <a href="{{ route('employee.index') }}"
-                                    class="{{ request()->is('employee*') ? 'active' : '' }}"><i
-                                        class="fas fa-users"></i> Employees List </a>
-                                <a href="{{ route('branche.index') }}"
-                                    class="{{ request()->is('branch*') ? 'active' : '' }}"><i
-                                        class="fas fa-building"></i> Branch</a>
-                                <a href="{{ route('departments.index') }}"
-                                    class="{{ request()->is('departments*') ? 'active' : '' }}"><i
-                                        class="fas fa-building"></i> Departments</a>
-                                <a href="{{ route('shifts.index') }}"
-                                    class="{{ request()->is('shift*') ? 'active' : '' }}"><i class="fas fa-clock"></i>
-                                    Shift</a>
-                                <a href="{{ route('attendance.index') }}"
-                                    class="{{ request()->is('attendance*') ? 'active' : '' }}"><i
-                                        class="fas fa-building"></i> Attendance</a>
-                                <a href="{{ route('leaveList') }}"
-                                    class="{{ request()->is('leave-list*') ? 'active' : '' }}"><i
-                                        class="fas fa-building"></i> Leave List</a>
-                            </div>
-
-                            <a href="#" class="collapsed" data-bs-toggle="collapse" data-bs-target="#profileSection"><i
-                                    class="fas fa-user-cog"></i> Profile <i class="fa-solid fa-caret-right"></i></a>
-                            <div id="profileSection"
-                                class="collapse {{ request()->is('company/profile/edit') || request()->is('company-documents*') || request()->is('document-verification*') ? 'show' : '' }}">
-                                <a href="{{ route('company.profile.edit') }}"
-                                    class="{{ request()->is('company/profile/edit') ? 'active' : '' }}"><i
-                                        class="fas fa-edit"></i> Edit Info</a>
-                                <a href="{{ route('company-documents.index') }}"
-                                    class="{{ request()->is('company-documents*') ? 'active' : '' }} d-flex"><i
-                                        class="fas fa-upload"></i> Documents upload</a>
-                                <a href="{{ route('companydocumentVerification') }}"
-                                    class="{{ request()->is('document-verification*') ? 'active' : '' }} d-flex"><i
-                                        class="fas fa-check-circle"></i> Documents verify</a>
-                            </div>
-
-                            <a href="{{ route('company.feedback') }}"
-                                class="{{ request()->is('company.feedback*') ? 'active' : '' }}"><i
-                                    class="fas fa-file-alt"></i> Feedback</a>
-
-                            <a href="{{ route('company.tickets') }}"
-                                class="{{ request()->is('company.tickets*') ? 'active' : '' }}">
-                                <i class="fas fa-ticket-alt"></i> Ticket
-                            </a>
-
-                            <a href="{{ route('download-report.index') }}"
-                                class="{{ request()->is('download-report*') ? 'active' : '' }}">
-                                <i class="fas fa-file-pdf"></i> Report
-                            </a>
-                            <a href="{{ route('company.helpList') }}"
-                                class="{{ request()->is('company-help*') ? 'active' : '' }}">
-                                <i class="fa fa-user me-2"></i> Help
-                            </a>
-
-
-                        </nav>
-                    </div>
 
                 </div>
-            </nav>
-        </div>
-    </div>
 
-    <div class="container-fluid h-100">
-        <div class="row h-100">
-            <div class="col-md-3 col-lg-2 px-0">
-                <nav class="d-md-block sidebar overflow-y-scroll">
-                    <div class="search-bar mb-3">
-                        <input type="text" id="searchInput" onkeyup="searchFunction()" class="form-control"
-                            placeholder="Search Modules...">
-                    </div>
-                    <a href="{{ route('user.dashboard') }}" class="{{ request()->is('dashboard') ? 'active' : '' }}"><i
-                            class="fas fa-tachometer-alt"></i> Dashboard</a>
-
-                    <a href="#" class="collapsed" data-bs-toggle="collapse" data-bs-target="#masterSection"><i
-                            class="fas fa-cogs"></i> Employee <i class="fa-solid fa-caret-right"></i></a>
-                    <div id="masterSection"
-                        class="submenu collapse {{ request()->is('shift*') || request()->is('branch*') || request()->is('departments*') || request()->is('employee*') || request()->is('attendance*') || request()->is('leave-list*') ? 'show' : '' }}">
-                        <a href="{{ route('employee.index') }}"
-                            class="{{ request()->is('employee*') ? 'active' : '' }}"><i class="fas fa-users"></i>
-                            Employees List</a>
-                        <a href="{{ route('branche.index') }}" class="{{ request()->is('branch*') ? 'active' : '' }}"><i
-                                class="fas fa-building"></i>
-                            Branch</a>
-                        <a href="{{ route('departments.index') }}"
-                            class="{{ request()->is('departments*') ? 'active' : '' }}"><i class="fas fa-building"></i>
-                            Departments</a>
-                        <a href="{{ route('shifts.index') }}" class="{{ request()->is('shift*') ? 'active' : '' }}"><i
-                                class="fas fa-clock"></i>
-                            Shift</a>
-                        <a href="{{ route('attendance.index') }}"
-                            class="{{ request()->is('attendance*') ? 'active' : '' }}"><i class="fas fa-building"></i>
-                            Attendance</a>
-                        <a href="{{ route('leaveList') }}" class="{{ request()->is('leave-list*') ? 'active' : '' }}"><i
-                                class="fas fa-building"></i> Leave List</a> 
-                        <a href="{{ route('leavetypes.index') }}"
-                            class="{{ request()->is('leavetypes*') ? 'active' : '' }}"><i class="fas fa-building"></i>
-                            Leave Types</a>
-                        <!-- <a href="{{ route('reimbursements.index') }}"
-                            class="{{ request()->is('reimbursements*') ? 'active' : '' }}"><i class="fas fa-building"></i>
-                            Reimbursements</a> -->
-                        <a href="{{ route('compoffleaves.index') }}"
-                            class="{{ request()->is('compoffleaves*') ? 'active' : '' }}"><i class="fas fa-building"></i>
-                            Compoff Leave</a>
-                        <a href="{{ route('deviceList') }}"
-                            class="{{ request()->is('deviceList*') ? 'active' : '' }}"><i class="fas fa-building"></i>
-                            Device List</a>
-                    </div>
-
-                    <a href="#" class="collapsed" data-bs-toggle="collapse" data-bs-target="#profileSection"><i
-                            class="fas fa-user-cog"></i> Profile <i class="fa-solid fa-caret-right"></i></a>
-                    <div id="profileSection"
-                        class="submenu collapse {{ request()->is('company/profile/edit') || request()->is('company-documents*') || request()->is('document-verification*') ? 'show' : '' }}">
-                        <a href="{{ route('company.profile.edit') }}"
-                            class="{{ request()->is('company/profile/edit') ? 'active' : '' }}"><i
-                                class="fas fa-edit"></i> Edit Info</a>
-                        <a href="{{ route('company-documents.index') }}"
-                            class="{{ request()->is('company-documents*') ? 'active' : '' }} d-flex"><i
-                                class="fas fa-upload"></i> Documents upload</a>
-                        <a href="{{ route('companydocumentVerification') }}"
-                            class="{{ request()->is('document-verification*') ? 'active' : '' }} d-flex"><i
-                                class="fas fa-check-circle"></i> Documents verify</a>
-                        <a href="{{ route('referralList') }}"
-                            class="{{ request()->is('companies/referrals') ? 'active' : '' }} d-flex"><i
-                                class="fas fa-check-circle"></i>Referrals</a>
-                    </div>
-
-                    <a href="{{ route('company.feedback') }}"
-                        class="{{ request()->is('company.feedback*') ? 'active' : '' }}"><i class="fas fa-file-alt"></i>
-                        Feedback</a>
-
-                    <a href="{{ route('company.tickets') }}"
-                        class="{{ request()->is('company.tickets*') ? 'active' : '' }}">
-                        <i class="fas fa-ticket-alt"></i> Ticket
-                    </a>
-
-
-                    <a href="{{ route('download-report.index') }}"
-                        class="{{ request()->is('download-report*') ? 'active' : '' }}">
-                        <i class="fas fa-file-pdf"></i> Report
-                    </a>
-                    <a href="{{ route('performancetypeList') }}"
-                        class="{{ request()->is('performance-type*') ? 'active' : '' }}">
-                        <i class="fas fa-line-chart"></i> Performance Type
-                    </a>
-                    <a href="{{ route('employeeRankList') }}" class="{{ request()->is('rank-list') ? 'active' : '' }}">
-                        <i class="fas fa-trophy"></i> Rank List
-                    </a>
-                    <a href="#" class="collapsed" data-bs-toggle="collapse" data-bs-target="#salarySection"><i
-                            class="fas fa-inr"></i> Salary <i class="fa-solid fa-caret-right"></i></a>
-                    <div id="salarySection"
-                        class="submenu collapse {{ request()->is('monthly-salary-list') || request()->is('generate-salary') ||  request()->is('salary-package-type*') || request()->is('salarytype*') || request()->is('grace-settings*') ? 'show' : '' }}">
-                        <a href="{{ route('salarytype.index') }}"
-                            class="{{ request()->is('salarytype') ? 'active' : '' }}"><i
-                                class="fas fa-newspaper"></i> Salary Type</a>
-
-                        <a href="{{ route('salary-package-type.index') }}"
-                            class="{{ request()->is('salary-package-type') ? 'active' : '' }} d-flex"><i
-                                class="fas fa-ticket"></i>Package</a>       
-
-
-                        <a href="{{ route('generateSalary') }}"
-                            class="{{ request()->is('generate-salary') ? 'active' : '' }} d-flex"><i
-                                class="fas fa-ils"></i> Generate Salary</a>
-                        <a href="{{ route('employeeSalaryList') }}"
-                            class="{{ request()->is('monthly-salary-list') ? 'active' : '' }} d-flex"><i
-                                class="fas fa-ticket"></i> Monthly Salary</a>
-                        <a href="{{ route('grace_settings.index') }}"
-                            class="{{ request()->is('grace-settings') ? 'active' : '' }} d-flex"><i
-                                class="fas fa-ticket"></i> Salary settings</a>
-
-                       
-                    </div>
-                    <a href="{{ route('company.helpList') }}"
-                                class="{{ request()->is('company-help*') ? 'active' : '' }}">
-                                <i class="fa fa-user me-2"></i> Help
-                    </a>
-                    <a href="{{ route('holiday.index') }}"
-                                class="{{ request()->is('holiday*') ? 'active' : '' }}">
-                                <i class="fa fa-sleigh me-2"></i> Holiday
-                    </a>
-                    <a href="{{ route('chat.index') }}"
-                        class="{{ request()->is('chat.index') ? 'active' : '' }}">
-                        <i class="fa fa-comment me-2"></i> Chat
-                    </a>
-
-                    <a href="{{ route('leadList') }}"
-                        class="{{ request()->is('leadList') ? 'active' : '' }}">
-                        <i class="fa fa-message me-2"></i> CRM
-                    </a>
-                    
-                    <a href="{{ route('taskList') }}"
-                        class="{{ request()->is('taskList') ? 'active' : '' }}">
-                        <i class="fa fa-tasks me-2"></i> Task
-                    </a>                    
-
-                    <a href="#" class="collapsed" data-bs-toggle="collapse" data-bs-target="#expenseSection"><i
-                            class="fas fa-inr"></i> Expense <i class="fa-solid fa-caret-right"></i></a>
-                    <div id="expenseSection"
-                        class="submenu collapse {{ request()->is('expense*') ? 'show' : '' }}">
-                        <a href="{{ route('expenseList') }}"
-                            class="{{ request()->is('expense/list') ? 'active' : '' }}"><i
-                                class="fas fa-newspaper"></i> Expense List</a>
-                        <a href="{{ route('expenseformList') }}"
-                            class="{{ request()->is('expense/formlist') ? 'active' : '' }} d-flex"><i
-                                class="fas fa-ils"></i> Expense Form</a>
-                        
-                    </div>
-
-                    <a href="#" class="collapsed" data-bs-toggle="collapse" data-bs-target="#manageTrip">
-                        <i class="fas fa-inr"></i> Manage Trip <i class="fa-solid fa-caret-right"></i>
-                    </a>
-                    <div id="manageTrip"
-                        class="submenu collapse {{ request()->is('vehicles/*') || request()->is('trips/*') ? 'show' : '' }}">
-                        
-                        <a href="{{ route('vehicles.index') }}"
-                        class="{{ request()->is('vehicles/*') ? 'active' : '' }}">
-                            <i class="fas fa-newspaper"></i> Vehicles
-                        </a>
-
-                        <a href="{{ route('trips.index') }}"
-                        class="{{ request()->is('trips/*') ? 'active' : '' }} d-flex">
-                            <i class="fas fa-ils"></i> Trip
-                        </a>
-
-                    </div>
-                    
-                </nav>
-            </div>
-
-            <div class="col-md-9 col-lg-10 px-md-4 py-4">
-                <main class="main-content ps-0">
-                    @yield('content')
-                </main>
             </div>
         </div>
+    </header>
+
+    <!-- Main Layout Container -->
+    <div class="app-wrapper">
+        
+        <!-- Sidebar Navigation (Desktop & Mobile) -->
+        @include('user.layouts.sidebar')
+
+        <!-- Right Main Content Area -->
+        <main class="main-content-wrapper">
+            @yield('content')
+        </main>
+
     </div>
 
+    <!-- Core Scripts -->
     <script src="//cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     @include('sweetalert::alert')
-    <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
-    <!-- <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script> -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="{{ asset('main/js/bootstrap.bundle.min5.3.js') }}"></script>
 
+    <!-- Sidebar Menu State Controller -->
     <script>
-        function searchFunction() {
-            let input, filter, sidebarLinks, collapsibleSections, i, txtValue, section, sectionLinks;
-            input = document.getElementById('searchInput');
-            filter = input.value.toLowerCase();
-            sidebarLinks = document.querySelectorAll('.sidebar a');
-            collapsibleSections = document.querySelectorAll('.collapse');
+        $(document).ready(function () {
+            // Clean up any stale menu cache from previous sessions
+            try {
+                sessionStorage.removeItem('stafo_active_menu');
+            } catch (e) {}
 
-            for (i = 0; i < sidebarLinks.length; i++) {
-                txtValue = sidebarLinks[i].textContent || sidebarLinks[i].innerText;
-                if (txtValue.toLowerCase().indexOf(filter) > -1) {
-                    sidebarLinks[i].style.display = "";
-                } else {
-                    sidebarLinks[i].style.display = "none";
+            const currentUrl = window.location.href.split(/[?#]/)[0];
+            const currentPath = window.location.pathname;
+
+            // Highlight sub-items matching current URL exactly or precise route prefix
+            $('.sidebar-sub-item').each(function () {
+                const href = $(this).attr('href');
+                if (!href || href === '#' || href === 'javascript:void(0)') return;
+
+                const linkUrl = href.split(/[?#]/)[0];
+                const linkPath = new URL(href, window.location.origin).pathname;
+
+                if (currentUrl === linkUrl || currentPath === linkPath) {
+                    $(this).addClass('active');
+                } else if (linkPath.length > 9 && currentPath.startsWith(linkPath + '/')) {
+                    $(this).addClass('active');
+                }
+            });
+
+            // If on employees-show or employee edit/documents, activate Employees List item
+            if (currentPath.includes('employees-show') || currentPath.includes('employee/') || currentPath.includes('employee-create')) {
+                $('a[href*="company/employee"]').first().addClass('active');
+            }
+
+            // Ensure parent collapse of active sub-item is shown and parent nav marked active
+            function syncParentActiveMenus() {
+                const $activeSubItems = $('.sidebar-sub-item.active');
+                if ($activeSubItems.length) {
+                    $activeSubItems.each(function () {
+                        const parentCollapse = $(this).closest('.collapse');
+                        if (parentCollapse.length) {
+                            parentCollapse.addClass('show');
+                            const collapseId = parentCollapse.attr('id');
+                            $(`[data-bs-target="#${collapseId}"]`)
+                                .addClass('active active-parent')
+                                .removeClass('collapsed')
+                                .attr('aria-expanded', 'true');
+                        }
+                    });
                 }
             }
 
-            for (i = 0; i < collapsibleSections.length; i++) {
-                section = collapsibleSections[i];
-                sectionLinks = section.querySelectorAll('a');
-                let sectionMatches = false;
+            syncParentActiveMenus();
 
-                for (let j = 0; j < sectionLinks.length; j++) {
-                    txtValue = sectionLinks[j].textContent || sectionLinks[j].innerText;
-                    if (txtValue.toLowerCase().indexOf(filter) > -1) {
-                        sectionMatches = true;
-                        sectionLinks[j].style.display = "";
-                    } else {
-                        sectionLinks[j].style.display = "none";
-                    }
-                }
+            // When a standalone nav item (not an accordion toggle) is clicked,
+            // immediately close all open collapses so no other menu stays open
+            $('.sidebar-nav-item:not([data-bs-toggle="collapse"])').on('click', function () {
+                $('.collapse.show').collapse('hide');
+                $('.sidebar-nav-item[data-bs-toggle="collapse"]')
+                    .addClass('collapsed')
+                    .removeClass('active active-parent')
+                    .attr('aria-expanded', 'false');
+            });
+        });
 
-                if (sectionMatches) {
-                    section.classList.add('show');
-                } else {
-                    section.classList.remove('show');
+        // Dark / Night Mode Controller
+        function toggleTheme() {
+            const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', newTheme);
+            document.documentElement.setAttribute('data-bs-theme', newTheme);
+            if (document.body) {
+                document.body.setAttribute('data-theme', newTheme);
+                document.body.setAttribute('data-bs-theme', newTheme);
+            }
+            localStorage.setItem('stafo_theme', newTheme);
+            updateThemeUI(newTheme);
+            window.dispatchEvent(new CustomEvent('stafoThemeChanged', { detail: { theme: newTheme } }));
+        }
+
+        function updateThemeUI(theme) {
+            const icon = document.getElementById('themeToggleIcon');
+            const text = document.getElementById('themeToggleText');
+            const btn = document.getElementById('themeToggleBtn');
+            const badge = document.getElementById('dropdownThemeBadge');
+            const mobileIcons = document.querySelectorAll('.mobile-theme-icon');
+
+            if (theme === 'dark') {
+                if (icon) {
+                    icon.className = 'fa-solid fa-sun text-warning';
+                    icon.style.transform = 'rotate(180deg)';
                 }
+                if (text) text.textContent = 'Light';
+                if (btn) btn.setAttribute('title', 'Switch to Light Mode');
+                if (badge) {
+                    badge.textContent = 'Dark';
+                    badge.className = 'badge bg-primary bg-opacity-20 text-primary border border-primary border-opacity-25';
+                }
+                mobileIcons.forEach(el => {
+                    el.className = 'fa-solid fa-sun text-warning mobile-theme-icon';
+                });
+            } else {
+                if (icon) {
+                    icon.className = 'fa-solid fa-moon text-info';
+                    icon.style.transform = 'rotate(0deg)';
+                }
+                if (text) text.textContent = 'Dark';
+                if (btn) btn.setAttribute('title', 'Switch to Dark / Night Mode');
+                if (badge) {
+                    badge.textContent = 'Light';
+                    badge.className = 'badge bg-light text-muted border';
+                }
+                mobileIcons.forEach(el => {
+                    el.className = 'fa-solid fa-moon text-info mobile-theme-icon';
+                });
             }
         }
-    </script>
 
-    <script>
-        document.addEventListener("DOMContentLoaded", function () {
-            const sidebar = document.querySelector(".col-md-3");
-            const mainContent = document.querySelector(".col-md-9");
-
-            function updateLayout() {
-                if (window.innerWidth < 992) {
-                    sidebar?.classList.add("d-none");
-                    mainContent.classList.remove("col-md-9");
-                    mainContent.classList.add("col-md-12");
-                } else {
-                    sidebar?.classList.remove("d-none");
-                    mainContent.classList.remove("col-md-12");
-                    mainContent.classList.add("col-md-9");
-                }
+        // Initialize UI on load
+        document.addEventListener('DOMContentLoaded', function () {
+            const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+            if (document.body) {
+                document.body.setAttribute('data-theme', currentTheme);
+                document.body.setAttribute('data-bs-theme', currentTheme);
             }
-
-            updateLayout();
-            window.addEventListener("resize", updateLayout);
+            updateThemeUI(currentTheme);
         });
     </script>
 

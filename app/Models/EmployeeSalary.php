@@ -19,10 +19,12 @@ class EmployeeSalary extends Model
         'salary_type_amount_type',
         'amount',
         'label',
+        'payment_type',
         'basic_salary',
         'gross_salary',
         'other_deduction',
         'absent_days',
+        'working_days',
         'reimbursement',
     ];
 

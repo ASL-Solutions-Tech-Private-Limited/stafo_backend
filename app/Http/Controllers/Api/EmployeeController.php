@@ -255,6 +255,7 @@ class EmployeeController extends Controller
             'birthday' => $birthday,
             'annyversary' => $annyversary,
             'employee_info' => $employee_info,
+            'permissions' => $employee_info->getEffectivePermissions(),
 
         ], 200);
     }
@@ -711,6 +712,12 @@ class EmployeeController extends Controller
             ]);
 
             $employee = Employee::find($request->employee_id);
+            if (!$employee->hasPermission('attendance.punch')) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Attendance punch is disabled for your account by your company.',
+                ], 403);
+            }
             $company_id = $employee->company_id;
             $company = CompanyDetail::find($company_id);
             $branch_info = Branch::find($employee->branch_id);
@@ -1186,24 +1193,237 @@ class EmployeeController extends Controller
     public function updateGeoStatus(Request $request)
     {
         try {
-
             $request->validate([
                 'employee_id' => 'required',
                 'geo_status' => 'required'
             ]);
             $employeeInfo = Employee::find($request->employee_id);
 
-            $employeeInfo->geo_status = $request->geo_status;
+            if (!$employeeInfo) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Employee not found.',
+                ], 404);
+            }
+
+            $employeeInfo->geo_status = (string) $request->geo_status;
             $employeeInfo->save();
+
+            // Step 1: Company passes request to Employee -> store 1
+            if ($employeeInfo->geo_status === '1') {
+                Notification::create([
+                    'employee_id' => $employeeInfo->id,
+                    'company_id' => $employeeInfo->company_id,
+                    'message' => 'Company has requested your real-time location tracking.',
+                    'status' => 'unread',
+                ]);
+            }
+            // Step 1 (acceptance): Employee accepts the request -> store 2
+            elseif ($employeeInfo->geo_status === '2') {
+                Notification::create([
+                    'employee_id' => $employeeInfo->id,
+                    'company_id' => $employeeInfo->company_id,
+                    'message' => ($employeeInfo->name ?? 'Employee') . ' has accepted your real-time location tracking request.',
+                    'status' => 'unread',
+                ]);
+            }
+
+            $message = 'Record updated successfully.';
+            if ($employeeInfo->geo_status === '1') {
+                $message = 'Location tracking requested successfully.';
+            } elseif ($employeeInfo->geo_status === '2') {
+                $message = 'Location tracking accepted successfully.';
+            } elseif ($employeeInfo->geo_status === '0') {
+                $message = 'Location tracking disabled successfully.';
+            }
 
             return response()->json([
                 'status' => true,
-                'message' => 'Record updated successfully.',
-            ], 201);
+                'message' => $message,
+                'geo_status' => (string) $employeeInfo->geo_status,
+            ], 200);
         } catch (Exception $e) {
             return response()->json([
                 'status' => false,
                 'message' => 'An error occurred while creating the request.',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Dedicated API for Employee to Accept Geo Tracking Request (Sets geo_status = 2)
+     */
+    public function acceptGeoTracking(Request $request)
+    {
+        try {
+            $employeeId = $request->input('employee_id');
+            if (!$employeeId && Auth::guard('sanctum')->check()) {
+                $employeeId = Auth::guard('sanctum')->id();
+            }
+
+            if (!$employeeId) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'The employee_id field is required.',
+                ], 422);
+            }
+
+            $employee = Employee::with('company')->find($employeeId);
+            if (!$employee) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Employee not found.',
+                ], 404);
+            }
+
+            // Step 1 accepted: store 2
+            $employee->geo_status = '2';
+            $employee->save();
+
+            // Create notification for Company
+            Notification::create([
+                'employee_id' => $employee->id,
+                'company_id' => $employee->company_id,
+                'message' => ($employee->name ?? 'Employee') . ' has accepted your real-time location tracking request.',
+                'status' => 'unread',
+            ]);
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Real-time location tracking request accepted successfully.',
+                'geo_status' => '2',
+                'data' => [
+                    'employee_id' => $employee->id,
+                    'name' => $employee->name,
+                    'geo_status' => '2',
+                    'tracking_active' => true,
+                    'company_id' => $employee->company_id,
+                ]
+            ], 200);
+        } catch (Exception $e) {
+            return response()->json([
+                'status' => false,
+                'message' => 'An error occurred while accepting location tracking.',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Dedicated API for Employee / Company to Reject or Disable Geo Tracking (Sets geo_status = 0)
+     */
+    public function rejectGeoTracking(Request $request)
+    {
+        try {
+            $employeeId = $request->input('employee_id');
+            if (!$employeeId && Auth::guard('sanctum')->check()) {
+                $employeeId = Auth::guard('sanctum')->id();
+            }
+
+            if (!$employeeId) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'The employee_id field is required.',
+                ], 422);
+            }
+
+            $employee = Employee::with('company')->find($employeeId);
+            if (!$employee) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Employee not found.',
+                ], 404);
+            }
+
+            // Step 2 disable: store 0
+            $employee->geo_status = '0';
+            $employee->save();
+
+            // Create notification for Company
+            Notification::create([
+                'employee_id' => $employee->id,
+                'company_id' => $employee->company_id,
+                'message' => ($employee->name ?? 'Employee') . ' has declined or disabled real-time location tracking.',
+                'status' => 'unread',
+            ]);
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Real-time location tracking declined / disabled successfully.',
+                'geo_status' => '0',
+                'data' => [
+                    'employee_id' => $employee->id,
+                    'name' => $employee->name,
+                    'geo_status' => '0',
+                    'tracking_active' => false,
+                    'company_id' => $employee->company_id,
+                ]
+            ], 200);
+        } catch (Exception $e) {
+            return response()->json([
+                'status' => false,
+                'message' => 'An error occurred while disabling location tracking.',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Get Current Geo Tracking Status and Shift Window for Employee
+     */
+    public function getGeoTrackingStatus(Request $request)
+    {
+        try {
+            $employeeId = $request->input('employee_id');
+            if (!$employeeId && Auth::guard('sanctum')->check()) {
+                $employeeId = Auth::guard('sanctum')->id();
+            }
+
+            if (!$employeeId) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'The employee_id field is required.',
+                ], 422);
+            }
+
+            $employee = Employee::with(['company', 'shifts', 'shift'])->find($employeeId);
+            if (!$employee) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Employee not found.',
+                ], 404);
+            }
+
+            $geoStatus = (string)($employee->geo_status ?? '0');
+            $statusLabel = 'Tracking OFF';
+            if ($geoStatus === '1') {
+                $statusLabel = 'Request Sent (Pending Acceptance)';
+            } elseif ($geoStatus === '2') {
+                $statusLabel = 'Tracking ON (Active)';
+            }
+
+            $shiftCheck = $employee->getActiveShiftWindow();
+
+            return response()->json([
+                'status' => true,
+                'geo_status' => $geoStatus,
+                'status_label' => $statusLabel,
+                'is_requested' => ($geoStatus === '1'),
+                'is_active' => ($geoStatus === '2'),
+                'is_off' => ($geoStatus === '0'),
+                'shift_window' => $shiftCheck,
+                'employee' => [
+                    'id' => $employee->id,
+                    'name' => $employee->name,
+                    'company_id' => $employee->company_id,
+                    'company_name' => $employee->company ? $employee->company->company_name : null,
+                ]
+            ], 200);
+        } catch (Exception $e) {
+            return response()->json([
+                'status' => false,
+                'message' => 'An error occurred while fetching tracking status.',
                 'error' => $e->getMessage()
             ], 500);
         }
@@ -1218,6 +1438,34 @@ class EmployeeController extends Controller
                 'longitude' => 'required'
             ]);
 
+            // Shift-based and status-based location tracking:
+            // Location is strictly tracked only when employee has accepted tracking (geo_status = 2)
+            // and during the employee's assigned shift time.
+            $employee = Employee::with(['shifts', 'shift'])->find($request->employee_id);
+            if ($employee) {
+                // If geo_status is not 2 (accepted), reject storing location
+                if ((string)$employee->geo_status !== '2') {
+                    return response()->json([
+                        'status' => false,
+                        'tracking_active' => false,
+                        'geo_status' => (string)$employee->geo_status,
+                        'message' => (string)$employee->geo_status === '1'
+                            ? 'Location tracking request is pending acceptance.'
+                            : 'Location tracking is disabled by company.',
+                    ], 200);
+                }
+
+                $shiftCheck = $employee->getActiveShiftWindow();
+                // If shifts are configured for this employee and current time is outside the shift window
+                if ($shiftCheck !== null && empty($shiftCheck['active'])) {
+                    return response()->json([
+                        'status' => false,
+                        'tracking_active' => false,
+                        'message' => 'Location tracking is active only during shift hours. Next tracking will start at the next scheduled shift time.',
+                    ], 200);
+                }
+            }
+
             $employeeGeoLocation = EmployeeGeoLocation::create([
                 'employee_id' => $request->employee_id,
                 'latitude' => $request->latitude,
@@ -1227,6 +1475,7 @@ class EmployeeController extends Controller
 
             return response()->json([
                 'status' => true,
+                'tracking_active' => true,
                 'message' => 'Geo location submitted successfully.',
             ], 201);
         } catch (ValidationException $e) {
@@ -1251,11 +1500,24 @@ class EmployeeController extends Controller
                 'employee_id' => 'required'
             ]);
 
-
+            $date = $request->input('date', date('Y-m-d'));
             $employeeGeoLocation = EmployeeGeoLocation::where('employee_id', $request->employee_id);
-            if ($request->has('date')) {
-                $employeeGeoLocation->whereDate('created_at', $request->date);
+
+            $employee = Employee::with(['shifts', 'shift'])->find($request->employee_id);
+            if ($employee) {
+                $shiftDetails = $employee->getShiftWindowForDate($date);
+                if ($shiftDetails && isset($shiftDetails['start']) && isset($shiftDetails['end'])) {
+                    $employeeGeoLocation->whereBetween('created_at', [
+                        $shiftDetails['start']->toDateTimeString(),
+                        $shiftDetails['end']->toDateTimeString()
+                    ]);
+                } else {
+                    $employeeGeoLocation->whereDate('created_at', $date);
+                }
+            } else {
+                $employeeGeoLocation->whereDate('created_at', $date);
             }
+
             $location = $employeeGeoLocation->get();
 
 

@@ -1,171 +1,161 @@
 @extends('user.layouts.app')
 
-@section('css')
-    <style>
-        /* Keyframes for confetti explosion */
-        @keyframes confetti-explosion {
-            0% {
-                top: -50px;
-                opacity: 1;
-                transform: rotate(0deg);
-            }
-
-            100% {
-                top: 100vh;
-                /* Falls to bottom */
-                opacity: 0;
-                transform: rotate(360deg);
-            }
-        }
-
-        /* Confetti elements */
-        .confetti {
-            position: absolute;
-            top: -10px;
-            /* Start from top of the container */
-            width: 10px;
-            height: 10px;
-            background-color: #FF6347;
-            /* Red Confetti */
-            border-radius: 50%;
-            animation: confetti-explosion 4s infinite ease-in-out;
-            opacity: 0;
-        }
-
-        /* Variation in confetti for multiple colors */
-        .confetti:nth-child(2) {
-            background-color: #FFD700;
-            /* Yellow Confetti */
-            animation-delay: 0.5s;
-        }
-
-        .confetti:nth-child(3) {
-            background-color: #32CD32;
-            /* Green Confetti */
-            animation-delay: 1s;
-        }
-
-        .confetti:nth-child(4) {
-            background-color: #00BFFF;
-            /* Blue Confetti */
-            animation-delay: 1.5s;
-        }
-
-        .confetti:nth-child(5) {
-            background-color: #FF1493;
-            /* Pink Confetti */
-            animation-delay: 2s;
-        }
-
-        .confetti:nth-child(6) {
-            background-color: #FF4500;
-            /* Orange Confetti */
-            animation-delay: 2.5s;
-        }
-
-        /* Confetti spread across the screen */
-        .birthday-card,
-        .anniversary-card {
-            position: relative;
-            overflow: hidden;
-        }
-
-        /* Card hover effects */
-        .carousel-card.birthday:hover,
-        .carousel-card.anniversary:hover {
-            transform: scale(1.05);
-            transition: transform 0.3s ease-in-out;
-        }
-
-        /* .carousel-card img {
-                                width: 100%;
-                                height: auto;
-                                border-radius: 50%;
-                                margin-bottom: 10px;
-                            } */
-
-        .carousel-card h5 {
-            font-size: 20px;
-            color: #fff;
-            font-weight: bold;
-        }
-
-        .carousel-card p {
-            font-size: 16px;
-            color: #fff;
-        }
-    </style>
-@endsection
+@section('title', $employee->name . ' - Performance Track | STAFO HRMS')
 
 @section('content')
-    <div class="container mt-4">
-    <div class="row mb-3">
-        <div class="col-md-9 col-6">
-            <h3 class="mb-4">{{ $employee->name}}'s Performance</h3>
+@include('user.layouts.alert')
+<div class="card shadow-sm border-0">
+    <div class="card-body p-4">
+
+        <!-- Page Header -->
+        <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3 mb-4 pb-3 border-bottom">
+            <div>
+                <div class="d-flex align-items-center gap-2 mb-1">
+                    <h3 class="fw-bold text-dark mb-0">{{ $employee->name }}'s Performance History</h3>
+                    <span class="badge-stafo badge-stafo-primary">
+                        <i class="fa-solid fa-user me-1"></i> Employee #{{ $employee->id }}
+                    </span>
+                </div>
+                <p class="text-muted small mb-0">Track monthly KPI evaluations, ratings breakdown, and appraisal trends</p>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <a href="{{ route('employeeRankList') }}" class="btn btn-outline-secondary px-3 py-2">
+                    <i class="fa-solid fa-arrow-left me-1"></i> Back to Rankings
+                </a>
+                <a href="{{ route('employeePerformanceAdd', $employee->id) }}" class="btn btn-primary px-4 py-2 fw-bold shadow-sm">
+                    <i class="fa-solid fa-plus me-1"></i> Add Evaluation
+                </a>
+            </div>
         </div>
-        <div class="col-md-3 col-6 text-end">
-            <a href="{{ route('employeePerformanceAdd',$employee->id) }}" class="btn btn-success shadow-sm"><i class="fas fa-plus"></i>
-                Add</a>
-        </div>
-    </div>
-        <!-- Cards Section -->
-        <div class="row g-4">
-            <!-- Total Employees Card -->
-            <div class="col-xl-4 col-md-4">
-                <div class="dashboard-card card h-100"> 
-                    @php
-                        $month = '';
-                        $monthValue = '';
-                    @endphp
-                    @foreach($employeePerformances as $performance)
-                        @if($monthValue != '' && $monthValue != $performance->month)
-                            </div> 
-                            </div>
-                            <div class="col-xl-4 col-md-4">  
-                            <div class="dashboard-card card h-100">
-                        @endif
-                        <div class="card-text">
-                            @php 
-                                if($performance->month == 1) {
-                                    $month = 'January';
-                                } elseif ($performance->month == 2) {
-                                    $month = 'February';
-                                } elseif ($performance->month == 3) {
-                                    $month = 'March';
-                                } elseif ($performance->month == 4) {
-                                    $month = 'April';
-                                } elseif ($performance->month == 5) {
-                                    $month = 'May';
-                                } elseif ($performance->month == 6) {
-                                    $month = 'June';
-                                } elseif ($performance->month == 7) {
-                                    $month = 'July';
-                                } elseif ($performance->month == 8) {
-                                    $month = 'August';
-                                } elseif ($performance->month == 9) {
-                                    $month = 'September';
-                                } elseif ($performance->month == 10) {
-                                    $month = 'October';
-                                } elseif ($performance->month == 11) {
-                                    $month = 'November';
-                                } else {
-                                    $month = 'December';
-                                }
-                                if($monthValue != $performance->month) {
-                                    $monthValue = $performance->month; 
-                                
-                                    echo '<h6>'.$month.'</h6>';
-                                }
-                            @endphp
-                            {{ $performance->performancetype->name }} - {{ $performance->marks}}
-                        </div>
-                        
-                    @endforeach
+
+        @php
+            $monthNames = [
+                1 => 'January', 2 => 'February', 3 => 'March', 4 => 'April',
+                5 => 'May', 6 => 'June', 7 => 'July', 8 => 'August',
+                9 => 'September', 10 => 'October', 11 => 'November', 12 => 'December'
+            ];
+
+            // Group by year and month
+            $groupedPerformances = $employeePerformances->groupBy(function($item) {
+                $y = $item->year ?? date('Y');
+                return $y . '-' . str_pad($item->month, 2, '0', STR_PAD_LEFT);
+            });
+
+            $totalReviews = $groupedPerformances->count();
+            $allMarks = $employeePerformances->pluck('marks')->filter();
+            $avgMarks = $allMarks->count() > 0 ? round($allMarks->avg(), 1) : 0;
+            $maxMarks = $allMarks->count() > 0 ? round($allMarks->max(), 1) : 0;
+        @endphp
+
+        <!-- Quick KPI Summary Strip -->
+        <div class="row g-3 mb-4">
+            <div class="col-12 col-sm-6 col-xl-4">
+                <div class="p-3 bg-light rounded-4 border d-flex align-items-center gap-3">
+                    <div class="bg-white rounded-3 p-3 border shadow-xs text-primary">
+                        <i class="fa-solid fa-clipboard-check fs-4"></i>
+                    </div>
+                    <div>
+                        <span class="text-muted small d-block">Monthly Reviews</span>
+                        <h4 class="fw-bold text-dark mb-0">{{ $totalReviews }} {{ Str::plural('Month', $totalReviews) }}</h4>
+                    </div>
                 </div>
             </div>
-
+            <div class="col-12 col-sm-6 col-xl-4">
+                <div class="p-3 bg-light rounded-4 border d-flex align-items-center gap-3">
+                    <div class="bg-white rounded-3 p-3 border shadow-xs text-warning">
+                        <i class="fa-solid fa-star fs-4"></i>
+                    </div>
+                    <div>
+                        <span class="text-muted small d-block">Overall Average Score</span>
+                        <h4 class="fw-bold text-dark mb-0">{{ $avgMarks }} <small class="fs-6 text-muted">/ 100</small></h4>
+                    </div>
+                </div>
+            </div>
+            <div class="col-12 col-sm-6 col-xl-4">
+                <div class="p-3 bg-light rounded-4 border d-flex align-items-center gap-3">
+                    <div class="bg-white rounded-3 p-3 border shadow-xs text-success">
+                        <i class="fa-solid fa-trophy fs-4"></i>
+                    </div>
+                    <div>
+                        <span class="text-muted small d-block">Peak KPI Score</span>
+                        <h4 class="fw-bold text-dark mb-0">{{ $maxMarks }} <small class="fs-6 text-muted">pts</small></h4>
+                    </div>
+                </div>
+            </div>
         </div>
 
+        <!-- Monthly Evaluations Grid -->
+        @if($groupedPerformances->count() > 0)
+            <div class="row g-4">
+                @foreach($groupedPerformances as $key => $items)
+                    @php
+                        $firstItem = $items->first();
+                        $monthNum = (int)$firstItem->month;
+                        $monthName = $monthNames[$monthNum] ?? ('Month ' . $monthNum);
+                        $yearVal = $firstItem->year ?? date('Y');
+                        $monthTotal = $items->sum('marks');
+                        $monthAvg = round($items->avg('marks'), 1);
+                    @endphp
+                    <div class="col-12 col-md-6 col-xl-4">
+                        <div class="p-4 bg-light rounded-4 border h-100 d-flex flex-column justify-content-between">
+                            <div>
+                                <!-- Header of Month Card -->
+                                <div class="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <div class="bg-white rounded-3 p-2 border shadow-xs text-primary">
+                                            <i class="fa-solid fa-calendar-check"></i>
+                                        </div>
+                                        <div>
+                                            <h5 class="fw-bold text-dark mb-0">{{ $monthName }} {{ $yearVal }}</h5>
+                                            <small class="text-muted">{{ $items->count() }} KPI {{ Str::plural('Metric', $items->count()) }}</small>
+                                        </div>
+                                    </div>
+                                    <span class="badge-stafo badge-stafo-success">
+                                        Total: {{ $monthTotal }} pts
+                                    </span>
+                                </div>
+
+                                <!-- KPI Items Breakdown -->
+                                <div class="d-flex flex-column gap-2 mb-3">
+                                    @foreach($items as $performance)
+                                        <div class="bg-white p-2 px-3 rounded-3 border d-flex align-items-center justify-content-between">
+                                            <div class="d-flex align-items-center gap-2">
+                                                <i class="fa-solid fa-circle-dot text-primary small"></i>
+                                                <span class="fw-semibold text-dark small">
+                                                    {{ $performance->performancetype->name ?? 'KPI Evaluation' }}
+                                                </span>
+                                            </div>
+                                            <span class="badge bg-light text-dark border fw-bold px-2 py-1">
+                                                <i class="fa-solid fa-star text-warning me-1"></i> {{ $performance->marks }}
+                                            </span>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            </div>
+
+                            <!-- Card Footer -->
+                            <div class="pt-2 border-top d-flex align-items-center justify-content-between text-muted small">
+                                <span>Monthly Average:</span>
+                                <span class="fw-bold text-dark">{{ $monthAvg }} pts</span>
+                            </div>
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+        @else
+            <!-- Empty State -->
+            <div class="text-center py-5 bg-light rounded-4 border">
+                <div class="bg-white rounded-circle p-3 d-inline-flex border mb-3 text-muted shadow-xs">
+                    <i class="fa-solid fa-chart-line fs-1 text-primary"></i>
+                </div>
+                <h5 class="fw-bold text-dark mb-1">No Performance Records Yet</h5>
+                <p class="text-muted small mb-3">There are no monthly KPI scores recorded for {{ $employee->name }}.</p>
+                <a href="{{ route('employeePerformanceAdd', $employee->id) }}" class="btn btn-primary px-4 fw-bold">
+                    <i class="fa-solid fa-plus me-1"></i> Record First Evaluation
+                </a>
+            </div>
+        @endif
 
     </div>
+</div>
 @endsection

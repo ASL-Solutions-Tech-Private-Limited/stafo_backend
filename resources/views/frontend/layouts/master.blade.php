@@ -38,7 +38,12 @@
   <!-- Favicon Icon -->
   <link rel="shortcut icon" href="{{asset('assets/images/favicon.png')}}" />
 
-  <!-- inject css start -->
+  <!-- Google Fonts: Plus Jakarta Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
   <!--== bootstrap -->
   <link href="{{asset('assets/css/bootstrap.min.css')}}" rel="stylesheet" type="text/css" />
@@ -87,51 +92,13 @@
     <!--header end-->   
 
     <!--hero section start-->
-    @if(request()->is('/'))
- 
-      <section class="hero-banner position-relative hero-shape2 custom-py-1 overflow-hidden">
-      <div class="container">
-        <div class="row align-items-center justify-content-between">
-          <div class="col-12 col-lg-5">
-            <h1 class="mb-4 font-w-4">
-              Welcome to STAFO <br /> <span class="font-w-6 text-primary">Smart, Simple & Affordable HRMS</span>
-            </h1>
-            <p class="lead mb-4">India&apos;s trusted HR software for startups, SMEs, and remote teams.
-              Manage attendance, payroll, leave, tasks, CRM, and real-time location tracking — all in one app.</p>
-            <!-- <a href="#" class="btn btn-primary">
-              Start Free Trial <i class="fa-solid fa-arrow-right" style="color: #1f1f1f;"></i>
-            </a> -->
-            <a href="https://play.google.com/store/apps/details?id=com.stafo.app&hl=en_IN" class="mx-1" target="_blank">
-              <img src="{{asset('assets/images/icon/playstore.svg')}}" width="150" height="46" alt="playstore">
-            </a>
-            <!-- <p class="mt-2">🎁 15-Day Free Trial – No Credit Card Needed</p> -->
-          </div>
-
-          <div class="col-12 col-lg-6 mt-5 mt-lg-0">
-            <div class="bg-white shadow-primary rounded overflow-hidden p-3 me-lg-n8">
-              <div class="owl-carousel no-pb" data-dots="false" data-items="1" data-autoplay="true">
-                
-                @foreach($homebanner as $banner)
-                <div class="item">
-                  <img class="img-fluid border border-light" src="{{ asset('uploads/homebanner/')}}/{{$banner->image}}" alt="">
-                </div>
-                @endforeach
-              </div>
-            </div>
-          </div>
-        </div>
-        <!-- / .row -->
-      </div>
-      <!-- / .container -->
-    </section>
-    @else    
+    @if(!request()->is('/'))
     <section class="hero-banner position-relative custom-pt-1 custom-pb-2 bg-light"
       data-bg-img="{{asset('assets/images/bg/02.png')}}">
       <div class="container">
         <div class="row text-white text-center">
           <div class="col">
             <h1 class="text-dark"> @yield('heading')</h1>
-
           </div>
         </div>
         <!-- / .row -->
@@ -259,6 +226,10 @@
 
   <!-- inject js end -->
 @yield('js')
+
+  <!-- Stafo AI Chat System Widget -->
+  @include('frontend.layouts.ai-chat-widget')
+
 </body>
 
 </html>

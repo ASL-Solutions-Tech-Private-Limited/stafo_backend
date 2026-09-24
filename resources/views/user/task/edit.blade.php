@@ -151,7 +151,7 @@
                 if (result.isConfirmed) {
                     var token = '{{ csrf_token() }}'; 
                     $.ajax({
-                        url: '{{ url('/') }}' + '/task/file-delete/' + fileId,
+                        url: '{{ url('company/task/file-delete') }}/' + fileId,
                         type: 'DELETE',
                         dataType: 'json',
                         data: {'_token': token},

@@ -13,8 +13,9 @@ class EmployeeImport
 {
     private $failureOccurred = false;
 
-    public function import($filePath)
+    public function import($filePath, $companyId = null)
     {
+        $companyId = $companyId ?: Auth::id();
         try {
             //Log::info("Starting import for file: " . $filePath);
 
@@ -45,7 +46,7 @@ class EmployeeImport
                         continue; // Skip this row if email already exists
                     }
                     Employee::create([
-                        'company_id' => Auth::id(),
+                        'company_id' => $companyId,
                         'name' => $row['A'], // Assuming 'A' is the name column
                         'email' => $row['B'],
                         'phone' => $row['C'],

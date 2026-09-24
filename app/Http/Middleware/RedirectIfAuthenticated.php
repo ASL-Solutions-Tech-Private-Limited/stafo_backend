@@ -19,11 +19,17 @@ class RedirectIfAuthenticated
      */
     public function handle(Request $request, Closure $next, ...$guards)
     {
-        $guards = empty($guards) ? [null] : $guards;
+        $guards = empty($guards) ? ['web', 'employee', 'admin'] : $guards;
 
         foreach ($guards as $guard) {
             if (Auth::guard($guard)->check()) {
-                return redirect(RouteServiceProvider::HOME);
+                if ($guard === 'employee') {
+                    return redirect()->route('employee.dashboard');
+                } elseif ($guard === 'admin') {
+                    return redirect()->route('dashboard');
+                } else {
+                    return redirect()->route('user.dashboard');
+                }
             }
         }
 

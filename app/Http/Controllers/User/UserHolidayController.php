@@ -16,7 +16,7 @@ class UserHolidayController extends Controller
             return view('user.verify_check');
         }
         $companyId = Auth::id();
-        $holidayes = Holiday::where('company_id', $companyId)->orderBy('created_at', 'desc')->get();
+        $holidayes = Holiday::where('company_id', $companyId)->orderBy('start_date', 'asc')->get();
 
         return view('user.holiday.index', compact('holidayes'));
     }

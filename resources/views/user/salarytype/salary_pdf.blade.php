@@ -3,439 +3,470 @@
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-    <title>Salary Slip - {{ $monthArray[$salaryMonth - 1] }} {{ $salaryYear }}</title>
+    <title>PAYSLIP – {{ $monthName }} {{ $salaryYear }}</title>
     <style>
+        @page {
+            size: A4 portrait;
+            margin: 9mm 13mm 9mm 13mm;
+        }
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
-        
         body {
             font-family: 'DejaVu Sans', 'Helvetica', 'Arial', sans-serif;
-            font-size: 11px;
-            line-height: 1.3;
-            color: #333;
-            margin: 0;
-            padding: 10px;
+            font-size: 8.2pt;
+            line-height: 1.35;
+            color: #1e293b;
+            background: #ffffff;
         }
-        
-        .salary-slip {
-            width: 100%;
-            max-width: 100%;
-            background: white;
-        }
-        
-        /* Header Section */
-        .header {
-            text-align: center;
-            margin-bottom: 12px;
-            padding-bottom: 8px;
-            border-bottom: 2px solid #3a6b92;
-        }
-        
-        .company-name {
-            font-size: 20px;
-            font-weight: bold;
-            color: #2c3e50;
-            margin-bottom: 3px;
-        }
-        
-        .company-address {
-            font-size: 9px;
-            color: #7f8c8d;
-            margin-bottom: 5px;
-        }
-        
-        .slip-title {
-            font-size: 14px;
-            font-weight: bold;
-            color: #2c3e50;
-            background: #ecf0f1;
-            display: inline-block;
-            padding: 3px 15px;
-            border-radius: 15px;
-        }
-        
-        .month-year {
-            font-size: 12px;
-            font-weight: bold;
-            margin-top: 5px;
-            color: #3a6b92;
-        }
-        
-        /* Employee Info Table */
-        .info-table {
+
+        /* Utility classes */
+        .w-full { width: 100%; }
+        .text-left { text-align: left; }
+        .text-center { text-align: center; }
+        .text-right { text-align: right; }
+        .font-bold { font-weight: bold; }
+        .uppercase { text-transform: uppercase; }
+
+        /* Header Table */
+        .header-table {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 12px;
+            margin-bottom: 8px;
         }
-        
-        .info-table td {
-            border: 1px solid #ddd;
-            padding: 6px 8px;
-            vertical-align: top;
+        .header-logo-td {
+            width: 16%;
+            vertical-align: middle;
+            text-align: left;
         }
-        
-        .info-table td:first-child {
-            width: 50%;
-            background: #fafafa;
+        .header-logo-td img {
+            max-height: 56px;
+            max-width: 95px;
         }
-        
-        .info-label {
+        .header-content-td {
+            width: 84%;
+            vertical-align: middle;
+            text-align: center;
+            padding-right: 15px;
+        }
+        .company-name {
+            font-size: 14pt;
             font-weight: bold;
-            color: #2c3e50;
-            min-width: 100px;
-            display: inline-block;
+            color: #0f172a;
+            margin-bottom: 3px;
+            letter-spacing: 0.5px;
         }
-        
-        .bank-details {
-            font-size: 9px;
-            margin-top: 5px;
-            padding-top: 5px;
-            border-top: 1px dotted #ddd;
+        .company-address {
+            font-size: 7.8pt;
+            color: #334155;
+            line-height: 1.3;
+            margin-bottom: 2px;
         }
-        
-        /* Attendance Box */
-        .attendance-box {
-            background: #f0f3f8;
-            padding: 6px;
-            border-radius: 4px;
-            margin-top: 5px;
+        .company-meta {
+            font-size: 7.3pt;
+            color: #64748b;
+            margin-top: 3px;
         }
-        
-        .attendance-item {
-            display: inline-block;
-            width: 49%;
-            font-size: 9px;
-            margin: 2px 0;
+
+        /* Divider */
+        .header-divider {
+            height: 2.5px;
+            background-color: #63121d;
+            width: 100%;
+            margin-bottom: 8px;
         }
-        
-        /* Salary Table */
+
+        /* Payslip Title Bar */
+        .title-bar {
+            width: 100%;
+            background-color: #f8fafc;
+            border: 1px solid #cbd5e1;
+            border-left: 4px solid #63121d;
+            margin-bottom: 10px;
+        }
+        .title-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .title-heading {
+            width: 44%;
+            font-size: 10pt;
+            font-weight: bold;
+            color: #63121d;
+            letter-spacing: 0.5px;
+            vertical-align: middle;
+            padding: 5px 8px;
+        }
+        .title-meta {
+            width: 56%;
+            font-size: 7.8pt;
+            color: #334155;
+            text-align: right;
+            vertical-align: middle;
+            padding: 5px 8px;
+        }
+
+        /* Section Title */
+        .section-header {
+            background-color: #f1f5f9;
+            font-size: 8pt;
+            font-weight: bold;
+            color: #0f172a;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 4.5px 8px;
+            border: 1px solid #cbd5e1;
+            border-bottom: none;
+        }
+
+        /* Employee Details Table */
+        .details-table {
+            width: 100%;
+            border-collapse: collapse;
+            border: 1px solid #cbd5e1;
+            margin-bottom: 11px;
+        }
+        .details-table td {
+            padding: 4.5px 8px;
+            font-size: 8pt;
+            vertical-align: middle;
+            border: 1px solid #e2e8f0;
+        }
+        .details-table .lbl {
+            width: 18%;
+            color: #475569;
+            font-weight: normal;
+            background-color: #f8fafc;
+        }
+        .details-table .val {
+            width: 32%;
+            color: #0f172a;
+            font-weight: bold;
+        }
+
+        /* Salary Breakdown Table */
         .salary-table {
             width: 100%;
             border-collapse: collapse;
-            margin: 10px 0;
+            border: 1px solid #cbd5e1;
+            margin-bottom: 11px;
         }
-        
         .salary-table th {
-            background: #3a6b92;
-            color: white;
-            padding: 6px;
-            text-align: center;
-            font-size: 11px;
+            padding: 5px 8px;
+            font-size: 8pt;
             font-weight: bold;
-            border: 1px solid #2c5a7a;
+            vertical-align: middle;
+            background-color: #f1f5f9;
+            border: 1px solid #cbd5e1;
+            color: #0f172a;
         }
-        
         .salary-table td {
-            border: 1px solid #ddd;
-            padding: 5px;
-            vertical-align: top;
+            padding: 4.5px 8px;
+            font-size: 8pt;
+            vertical-align: middle;
+            border-left: 1px solid #cbd5e1;
+            border-right: 1px solid #cbd5e1;
+            border-top: 1px solid #f1f5f9;
+            border-bottom: 1px solid #f1f5f9;
         }
-        
-        .inner-table {
+        .salary-table .border-right-bold {
+            border-right: 1.5px solid #cbd5e1;
+        }
+        .total-row td {
+            background-color: #f8fafc;
+            font-weight: bold;
+            border-top: 1.5px solid #cbd5e1 !important;
+            border-bottom: 1.5px solid #cbd5e1 !important;
+            padding: 5px 8px;
+            color: #0f172a;
+        }
+
+        /* Net Pay Box */
+        .net-box {
             width: 100%;
             border-collapse: collapse;
+            border: 1.5px solid #63121d;
+            background-color: #fef8f8;
+            margin-bottom: 11px;
         }
-        
-        .inner-table tr {
-            border-bottom: 1px solid #eee;
+        .net-box td {
+            padding: 6px 10px;
+            vertical-align: middle;
         }
-        
-        .inner-table td {
-            border: none;
-            padding: 4px 2px;
+        .net-title {
+            font-size: 8.2pt;
+            font-weight: bold;
+            color: #475569;
+            text-transform: uppercase;
         }
-        
-        .inner-table td:first-child {
-            text-align: left;
+        .net-amount {
+            font-size: 13.5pt;
+            font-weight: bold;
+            color: #63121d;
+            margin-top: 2px;
         }
-        
-        .inner-table td:last-child {
+        .net-words {
+            font-size: 8pt;
+            color: #1e293b;
+            margin-top: 2px;
+            line-height: 1.3;
+        }
+
+        /* Signatures & Footer */
+        .footer-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 16px;
+        }
+        .footer-table td {
+            vertical-align: bottom;
+            font-size: 7.8pt;
+        }
+        .disclaimer-text {
+            color: #64748b;
+            line-height: 1.4;
+        }
+        .sign-area {
             text-align: right;
         }
-        
-        .total-row {
-            background: #e8edf5;
-            font-weight: bold;
-        }
-        
-        .total-row td {
-            padding: 5px;
-            font-weight: bold;
-        }
-        
-        .gross-row {
-            background: #d4edda;
-        }
-        
-        .net-row {
-            background: #e8f0fe;
-        }
-        
-        .net-row td {
-            padding: 8px;
-        }
-        
-        .amount-word {
-            font-size: 9px;
-            color: #666;
-            font-style: italic;
-            margin-top: 3px;
-        }
-        
-        .status-badge {
+        .sign-box {
             display: inline-block;
-            padding: 2px 8px;
-            border-radius: 12px;
-            font-size: 9px;
+            text-align: center;
+            width: 160px;
+        }
+        .sign-line {
+            border-top: 1px solid #334155;
+            padding-top: 4px;
+            font-size: 7.8pt;
+            color: #334155;
             font-weight: bold;
         }
-        
-        .status-paid {
-            background: #28a745;
-            color: white;
-        }
-        
-        .status-generated {
-            background: #ffc107;
-            color: #333;
-        }
-        
-        .footer {
-            margin-top: 12px;
-            padding-top: 8px;
-            border-top: 1px solid #ddd;
-            font-size: 8px;
-            text-align: center;
-            color: #95a5a6;
-        }
-        
-        .signature {
-            margin-top: 8px;
-            padding-top: 8px;
-        }
-        
-        .text-right {
-            text-align: right;
-        }
-        
-        .text-center {
-            text-align: center;
-        }
-        
-        .font-bold {
-            font-weight: bold;
-        }
-        
-        hr {
-            margin: 6px 0;
-            border: 0;
-            border-top: 1px solid #ddd;
-        }
-        
-        /* Ensure everything fits on one page */
-        @page {
-            margin: 0.5cm;
-            size: A4;
-        }
-        
-        @media print {
-            body {
-                padding: 0;
-                margin: 0;
-            }
-            .salary-slip {
-                margin: 0;
-            }
+
+        .bottom-bar {
+            height: 2.5px;
+            background-color: #63121d;
+            width: 100%;
+            margin-top: 10px;
         }
     </style>
 </head>
 <body>
-    <div class="salary-slip">
-        <!-- Header -->
-        <div class="header">
-            <div class="company-name">{{ $company->company_name }}</div>
-            <div class="company-address">{{ $company->address }}, {{ $company->pin }}</div>
-            <div class="slip-title">SALARY SLIP</div>
-            <div class="month-year">{{ $monthArray[$salaryMonth - 1] }} {{ $salaryYear }}</div>
-        </div>
-        
-        <!-- Employee Information -->
-        <table class="info-table">
-            <tr>
-                <td>
-                    <span class="info-label">Employee Name:</span> {{ $salarySummary->employee_name ?? $employee->name }}<br>
-                    <span class="info-label">Employee Code:</span> {{ $employee->emp_id }}<br>
-                    <span class="info-label">Designation:</span> {{ $employee->designation ?? 'N/A' }}<br>
-                    <span class="info-label">Department:</span> {{ $employee->department->name ?? 'N/A' }}<br>
-                    <span class="info-label">DOJ:</span> {{ date('d/m/Y', strtotime($employee->date_of_joining)) }}<br>
-                    
-                    @if($employee->bankAccount)
-                        <div class="bank-details">
-                            <span class="info-label">A/C No:</span> {{ $employee->bankAccount->account_number }}<br>
-                            <span class="info-label">Bank:</span> {{ $employee->bankAccount->bank_name }}<br>
-                            <span class="info-label">IFSC:</span> {{ $employee->bankAccount->ifsc_code }}
-                        </div>
-                    @endif
+    <!-- Company Header -->
+    <table class="header-table">
+        <tr>
+            @if(!empty($logoBase64))
+                <td class="header-logo-td">
+                    <img src="{{ $logoBase64 }}" alt="Logo">
                 </td>
-                <td>
-                    <span class="info-label">PF Number:</span> {{ $employee->pf_number ?? 'N/A' }}<br>
-                    <span class="info-label">ESI Number:</span> {{ $employee->esi_number ?? 'N/A' }}<br>
-                    <span class="info-label">UAN Number:</span> {{ $employee->uan_number ?? 'N/A' }}<br>
-                    
-                    <div class="attendance-box">
-                        <div style="font-weight: bold; margin-bottom: 4px;">Attendance</div>
-                        <div class="attendance-item">📅 Working Days: <strong>{{ $salarySummary->working_days ?? 0 }}</strong></div>
-                        <div class="attendance-item">🎉 Holidays: <strong>{{ $salarySummary->holiday_count ?? 0 }}</strong></div>
-                        <div class="attendance-item">❌ Absent: <strong>{{ $salarySummary->absent_days ?? 0 }}</strong></div>
-                        <div class="attendance-item">✅ Present: <strong>{{ ($salarySummary->working_days ?? 0) - ($salarySummary->absent_days ?? 0) }}</strong></div>
-                    </div>
-                </td>
-            </tr>
-        </table>
-        
-        <!-- Salary Details -->
-        <table class="salary-table">
-            <thead>
-                <tr>
-                    <th width="50%">EARNINGS</th>
-                    <th width="50%">DEDUCTIONS</th>
-                </tr>
-            </thead>
-            <tbody>
-                @php
-                    $earnings_list = '';
-                    $deductions_list = '';
-                    $total_earning = 0;
-                    $total_deduction = 0;
-                    
-                    // Basic Salary
-                    $basic_salary = $salarySummary->basic_salary ?? 0;
-                    $earnings_list .= '<tr><td>Basic Salary</td><td class="text-right">₹ ' . number_format($basic_salary, 2) . '</td></tr>';
-                    $total_earning += $basic_salary;
-                    
-                    // Process salary components
-                    foreach($employeeSalaries as $salary){
-                        if($salary->salarytype->payment_type == 'Earning'){
-                            $earnings_list .= '<tr><td>' . $salary->salarytype->salary_type . '</td><td class="text-right">₹ ' . number_format($salary->amount, 2) . '</td></tr>';
-                            $total_earning += $salary->amount;
-                        }
-                        if($salary->salarytype->payment_type == 'Deduction'){
-                            $deductions_list .= '<tr><td>' . $salary->salarytype->salary_type . '</td><td class="text-right">₹ ' . number_format($salary->amount, 2) . '</td></tr>';
-                            $total_deduction += $salary->amount;
-                        }
-                    }
-                    
-                    // Reimbursement
-                    $reimbursement = $salarySummary->reimbursement ?? 0;
-                    if($reimbursement > 0){
-                        $earnings_list .= '<tr><td>Reimbursement</td><td class="text-right">₹ ' . number_format($reimbursement, 2) . '</td></tr>';
-                        $total_earning += $reimbursement;
-                    }
-                    
-                    // Other Deduction
-                    $other_deduction = $salarySummary->other_deduction ?? 0;
-                    if($other_deduction > 0){
-                        $deductions_list .= '<tr><td>Other Deduction</td><td class="text-right">₹ ' . number_format($other_deduction, 2) . '</td></tr>';
-                        $total_deduction += $other_deduction;
-                    }
-                    
-                    $gross_earning = $total_earning;
-                    $net_salary = $salarySummary->net_salary ?? ($gross_earning - $total_deduction);
-                @endphp
-                
-                <tr>
-                    <td style="vertical-align: top;">
-                        <table class="inner-table">
-                            {!! $earnings_list !!}
-                            @if(empty($earnings_list))
-                                <tr><td colspan="2" class="text-center">- No Earnings -</td></tr>
-                            @endif
-                        </table>
-                    </td>
-                    <td style="vertical-align: top;">
-                        <table class="inner-table">
-                            {!! $deductions_list !!}
-                            @if(empty($deductions_list))
-                                <tr><td colspan="2" class="text-center">- No Deductions -</td></tr>
-                            @endif
-                        </table>
-                    </td>
-                </tr>
-                
-                <!-- Total Row -->
-                <tr class="total-row">
-                    <td><strong>Total Earnings</strong></td>
-                    <td><strong>Total Deductions</strong></td>
-                </tr>
-                <tr class="total-row">
-                    <td class="text-right"><strong>₹ {{ number_format($gross_earning, 2) }}</strong></td>
-                    <td class="text-right"><strong>₹ {{ number_format($total_deduction, 2) }}</strong></td>
-                </tr>
-                
-                <!-- Gross Salary -->
-                <tr class="gross-row">
-                    <td colspan="2">
-                        <strong>Gross Salary: ₹ {{ number_format($gross_earning, 2) }}</strong>
-                        <div class="amount-word">{{ ucwords(\App\Helpers\Helper::convert($gross_earning)) }} Only</div>
-                    </td>
-                </tr>
-                
-                <!-- Net Salary -->
-                <tr class="net-row">
-                    <td colspan="2">
-                        <table width="100%">
-                            <tr>
-                                <td width="70%"><strong>Net Salary Payable:</strong></td>
-                                <td width="30%" class="text-right"><strong style="font-size: 14px;">₹ {{ number_format($net_salary, 2) }}</strong></td>
-                            </tr>
-                            <tr>
-                                <td colspan="2" class="amount-word">{{ ucwords(\App\Helpers\Helper::convert($net_salary)) }} Only</td>
-                            </tr>
-                        </table>
-                    </td>
-                </tr>
-                
-                <!-- Status -->
-                @if($salarySummary && $salarySummary->status)
-                <tr>
-                    <td colspan="2" style="background: #f9f9f9;">
-                        <strong>Status:</strong> 
-                        <span class="status-badge {{ $salarySummary->status == 'Paid' ? 'status-paid' : 'status-generated' }}">
-                            {{ $salarySummary->status }}
-                        </span>
-                        &nbsp;&nbsp;|&nbsp;&nbsp;
-                        <strong>Generated:</strong> {{ date('d/m/Y', strtotime($salarySummary->generated_date)) }}
-                    </td>
-                </tr>
+            @endif
+            <td class="header-content-td" @if(empty($logoBase64)) style="width: 100%; padding-right: 0;" @endif>
+                <div class="company-name">{{ $company->company_name ?? '' }}</div>
+                @if(!empty($regAddress))
+                    <div class="company-address"><strong>Registered Office:</strong> {{ $regAddress }}</div>
                 @endif
-            </tbody>
-        </table>
-        
-        <!-- Payment Info & Signature -->
-        <table width="100%" style="margin-top: 8px;">
+                @if(!empty($branchAddress))
+                    <div class="company-address"><strong>Branch Office:</strong> {{ $branchAddress }}</div>
+                @endif
+                <div class="company-meta">
+                    @if(!empty($company->gst_number))
+                        <strong>GSTIN:</strong> {{ $company->gst_number }} &nbsp;|&nbsp;
+                    @endif
+                    @if(!empty($company->pan_number))
+                        <strong>PAN:</strong> {{ $company->pan_number }} &nbsp;|&nbsp;
+                    @endif
+                    @if(!empty($company->email))
+                        <strong>Email:</strong> {{ $company->email }}
+                    @endif
+                    @if(!empty($company->mobile_no))
+                        &nbsp;|&nbsp; <strong>Phone:</strong> {{ $company->mobile_no }}
+                    @endif
+                </div>
+            </td>
+        </tr>
+    </table>
+
+    <div class="header-divider"></div>
+
+    <!-- Title Bar -->
+    <div class="title-bar">
+        <table class="title-table">
             <tr>
-                <td width="60%">
-                    <strong>Payment Mode:</strong> Bank Transfer
+                <td class="title-heading">
+                    PAYSLIP – {{ strtoupper($monthName) }} {{ $salaryYear }}
                 </td>
-                <td width="40%" class="text-right">
-                    <strong>For {{ $company->company_name }}</strong>
+                <td class="title-meta">
+                    <strong>Pay Period:</strong> {{ $payPeriod }} &nbsp;&nbsp;|&nbsp;&nbsp;
+                    <strong>Pay Date:</strong> {{ $payDate }}
                 </td>
             </tr>
-            <tr>
-                <td>&nbsp;</td>
-                <td class="text-right" style="padding-top: 25px;">
-                    <span style="border-top: 1px solid #333; padding-top: 3px; font-size: 9px;">Authorized Signatory</span>
-                </td>
-            </tr>
         </table>
-        
-        <!-- Footer -->
-        <div class="footer">
-            This is a computer generated salary slip | Valid without signature
-        </div>
     </div>
+
+    <!-- Employee Details Table -->
+    <div class="section-header">Employee Details</div>
+    <table class="details-table">
+        <tr>
+            <td class="lbl">Employee ID</td>
+            <td class="val">{{ $employeeId }}</td>
+            <td class="lbl">Employee Name</td>
+            <td class="val">{{ $employeeName }}</td>
+        </tr>
+        <tr>
+            <td class="lbl">Designation</td>
+            <td class="val">{{ $designationName }}</td>
+            <td class="lbl">Department</td>
+            <td class="val">{{ $departmentName }}</td>
+        </tr>
+        <tr>
+            <td class="lbl">Date of Joining</td>
+            <td class="val">{{ $doj }}</td>
+            <td class="lbl">Branch</td>
+            <td class="val">{{ $branchName ?: 'Main Branch' }}</td>
+        </tr>
+        <tr>
+            <td class="lbl">Bank Name</td>
+            <td class="val">{{ $bankName }}</td>
+            <td class="lbl">Bank A/C No.</td>
+            <td class="val">{{ $bankAccount }}</td>
+        </tr>
+        <tr>
+            <td class="lbl">IFSC Code</td>
+            <td class="val">{{ $ifscCode }}</td>
+            <td class="lbl">PAN / UAN</td>
+            <td class="val">
+                @if(!empty($panNumber) && !empty($uanNumber))
+                    PAN: {{ $panNumber }} | UAN: {{ $uanNumber }}
+                @elseif(!empty($panNumber))
+                    {{ $panNumber }}
+                @elseif(!empty($uanNumber))
+                    {{ $uanNumber }}
+                @else
+                    N/A
+                @endif
+            </td>
+        </tr>
+        <tr>
+            <td class="lbl">Working Days</td>
+            <td class="val">{{ $workingDays }}</td>
+            <td class="lbl">Paid Days</td>
+            <td class="val">
+                {{ $paidDays }}
+                @if($absentDays > 0)
+                    <span style="color: #b91c1c; font-weight: normal; font-size: 7.5pt;">(Absent: {{ $absentDays }})</span>
+                @endif
+            </td>
+        </tr>
+        @if(!empty($pfNumber) || !empty($esiNumber))
+        <tr>
+            <td class="lbl">PF Number</td>
+            <td class="val">{{ $pfNumber ?: 'N/A' }}</td>
+            <td class="lbl">ESI Number</td>
+            <td class="val">{{ $esiNumber ?: 'N/A' }}</td>
+        </tr>
+        @endif
+    </table>
+
+    <!-- Salary Components (Earnings & Deductions Side-by-Side) -->
+    @php
+        $maxRows = max(count($earningsList), count($deductionsList));
+        if ($maxRows < 3) {
+            $maxRows = 3;
+        }
+    @endphp
+
+    <table class="salary-table">
+        <thead>
+            <tr>
+                <th colspan="2" class="border-right-bold" style="width: 50%;">EARNINGS</th>
+                <th colspan="2" style="width: 50%;">DEDUCTIONS</th>
+            </tr>
+            <tr>
+                <th style="width: 33%; font-weight: bold;">Description</th>
+                <th class="text-right border-right-bold" style="width: 17%; font-weight: bold;">Amount (₹)</th>
+                <th style="width: 33%; font-weight: bold;">Description</th>
+                <th class="text-right" style="width: 17%; font-weight: bold;">Amount (₹)</th>
+            </tr>
+        </thead>
+        <tbody>
+            @for($i = 0; $i < $maxRows; $i++)
+                @php
+                    $earn = $earningsList[$i] ?? null;
+                    $ded = $deductionsList[$i] ?? null;
+                @endphp
+                <tr>
+                    <td style="color: #1e293b;">
+                        {{ $earn ? $earn['name'] : '' }}
+                    </td>
+                    <td class="text-right border-right-bold">
+                        {{ $earn ? number_format($earn['amount'], 2) : '' }}
+                    </td>
+                    <td style="color: #1e293b;">
+                        {{ $ded ? $ded['name'] : '' }}
+                    </td>
+                    <td class="text-right">
+                        {{ $ded ? number_format($ded['amount'], 2) : '' }}
+                    </td>
+                </tr>
+            @endfor
+
+            <!-- Total Row -->
+            <tr class="total-row">
+                <td>Total Earnings (Gross)</td>
+                <td class="text-right border-right-bold">₹ {{ number_format($grossSalary, 2) }}</td>
+                <td>Total Deductions</td>
+                <td class="text-right">₹ {{ number_format($totalDeductions, 2) }}</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <!-- Net Salary Box -->
+    <table class="net-box">
+        <tr>
+            <td style="width: 60%;">
+                <div class="net-title">Net Salary Payable (Monthly In-Hand)</div>
+                <div class="net-amount">₹ {{ number_format($netSalary, 2) }}</div>
+            </td>
+            <td style="width: 40%; text-align: right; vertical-align: middle;">
+                <div style="font-size: 7.5pt; color: #64748b; text-transform: uppercase; font-weight: bold;">Payment Status</div>
+                <div style="font-size: 9pt; font-weight: bold; color: {{ ($salarySummary->status ?? '') === 'Paid' ? '#15803d' : '#0369a1' }}; margin-top: 2px;">
+                    {{ $salarySummary->status ?? 'Generated' }}
+                </div>
+            </td>
+        </tr>
+        <tr>
+            <td colspan="2" style="border-top: 1px dashed #fca5a5; padding-top: 5px;">
+                <div class="net-words">
+                    <strong>Amount in Words:</strong> {{ $netSalaryInWords }}
+                </div>
+            </td>
+        </tr>
+    </table>
+
+    <!-- Signatures & Notes -->
+    <table class="footer-table">
+        <tr>
+            <td style="width: 60%;">
+                <div class="disclaimer-text">
+                    <strong>Payment Mode:</strong> Bank Transfer<br>
+                    <strong>Note:</strong> This is a computer-generated payslip and does not require a physical signature if generated electronically.
+                </div>
+            </td>
+            <td style="width: 40%;" class="sign-area">
+                <div class="sign-box">
+                    <div style="font-size: 8pt; font-weight: bold; color: #1e293b; margin-bottom: 30px;">
+                        For {{ $company->company_name ?? 'Company' }}
+                    </div>
+                    <div class="sign-line">
+                        Authorized Signatory
+                    </div>
+                </div>
+            </td>
+        </tr>
+    </table>
+
+    <!-- Bottom Accent Bar -->
+    <div class="bottom-bar"></div>
 </body>
 </html>

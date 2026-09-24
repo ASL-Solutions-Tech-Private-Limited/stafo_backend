@@ -1,83 +1,113 @@
 @extends('user.layouts.app')
 
-@section('title', 'Add Leavetype')
+@section('title', 'Add Leave Type | STAFO HRMS')
 
 @section('content')
-    <div class="card mt-4 p-3">
+@include('user.layouts.alert')
+<div class="card shadow-sm border-0">
+    <div class="card-body p-4">
 
-        <div class="container">
-            <div class="row mb-3">
-                <div class="col-md-6">
-                    <h2 class="fw-bold">Add Leavetype</h2>
+        <!-- Page Header -->
+        <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3 mb-4 pb-3 border-bottom">
+            <div>
+                <div class="d-flex align-items-center gap-2 mb-1">
+                    <h3 class="fw-bold text-dark mb-0">Add Leave Type</h3>
+                    <span class="badge-stafo badge-stafo-primary">
+                        <i class="fa-solid fa-plane-departure me-1"></i> Policy Setup
+                    </span>
                 </div>
-                <div class="col-md-6">
-                    <a href="{{ route('leavetypes.index') }}" class="btn btn-primary" style="float: right;">Leavetype
-                        List</a>
-                </div>
+                <p class="text-muted small mb-0">Configure a new category for company leave allowances and quotas</p>
             </div>
+            <a href="{{ route('leavetypes.index') }}" class="btn btn-outline-secondary px-3 py-2">
+                <i class="fa-solid fa-arrow-left me-1"></i> Back to Leave Types
+            </a>
+        </div>
 
-            <form action="{{ route('leavetypes.store') }}" method="POST">
-                @csrf
-                <div class="row align-items-end">
+        <form action="{{ route('leavetypes.store') }}" method="POST">
+            @csrf
 
-                    <!-- Leavetype Name -->
-                    <div class="col-md-6 mb-3">
-                        <label for="name" class="form-label">Leavetype Name</label>
-                        <input type="text" name="name" class="form-control" value="{{ old('name') }}">
+            <!-- Form Card -->
+            <div class="p-4 bg-light rounded-4 border mb-4">
+                <h5 class="fw-bold text-dark mb-3 d-flex align-items-center gap-2">
+                    <i class="fa-solid fa-sliders text-primary"></i> Leave Type Configuration
+                </h5>
+
+                <div class="row g-3">
+                    <!-- Leave Type Name -->
+                    <div class="col-12 col-md-6">
+                        <label for="name" class="form-label fw-semibold text-dark">
+                            Leave Type Name <span class="text-danger">*</span>
+                        </label>
+                        <input type="text" name="name" id="name" class="form-control @error('name') is-invalid @enderror" 
+                               value="{{ old('name') }}" placeholder="e.g. Annual Leave, Sick Leave, Casual Leave" required>
                         @error('name')
-                            <div class="text-danger">{{ $message }}</div>
+                            <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
                     </div>
-                    <div class="col-md-6 mb-3">
-                        <label for="no_of_days" class="form-label">Max no of days leave taken per year</label>
-                        <input type="text" name="no_of_days" class="form-control" value="{{ old('no_of_days') }}">
+
+                    <!-- Max No. of Days Per Year -->
+                    <div class="col-12 col-md-6">
+                        <label for="no_of_days" class="form-label fw-semibold text-dark">
+                            Annual Quota (Days / Year) <span class="text-danger">*</span>
+                        </label>
+                        <input type="number" step="0.5" name="no_of_days" id="no_of_days" class="form-control @error('no_of_days') is-invalid @enderror" 
+                               value="{{ old('no_of_days') }}" placeholder="e.g. 12" required>
                         @error('no_of_days')
-                            <div class="text-danger">{{ $message }}</div>
+                            <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
                     </div>
 
-                    <div class="col-md-6 mb-3">
-                        <label for="is_paid" class="form-label">Is Paid</label>
-                        <select name="is_paid" id="is_paid" class="form-control">
-                            <option value="0" {{ old('is_paid', 0) == 0 ? 'selected' : '' }}>No</option>
-                            <option value="1" {{ old('is_paid', 0) == 1 ? 'selected' : '' }}>Yes</option>                            
+                    <!-- Is Paid -->
+                    <div class="col-12 col-md-6">
+                        <label for="is_paid" class="form-label fw-semibold text-dark">
+                            Leave Compensation Type <span class="text-danger">*</span>
+                        </label>
+                        <select name="is_paid" id="is_paid" class="form-select @error('is_paid') is-invalid @enderror">
+                            <option value="1" {{ old('is_paid', 1) == 1 ? 'selected' : '' }}>Paid Leave (Encashable/Covered)</option>
+                            <option value="0" {{ old('is_paid', 1) == 0 ? 'selected' : '' }}>Unpaid Leave (LWP)</option>                            
                         </select>
-
                         @error('is_paid')
-                            <div class="text-danger">{{ $message }}</div>
+                            <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
                     </div>
 
                     <!-- Status -->
-                    <div class="col-md-6 mb-3">
-                        <label for="status" class="form-label">Status</label>
-                        <select name="status" id="status" class="form-control">
+                    <div class="col-12 col-md-6">
+                        <label for="status" class="form-label fw-semibold text-dark">
+                            Status <span class="text-danger">*</span>
+                        </label>
+                        <select name="status" id="status" class="form-select @error('status') is-invalid @enderror">
                             <option value="1" {{ old('status', 1) == 1 ? 'selected' : '' }}>Active</option>
                             <option value="0" {{ old('status', 1) == 0 ? 'selected' : '' }}>Inactive</option>
                         </select>
-
                         @error('status')
-                            <div class="text-danger">{{ $message }}</div>
+                            <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
                     </div>
 
                     <!-- Description -->
-                    <div class="col-md-6 mb-3">
-                        <label for="description" class="form-label">Description</label>
-                        <textarea name="description" class="form-control" rows="3">{{ old('description') }}</textarea>
+                    <div class="col-12">
+                        <label for="description" class="form-label fw-semibold text-dark">
+                            Description & Policy Rules <span class="text-muted fw-normal">(Optional)</span>
+                        </label>
+                        <textarea name="description" id="description" class="form-control @error('description') is-invalid @enderror" 
+                                  rows="3" placeholder="Provide details on eligibility, probation rules, or notice requirements">{{ old('description') }}</textarea>
                         @error('description')
-                            <div class="text-danger">{{ $message }}</div>
+                            <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
                     </div>
-
-
-
-                    <!-- Save Button -->
-                    <div class="col-md-6 mb-3 text-end">
-                        <button type="submit" class="btn btn-success ">Save</button>
-                    </div>
                 </div>
-            </form>
-        </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="d-flex justify-content-end align-items-center gap-2 pt-3 border-top">
+                <a href="{{ route('leavetypes.index') }}" class="btn btn-outline-secondary px-4">Cancel</a>
+                <button type="submit" class="btn btn-primary px-5 py-2 fw-bold shadow-sm">
+                    <i class="fa-solid fa-floppy-disk me-1"></i> Save Leave Type
+                </button>
+            </div>
+        </form>
+
     </div>
+</div>
 @endsection

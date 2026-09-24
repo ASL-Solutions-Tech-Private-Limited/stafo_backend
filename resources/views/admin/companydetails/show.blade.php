@@ -71,7 +71,11 @@
                             </tr>
                             <tr>
                                 <th>Status</th>
-                                <td>{{ $company->status == 1 ? 'Active' : 'Inactive' }}</td>
+                                <td>
+                                    <span class="badge {{ $company->status == 1 ? 'bg-success' : 'bg-secondary' }}">
+                                        {{ $company->status == 1 ? 'Active' : 'Inactive' }}
+                                    </span>
+                                </td>
                             </tr>
                         </tbody>
                     </table>

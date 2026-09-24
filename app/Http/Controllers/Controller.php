@@ -14,6 +14,7 @@ class Controller extends BaseController
 
     public function makeCurlRequest($url, $data = [], $method = 'POST')
     {
+       // dd($url, $data, $method);
         $ch = curl_init();
 
         switch (strtoupper($method)) {

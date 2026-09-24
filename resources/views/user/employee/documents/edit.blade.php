@@ -1,169 +1,99 @@
 @extends('user.layouts.app')
 
-@section('title', 'Edit Document') <!-- Set your custom title here -->
-
-@section('css')
-    <style>
-        /* Custom Styling for Form */
-        .card {
-            border: none;
-            background-color: #f9f9f9;
-            border-radius: 10px;
-            padding: 30px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-
-        .text-primary {
-            font-size: 1.5rem;
-            font-weight: 600;
-        }
-
-        .form-control {
-            border-radius: 5px;
-            padding: 10px;
-            font-size: 1rem;
-            border: 1px solid #ccc;
-            transition: border-color 0.3s ease;
-        }
-
-        .form-control:focus {
-            border-color: #007bff;
-            box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
-        }
-
-        .btn {
-            font-size: 1rem;
-            padding: 12px 20px;
-            border-radius: 5px;
-            transition: all 0.3s ease;
-        }
-
-        .btn-warning {
-            background-color: #ffc107;
-            border-color: #ffc107;
-        }
-
-        .btn-warning:hover {
-            background-color: #e0a800;
-            border-color: #d39e00;
-        }
-
-        .btn-secondary {
-            background-color: #6c757d;
-            border-color: #6c757d;
-        }
-
-        .btn-secondary:hover {
-            background-color: #5a6268;
-            border-color: #545b62;
-        }
-
-        .row {
-            margin-bottom: 20px;
-        }
-
-        .form-group {
-            margin-bottom: 20px;
-        }
-
-        .text-center {
-            margin-bottom: 30px;
-        }
-
-        .form-control-file {
-            padding: 10px;
-        }
-
-        /* Spacing adjustments for form layout */
-        .col-md-4 {
-            margin-bottom: 15px;
-        }
-
-        .col-md-4.mb-3 {
-            margin-bottom: 20px;
-        }
-
-        .col-md-4.d-flex {
-            display: flex;
-            justify-content: center;
-        }
-
-        .col-md-4.text-right {
-            display: flex;
-            justify-content: flex-end;
-        }
-
-        /* Additional styling for the document preview section */
-        .document-preview {
-            background-color: #f1f1f1;
-            padding: 10px;
-            border-radius: 5px;
-            margin-top: 10px;
-            text-align: center;
-        }
-
-        .document-preview a {
-            color: #007bff;
-            text-decoration: none;
-            font-weight: 500;
-        }
-
-        .document-preview a:hover {
-            text-decoration: underline;
-        }
-    </style>
-@endsection
+@section('title', 'Edit Employee Document | STAFO HRMS')
 
 @section('content')
-    <div class="card mt-4 p-3">
-        <h5 class="text-center text-primary mb-4">Edit Document for {{ $employee->name }}</h5>
+@include('user.layouts.alert')
+<div class="card shadow-sm border-0">
+    <div class="card-body p-4">
 
-        <form
-            action="{{ route('employee.documents.update', ['employeeId' => $employee->id, 'documentId' => $document->id]) }}"
-            method="POST" enctype="multipart/form-data">
+        <!-- Page Header -->
+        <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3 mb-4 pb-3 border-bottom">
+            <div>
+                <div class="d-flex align-items-center gap-2 mb-1">
+                    <h3 class="fw-bold text-dark mb-0">Edit Employee Document</h3>
+                    <span class="badge-stafo badge-stafo-primary">
+                        <i class="fa-solid fa-user me-1"></i> {{ $employee->name }}
+                    </span>
+                </div>
+                <p class="text-muted small mb-0">Update document classification or upload a replacement file</p>
+            </div>
+            <a href="{{ route('employee.index') }}" class="btn btn-outline-secondary px-3 py-2">
+                <i class="fa-solid fa-arrow-left me-1"></i> Back to Employee List
+            </a>
+        </div>
+
+        <form action="{{ route('employee.documents.update', ['employeeId' => $employee->id, 'documentId' => $document->id]) }}"
+              method="POST" enctype="multipart/form-data">
             @csrf
             @method('PUT')
-            <div class="row mb-4">
-                <!-- Document Type Dropdown -->
-                <div class="col-md-4 mb-3">
-                    <label for="document_type_id" class="form-label">Select Document Type</label>
-                    <select name="document_type_id" class="form-control" required>
-                        <option value="">Select Document Type</option>
-                        @foreach ($documentTypes as $documentType)
-                            <option value="{{ $documentType->id }}"
-                                {{ $document->document_type_id == $documentType->id ? 'selected' : '' }}>
-                                {{ $documentType->document_name }}
-                            </option>
-                        @endforeach
-                    </select>
-                </div>
 
-                <!-- File Input (Optional) -->
-                <div class="col-md-4 mb-3">
-                    <label for="file" class="form-label">Upload New Document (Optional)</label>
-                    <input type="file" name="file" class="form-control">
-                    <!-- Display existing file (if any) -->
-                    @if ($document->file_path)
-                        <div class="document-preview">
-                            <p>Current Document:</p>
-                            <a href="{{ asset('employee_documents/' . $document->file_path) }}" target="_blank">View
-                                Document</a>
-                        </div>
-                    @endif
+            <!-- Document Details Card -->
+            <div class="p-4 bg-light rounded-4 border mb-4">
+                <h5 class="fw-bold text-dark mb-3 d-flex align-items-center gap-2">
+                    <i class="fa-solid fa-file-contract text-primary"></i> Document Details
+                </h5>
+
+                <div class="row g-3">
+                    
+                    <!-- Document Type Dropdown -->
+                    <div class="col-12 col-md-6">
+                        <label for="document_type_id" class="form-label fw-semibold text-dark">
+                            Select Document Type <span class="text-danger">*</span>
+                        </label>
+                        <select name="document_type_id" id="document_type_id" class="form-select" required>
+                            <option value="">-- Select Document Type --</option>
+                            @foreach ($documentTypes as $documentType)
+                                <option value="{{ $documentType->id }}"
+                                    {{ $document->document_type_id == $documentType->id ? 'selected' : '' }}>
+                                    {{ $documentType->document_name }}
+                                </option>
+                            @endforeach
+                        </select>
+                        @error('document_type_id')
+                            <div class="text-danger small mt-1">{{ $message }}</div>
+                        @enderror
+                    </div>
+
+                    <!-- File Input -->
+                    <div class="col-12 col-md-6">
+                        <label for="file" class="form-label fw-semibold text-dark">
+                            Upload New Document <span class="text-muted fw-normal">(Optional)</span>
+                        </label>
+                        <input type="file" name="file" id="file" class="form-control">
+                        
+                        @if ($document->file_path)
+                            <div class="mt-2 p-2 bg-white rounded-3 border d-flex align-items-center justify-content-between">
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="fa-solid fa-file-lines text-primary fs-5"></i>
+                                    <div>
+                                        <small class="text-muted d-block">Current Attached File</small>
+                                        <span class="small fw-semibold text-dark">{{ basename($document->file_path) }}</span>
+                                    </div>
+                                </div>
+                                <a href="{{ asset('employee_documents/' . $document->file_path) }}" target="_blank" 
+                                   class="btn btn-sm btn-outline-primary px-3" style="border-radius: 6px;">
+                                    <i class="fa-solid fa-arrow-up-right-from-square me-1"></i> View
+                                </a>
+                            </div>
+                        @endif
+                        @error('file')
+                            <div class="text-danger small mt-1">{{ $message }}</div>
+                        @enderror
+                    </div>
+
                 </div>
             </div>
 
-            <div class="row">
-                <!-- Submit Button -->
-                <div class="col-md-4"></div>
-                <div class="col-md-4 mb-3 d-flex justify-content-center">
-                    <button type="submit" class="btn btn-warning w-100">Update Document</button>
-                </div>
-                <!-- Back Button (Aligned to the right) -->
-                <div class="col-md-4 text-right">
-                    <a href="{{ route('employee.index') }}" class="btn btn-secondary">Back to Employee List</a>
-                </div>
+            <!-- Actions Bar -->
+            <div class="d-flex justify-content-end align-items-center gap-2 pt-3 border-top">
+                <a href="{{ route('employee.index') }}" class="btn btn-outline-secondary px-4">Cancel</a>
+                <button type="submit" class="btn btn-primary px-5 py-2 fw-bold shadow-sm">
+                    <i class="fa-solid fa-floppy-disk me-1"></i> Update Document
+                </button>
             </div>
         </form>
+
     </div>
+</div>
 @endsection

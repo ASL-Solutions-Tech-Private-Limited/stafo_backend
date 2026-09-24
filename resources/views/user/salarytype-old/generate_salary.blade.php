@@ -73,7 +73,7 @@
             
             if (employeeId && month) {
                 $.ajax({
-                    url: '{{ url('/') }}' + '/get-employee-salary/' + employeeId,
+                    url: '{{ route('getEmployeeSalary', '') }}/' + employeeId,
                     type: 'GET',
                     dataType: 'json',
                     data: { 
@@ -164,7 +164,7 @@
             
             if(confirm('Are you sure you want to generate salary for ALL employees for this month?')) {
                 $.ajax({
-                    url: '{{ url('/') }}' + '/generate-all-salary/',
+                    url: '{{ route('generateAllSalary') }}',
                     type: 'GET',
                     dataType: 'json',
                     data: { 

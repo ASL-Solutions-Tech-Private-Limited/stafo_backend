@@ -20,6 +20,8 @@ use App\Http\Controllers\admin\FeaturesController;
 use App\Http\Controllers\admin\FeedbackController;
 use App\Http\Controllers\admin\AppbannerController;
 use App\Http\Controllers\User\DepartmentController;
+use App\Http\Controllers\User\DesignationController;
+use App\Http\Controllers\User\CompanyRoleController;
 use App\Http\Controllers\User\SalarytypeController;
 use App\Http\Controllers\User\LeavetypeController;
 use App\Http\Controllers\User\ReimbursementController;
@@ -40,6 +42,9 @@ use App\Http\Controllers\User\UserEmployeeController;
 use App\Http\Controllers\admin\BusinessTypeController;
 use App\Http\Controllers\Auth\LoginRegisterController;
 use App\Http\Controllers\admin\AdministratorController;
+use App\Http\Controllers\Employee\EmployeeDashboardController;
+use App\Http\Controllers\Employee\EmployeeManagementController;
+use App\Http\Controllers\Employee\EmployeePayrollManagementController;
 
 use App\Http\Controllers\admin\CompanyDetailController;
 use App\Http\Controllers\User\UserAttendanceController;
@@ -53,6 +58,7 @@ use App\Http\Controllers\User\PerformanceController;
 use App\Http\Controllers\User\ChatController;
 use App\Http\Controllers\admin\AdminChatController;
 use App\Http\Controllers\admin\NotificationController;
+use App\Http\Controllers\admin\AdminProfileController;
 use App\Http\Controllers\admin\SalaryController;
 use App\Http\Controllers\User\CRMController;
 use App\Http\Controllers\admin\AdminCRMController;
@@ -70,6 +76,7 @@ use App\Http\Controllers\admin\BlogCategoryController;
 use App\Http\Controllers\User\UserHolidayController;
 use App\Http\Controllers\admin\BlogTagController;
 use App\Http\Controllers\admin\BlogController;
+use App\Http\Controllers\WebsiteAiChatController;
 
 
 /*
@@ -94,6 +101,8 @@ Route::get('blog', [HomeController::class, 'blog'])->name('blog');
 Route::get('blog-details/{id}/{slug}', [HomeController::class, 'blogDetails'])->name('blogDetails');
 Route::post('blog-comment-store/{id}', [HomeController::class, 'blogCommentStore'])->name('blogCommentStore');
 Route::post('contact-submit', [HomeController::class, 'store'])->name('contact.submit');
+Route::post('website-ai-chat', [WebsiteAiChatController::class, 'handleMessage'])->name('website.aiChat');
+Route::post('website-ai-chat/upload', [WebsiteAiChatController::class, 'uploadAttachment'])->name('website.aiChat.upload');
 
 Route::get('privacy-policy', [HomeController::class, 'privacy'])->name('privacy');
 Route::get('terms-condition', [HomeController::class, 'terms'])->name('terms');
@@ -112,16 +121,129 @@ Route::controller(LoginRegisterController::class)->group(function () {
     Route::get('/logout', 'logout')->name('logout');
 });
 
-// user dashborad
-Route::namespace('App\Http\Controllers')->middleware('auth')->group(function () {
+// user / employee dashboard redirect
+Route::get('dashboard', function () {
+    if (\Illuminate\Support\Facades\Auth::guard('employee')->check()) {
+        return redirect()->route('employee.dashboard');
+    }
+    return redirect()->route('user.dashboard');
+});
+
+// Employee Portal Routes
+Route::prefix('employee')->middleware('auth:employee')->group(function () {
+    Route::get('dashboard', [EmployeeDashboardController::class, 'index'])->name('employee.dashboard');
+    Route::get('profile', [EmployeeDashboardController::class, 'profile'])->name('employee.profile');
+    Route::match(['post', 'put'], 'profile/update', [EmployeeDashboardController::class, 'updateProfile'])->name('employee.profile.update');
+    Route::get('attendance', [EmployeeDashboardController::class, 'attendance'])->name('employee.attendance');
+    Route::get('leaves', [EmployeeDashboardController::class, 'leaves'])->name('employee.leaves');
+    Route::post('leave/apply', [EmployeeDashboardController::class, 'applyLeave'])->name('employee.leave.apply');
+    Route::get('salary-slips', [EmployeeDashboardController::class, 'salarySlips'])->name('employee.salarySlips');
+    Route::get('salary-slip/download/{id}', [EmployeeDashboardController::class, 'downloadSalarySlip'])->name('employee.salarySlip.download');
+    Route::get('tasks', [EmployeeDashboardController::class, 'tasks'])->name('employee.tasks');
+    Route::post('task/update-status/{id}', [EmployeeDashboardController::class, 'updateTaskStatus'])->name('employee.task.updateStatus');
+    Route::get('documents', [EmployeeDashboardController::class, 'documents'])->name('employee.documents');
+    Route::put('documents/update', [EmployeeDashboardController::class, 'updateDocumentData'])->name('employee.documents.updateData');
+    Route::get('holidays', [EmployeeDashboardController::class, 'holidays'])->name('employee.holidays');
+    Route::post('punch/submit', [EmployeeDashboardController::class, 'webPunch'])->name('employee.punch.submit');
+    Route::post('punch/selfie', [EmployeeDashboardController::class, 'webSelfiePunch'])->name('employee.punch.selfie');
+    Route::post('punch/qr', [EmployeeDashboardController::class, 'webQrPunch'])->name('employee.punch.qr');
+    Route::get('punch/status', [EmployeeDashboardController::class, 'webPunchStatus'])->name('employee.punch.status');
+    Route::post('geo-tracking/respond', [EmployeeDashboardController::class, 'respondGeoTracking'])->name('employee.geoTracking.respond');
+
+    // Role-Based Management Modules (guarded by designation permissions & company_id)
+    Route::prefix('management')->name('employee.management.')->group(function () {
+        // Staff Directory (Employee)
+        Route::get('employees', [EmployeeManagementController::class, 'employees'])->name('employees');
+        Route::post('employees', [EmployeeManagementController::class, 'storeEmployee'])->name('employees.store');
+        Route::put('employees/{id}', [EmployeeManagementController::class, 'updateEmployee'])->name('employees.update');
+        Route::delete('employees/{id}', [EmployeeManagementController::class, 'destroyEmployee'])->name('employees.destroy');
+        Route::get('employees/export', [EmployeeManagementController::class, 'exportEmployees'])->name('employees.export');
+        Route::post('employees/import', [EmployeeManagementController::class, 'importEmployees'])->name('employees.import');
+
+        // Leave
+        Route::get('leaves', [EmployeeManagementController::class, 'leaves'])->name('leaves');
+        Route::post('leave/update-status', [EmployeeManagementController::class, 'updateLeaveStatus'])->name('leave.updateStatus');
+        Route::delete('leave/{id}', [EmployeeManagementController::class, 'deleteLeave'])->name('leave.delete');
+
+        // Emp Attendance
+        Route::get('attendance', [EmployeeManagementController::class, 'attendance'])->name('attendance');
+        Route::post('attendance/store', [EmployeeManagementController::class, 'storeAttendance'])->name('attendance.store');
+        Route::get('attendance/{id}/edit', [EmployeeManagementController::class, 'editAttendance'])->name('attendance.edit');
+        Route::put('attendance/{id}', [EmployeeManagementController::class, 'updateAttendance'])->name('attendance.update');
+        Route::delete('attendance/{id}', [EmployeeManagementController::class, 'destroyAttendance'])->name('attendance.destroy');
+
+        // Branch
+        Route::get('branches', [EmployeeManagementController::class, 'branches'])->name('branches');
+        Route::post('branches', [EmployeeManagementController::class, 'storeBranch'])->name('branches.store');
+        Route::put('branches/{id}', [EmployeeManagementController::class, 'updateBranch'])->name('branches.update');
+        Route::delete('branches/{id}', [EmployeeManagementController::class, 'destroyBranch'])->name('branches.destroy');
+
+        // Department
+        Route::get('departments', [EmployeeManagementController::class, 'departments'])->name('departments');
+        Route::post('departments', [EmployeeManagementController::class, 'storeDepartment'])->name('departments.store');
+        Route::put('departments/{id}', [EmployeeManagementController::class, 'updateDepartment'])->name('departments.update');
+        Route::delete('departments/{id}', [EmployeeManagementController::class, 'destroyDepartment'])->name('departments.destroy');
+
+        // Designation
+        Route::get('designations', [EmployeeManagementController::class, 'designations'])->name('designations');
+        Route::post('designations', [EmployeeManagementController::class, 'storeDesignation'])->name('designations.store');
+        Route::put('designations/{id}', [EmployeeManagementController::class, 'updateDesignation'])->name('designations.update');
+        Route::delete('designations/{id}', [EmployeeManagementController::class, 'destroyDesignation'])->name('designations.destroy');
+
+        // Shift
+        Route::get('shifts', [EmployeeManagementController::class, 'shifts'])->name('shifts');
+        Route::post('shifts', [EmployeeManagementController::class, 'storeShift'])->name('shifts.store');
+        Route::put('shifts/{id}', [EmployeeManagementController::class, 'updateShift'])->name('shifts.update');
+        Route::delete('shifts/{id}', [EmployeeManagementController::class, 'destroyShift'])->name('shifts.destroy');
+
+        // Team task
+        Route::get('tasks', [EmployeeManagementController::class, 'tasks'])->name('tasks');
+        Route::post('task/store', [EmployeeManagementController::class, 'storeTask'])->name('task.store');
+        Route::put('task/{id}', [EmployeeManagementController::class, 'updateTask'])->name('task.update');
+        Route::delete('task/{id}', [EmployeeManagementController::class, 'destroyTask'])->name('task.destroy');
+
+        // Staff payroll and Salary (Full Module Replicated from Company Panel)
+        Route::get('payroll', [EmployeePayrollManagementController::class, 'records'])->name('payroll');
+        Route::prefix('payroll')->name('payroll.')->group(function () {
+            // 1. Monthly Salary Records
+            Route::get('records', [EmployeePayrollManagementController::class, 'records'])->name('records');
+            Route::get('details/{employeeId}', [EmployeePayrollManagementController::class, 'details'])->name('details');
+            Route::get('download-slip', [EmployeePayrollManagementController::class, 'downloadSlip'])->name('downloadSlip');
+            Route::delete('delete-salary/{id}', [EmployeePayrollManagementController::class, 'deleteSalary'])->name('deleteSalary');
+            Route::get('export', [EmployeePayrollManagementController::class, 'export'])->name('export');
+
+            // 2. Run / Generate Salary Studio
+            Route::get('generate', [EmployeePayrollManagementController::class, 'generateSalary'])->name('generate');
+            Route::get('get-employee-salary/{employeeId}', [EmployeePayrollManagementController::class, 'getEmployeeSalary'])->name('getEmployeeSalary');
+            Route::post('save-employee-salary', [EmployeePayrollManagementController::class, 'saveEmployeeSalary'])->name('saveEmployeeSalary');
+            Route::get('generate-all-salary', [EmployeePayrollManagementController::class, 'generateAllSalary'])->name('generateAllSalary');
+
+            // 3. Salary Components
+            Route::get('components', [EmployeePayrollManagementController::class, 'componentsIndex'])->name('components');
+            Route::get('components/create', [EmployeePayrollManagementController::class, 'componentsCreate'])->name('components.create');
+            Route::post('components/store', [EmployeePayrollManagementController::class, 'componentsStore'])->name('components.store');
+            Route::get('components/{id}/edit', [EmployeePayrollManagementController::class, 'componentsEdit'])->name('components.edit');
+            Route::put('components/{id}', [EmployeePayrollManagementController::class, 'componentsUpdate'])->name('components.update');
+            Route::delete('components/{id}', [EmployeePayrollManagementController::class, 'componentsDestroy'])->name('components.destroy');
+        });
+
+        // Download Report
+        Route::get('reports', [EmployeeManagementController::class, 'reports'])->name('reports');
+        Route::get('reports/export-employee', [EmployeeManagementController::class, 'exportEmployeeReport'])->name('reports.exportEmployee');
+        Route::get('reports/export-attendance', [EmployeeManagementController::class, 'exportAttendanceReport'])->name('reports.exportAttendance');
+        Route::get('reports/export-leave', [EmployeeManagementController::class, 'exportLeaveReport'])->name('reports.exportLeave');
+    });
+});
+
+Route::prefix('company')->namespace('App\Http\Controllers')->middleware('auth')->group(function () {
     Route::get('dashboard', 'DashboardController@index')->name('user.dashboard');
 
-    Route::get('company/profile/edit', [UserCompanyDetailController::class, 'edit'])->name('company.profile.edit');
+    Route::get('profile/edit', [UserCompanyDetailController::class, 'edit'])->name('company.profile.edit');
 
-    Route::put('/company/profile/update', [UserCompanyDetailController::class, 'update'])->name('company.profile.update');
+    Route::put('profile/update', [UserCompanyDetailController::class, 'update'])->name('company.profile.update');
 
-    Route::get('/companies-list', [UserCompanyDetailController::class, 'index'])->name('company.index'); // List all
-    Route::get('/companies/referrals', [UserCompanyDetailController::class, 'referralList'])->name('referralList');
+    Route::get('companies-list', [UserCompanyDetailController::class, 'index'])->name('company.index'); // List all
+    Route::get('referrals', [UserCompanyDetailController::class, 'referralList'])->name('referralList');
 
     Route::get('states/{country_id}', [UserCompanyDetailController::class, 'getStates'])->name('user.getStates');
     Route::get('cities/{state_id}', [UserCompanyDetailController::class, 'getCities'])->name('user.getCities');
@@ -152,7 +274,10 @@ Route::namespace('App\Http\Controllers')->middleware('auth')->group(function () 
     Route::post('employees/{employee}/assign-branch', [UserEmployeeController::class, 'assignBranch'])->name('employee.assignBranch');
     Route::post('employees/{employee}/assign-department', [UserEmployeeController::class, 'assignDepartment'])->name('employee.assignDepartment');
 
-    Route::get('employee/location/{id}', [UserEmployeeController::class, 'location'])->name('employee.location');
+    Route::get('employee/location/{id?}', [UserEmployeeController::class, 'location'])->name('employee.location');
+    Route::get('employee/location-live/{id}', [UserEmployeeController::class, 'getLiveLocation'])->name('employee.locationLive');
+    Route::post('employee/update-geo-status', [UserEmployeeController::class, 'updateGeoStatus'])->name('employee.updateGeoStatus');
+    Route::get('employee/monthly-attendance/{id}', [UserEmployeeController::class, 'getMonthlyAttendance'])->name('employee.monthlyAttendance');
 
     Route::get('employees/export', [UserEmployeeController::class, 'export'])->name('employees.export');
     Route::post('employees/import', [UserEmployeeController::class, 'import'])->name('user.employees.import');
@@ -190,11 +315,26 @@ Route::namespace('App\Http\Controllers')->middleware('auth')->group(function () 
     Route::get('employee-salary-details/{employeeId}', [SalarytypeController::class, 'employeeSalaryDetails'])->name('employeeSalaryDetails');
 
     Route::get('employee/salary-slip/download', [SalarytypeController::class, 'salaryPDF'])->name('salaryPDF');
+    Route::delete('delete-salary/{id}', [SalarytypeController::class, 'deleteSalary'])->name('deleteSalary');
     Route::get('salary/export', [SalarytypeController::class, 'export'])->name('salary-export');
 
     // Department routes
     Route::resource('departments', DepartmentController::class);
     Route::patch('departments/{id}/toggle-status', [DepartmentController::class, 'toggleStatus'])->name('departments.toggleStatus');
+
+    // Designation routes
+    Route::resource('designations', DesignationController::class);
+    Route::patch('designations/{id}/toggle-status', [DesignationController::class, 'toggleStatus'])->name('designations.toggleStatus');
+
+    // Company Roles & Permissions routes
+    Route::get('company-roles/employee-data', [CompanyRoleController::class, 'getEmployeeData'])->name('company-roles.employeeData');
+    Route::post('company-roles/save-permissions', [CompanyRoleController::class, 'savePermissions'])->name('company-roles.savePermissions');
+    Route::get('company-roles/{id}/role-data', [CompanyRoleController::class, 'getRoleData'])->name('company-roles.roleData');
+    Route::post('company-roles/assign-employee-role', [CompanyRoleController::class, 'assignEmployeeRole'])->name('company-roles.assignEmployeeRole');
+    Route::post('company-roles/{id}/toggle-permission', [CompanyRoleController::class, 'togglePermission'])->name('company-roles.togglePermission');
+    Route::post('company-roles/{id}/sync-permissions', [CompanyRoleController::class, 'syncPermissions'])->name('company-roles.syncPermissions');
+    Route::resource('company-roles', CompanyRoleController::class);
+    Route::patch('company-roles/{id}/toggle-status', [CompanyRoleController::class, 'toggleStatus'])->name('company-roles.toggleStatus');
     
     // Leavetypes routes
     Route::resource('leavetypes', LeavetypeController::class);
@@ -244,7 +384,7 @@ Route::namespace('App\Http\Controllers')->middleware('auth')->group(function () 
 
     // comapny documents
     Route::resource('company-documents', CompanyDocumentController::class);
-    Route::get('company/document-verification', [CompanyDocumentController::class, 'documentVerification'])->name('companydocumentVerification');
+    Route::get('document-verification', [CompanyDocumentController::class, 'documentVerification'])->name('companydocumentVerification');
     Route::put('company-data-update', [CompanyDocumentController::class, 'companyDataUpdate'])->name('companyDataUpdate');
 
     Route::resource('company-packages', UserPackageController::class);
@@ -271,6 +411,8 @@ Route::namespace('App\Http\Controllers')->middleware('auth')->group(function () 
     Route::get('chat', [ChatController::class, 'index'])->name('chat.index');
     Route::get('save-chat', [ChatController::class, 'savechat'])->name('savechat');
     Route::get('get-chat', [ChatController::class, 'getChat'])->name('getChat');
+    Route::post('chat/toggle-status', [ChatController::class, 'toggleStatus'])->name('chat.toggleStatus');
+    Route::post('chat/upload-attachment', [ChatController::class, 'uploadAttachment'])->name('chat.uploadAttachment');
 
     Route::get('lead-list', [CRMController::class, 'leadList'])->name('leadList');
     Route::get('lead-create', [CRMController::class, 'leadCreate'])->name('leadCreate');
@@ -286,7 +428,8 @@ Route::namespace('App\Http\Controllers')->middleware('auth')->group(function () 
 
     Route::get('device-list', [UserCompanyDetailController::class, 'deviceList'])->name('deviceList');
     Route::get('approve-device/{id}', [UserCompanyDetailController::class, 'approveDevice'])->name('approveDevice');
-     Route::get('reject-device/{id}', [UserCompanyDetailController::class, 'rejectDevice'])->name('rejectDevice');
+    Route::get('reject-device/{id}', [UserCompanyDetailController::class, 'rejectDevice'])->name('rejectDevice');
+    Route::get('reset-device/{id}', [UserCompanyDetailController::class, 'resetDevice'])->name('resetDevice');
 
     Route::prefix('task')->group(function () {
         Route::get('/list', [TaskController::class, 'taskList'])->name('taskList');
@@ -372,6 +515,9 @@ Route::group(['prefix' => 'admin', 'namespace' => 'App\Http\Controllers\admin'],
 Route::group(['prefix' => 'admin', 'namespace' => 'App\Http\Controllers\admin', 'middleware' => ['auth:admin']], function () {
     Route::get('/logout', ['as' => 'admin_logout', 'uses' => 'LoginController@logout']);
     Route::get('dashboard', 'DashboardController@index')->name('dashboard');
+    Route::get('profile', [AdminProfileController::class, 'index'])->name('admin.profile');
+    Route::post('profile/update', [AdminProfileController::class, 'updateProfile'])->name('admin.profile.update');
+    Route::post('profile/change-password', [AdminProfileController::class, 'changePassword'])->name('admin.profile.changePassword');
     Route::get('document', 'DocumentTypeController@index')->name('document_list');
     Route::get('document-add', 'DocumentTypeController@add')->name('document_add');
     Route::post('document-add', 'DocumentTypeController@store')->name('store_document');
@@ -540,6 +686,8 @@ Route::group(['prefix' => 'admin', 'namespace' => 'App\Http\Controllers\admin', 
     Route::get('chat-list', [AdminChatController::class, 'chatList'])->name('chatList');
     Route::get('save-adminchat/{id}', [AdminChatController::class, 'savechat'])->name('saveadminchat');
     Route::get('get-adminchat/{id}', [AdminChatController::class, 'getadminChat'])->name('getadminChat');
+    Route::post('chat/toggle-status/{id}', [AdminChatController::class, 'toggleStatus'])->name('adminchat.toggleStatus');
+    Route::post('chat/upload-attachment/{id}', [AdminChatController::class, 'uploadAttachment'])->name('adminchat.uploadAttachment');
 
     Route::get('notification/send', [NotificationController::class, 'create'])->name('notification.send');
     Route::post('notification/send', [NotificationController::class, 'send'])->name('notification_send');
@@ -661,4 +809,9 @@ Route::group(['prefix' => 'admin', 'namespace' => 'App\Http\Controllers\admin', 
         Route::get('/{id}/comments', [BlogController::class, 'blogcomments'])->name('admin.blogcomments');
         Route::delete('/comment/{id}', [BlogController::class, 'blogcommentdelete'])->name('admin.blogcommentdelete');
     });
+});
+
+// Universal 404 Fallback Route for Website, Employee Portal & Company Portal
+Route::fallback(function () {
+    return response()->view('errors.404', [], 404);
 });

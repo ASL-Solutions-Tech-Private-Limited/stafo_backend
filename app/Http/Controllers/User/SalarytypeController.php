@@ -15,6 +15,7 @@ use App\Models\Holiday;
 use App\Models\Expense;
 use App\Models\CompanyDetail;
 use App\Models\SalryTypePackage;
+use App\Models\Department;
 use App\Exports\SalaryPDFExport;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -34,13 +35,33 @@ class SalarytypeController extends Controller
             return view('user.verify_check');
         }
         $companyId = Auth::id();
-        $salarytypes = Salarytype::with('package')
+        $salarytypes = Salarytype::with('department')
        ->where('company_id', Auth::id())
        ->get();
    
   
         return view('user.salarytype.index', compact('salarytypes')); // Return the view with all salarytypes
     }
+
+    // public function create()
+    // {
+    //     $is_verified = Auth::user()->is_verified;
+    //     if ($is_verified == 'No') {
+    //         return view('user.verify_check');
+    //     }
+
+    //         // Get all active employees for the company
+    //     $employees = Employee::where('company_id', Auth::id())
+    //         ->where('status', '1')
+    //         ->orderBy('name')
+    //         ->get();
+   
+
+    //     // return view('user.salarytype.create',compact('packages','departments')); 
+    //   return view('user.salarytype.create', compact('employees'));
+
+    // }
+
 
     public function create()
     {
@@ -49,49 +70,24 @@ class SalarytypeController extends Controller
             return view('user.verify_check');
         }
 
+        // Get all active departments for the company
+        $departments = Department::where('company_id', Auth::id())
+            ->where('status', '1')
+            ->orderBy('name')
+            ->get();
 
-        // Get all active packages for the company
-       $packages = SalryTypePackage::where('company_id', Auth::id())
-        ->where('status', 'Active')
-        ->orderBy('package_name')
-        ->get();
-
-        return view('user.salarytype.create',compact('packages')); 
+        return view('user.salarytype.create', compact('departments'));
     }
-
-
-
-
-
-    // public function store(Request $request)
-    // {
-    //     // Validate the incoming request
-    //     $request->validate([
-    //         'salary_type' => 'required|string',
-    //         'amount' => 'required|numeric',
-    //     ]);
-    //     $userId = Auth::id();
-    //     Salarytype::create([
-    //         'company_id' => $userId,
-    //         'payment_type' => $request->payment_type,
-    //         'salary_type' => $request->salary_type,
-    //         'salary_type_description' => $request->salary_type_description,
-    //         'amount' => $request->amount,
-    //         'amount_type' => $request->amount_type,
-    //         'status' => '1',
-    //     ]);
-    //     return redirect()->route('salarytype.index')->with('success', 'Salarytype created successfully.');
-    // }
 
 
     public function store(Request $request)
     {
         // Validate the incoming request
         $request->validate([
-            'package_id' => 'required|exists:salry_type_packages,id',
+            'department_id' => 'required|exists:departments,id',
             'items' => 'required|array|min:1',
             'items.*.payment_type' => 'required|in:Earning,Deduction',
-            'items.*.salary_type' => 'required|string|max:255|unique:salarytypes,salary_type,NULL,id,company_id,' . Auth::id() . ',package_id,' . $request->package_id,
+            'items.*.salary_type' => 'required|string|max:255',
             'items.*.salary_type_description' => 'nullable|string',
             'items.*.amount' => 'required|numeric|min:0',
             'items.*.amount_type' => 'required|in:Flat,Percentage',
@@ -99,28 +95,19 @@ class SalarytypeController extends Controller
         ]);
         
         $userId = Auth::id();
-        $packageId = $request->package_id;
+        $employeeId = $request->employee_id;
+        $departmentId = $request->department_id;
         $createdCount = 0;
         $errors = [];
 
-        // Verify package belongs to company
-        $package = SalryTypePackage::where('id', $packageId)
-            ->where('company_id', $userId)
-            ->first();
-        
-        if (!$package) {
-            return redirect()->back()
-                ->with('error', 'Invalid package selected!')
-                ->withInput();
-        }
         
         foreach ($request->items as $index => $item) {
-        
+           
             
             try {
                 Salarytype::create([
                     'company_id' => $userId,
-                    'package_id' => $packageId,
+                    'department_id' => $departmentId,
                     'payment_type' => $item['payment_type'],
                     'salary_type' => $item['salary_type'],
                     'salary_type_description' => $item['salary_type_description'] ?? null,
@@ -136,7 +123,7 @@ class SalarytypeController extends Controller
         
         // Return response
         if ($createdCount > 0) {
-            $message = "$createdCount salary type(s) created successfully for package '{$package->package_name}'.";
+            $message = "$createdCount salary type(s) created successfully for department .";
             if (!empty($errors)) {
                 $message .= " But " . count($errors) . " item(s) failed: " . implode(' ', $errors);
             }
@@ -195,908 +182,473 @@ class SalarytypeController extends Controller
 
     public function generateSalary()
     {
-        // dd("test data");
         $is_verified = Auth::user()->is_verified;
         if ($is_verified == 'No') {
             return view('user.verify_check');
         }
-        $employees = Employee::where('company_id', Auth::id())->get();
-        $salarytypes = Salarytype::where('company_id', Auth::id())->where('status', '1')->get();
-        return view('user.salarytype.generate_salary', compact('employees', 'salarytypes'));
+
+        $companyId = Auth::id();
+        $employees = Employee::with(['department', 'designation'])
+            ->where('company_id', $companyId)
+            ->where('status', '1')
+            ->orderBy('name')
+            ->get();
+
+        $departments = Department::where('company_id', $companyId)
+            ->where('status', '1')
+            ->orderBy('name')
+            ->get();
+
+        $salarytypes = Salarytype::where('company_id', $companyId)
+            ->where('status', '1')
+            ->get();
+
+        $currentMonth = (int)date('m');
+        $currentYear = (int)date('Y');
+
+        $totalEmployees = $employees->count();
+        $processedCount = EmployeeSalarySummary::where('company_id', $companyId)
+            ->where('salary_month', $currentMonth)
+            ->where('salary_year', $currentYear)
+            ->count();
+        $pendingCount = max(0, $totalEmployees - $processedCount);
+
+        return view('user.salarytype.generate_salary', compact(
+            'employees',
+            'departments',
+            'salarytypes',
+            'totalEmployees',
+            'processedCount',
+            'pendingCount',
+            'currentMonth',
+            'currentYear'
+        ));
     }
-    // public function getEmployeeSalary(Request $request, $id)
-    // {
-        
-    //     $month = $request->month;
-    //     $employee = Employee::where('id', $id)->first();
-    //     $basic_salary = $employee->salary;
-    //     if($request->basic_salary){
-    //         $basic_salary = $request->basic_salary;
-    //     }
-    //     $section = '';
-    //     $earning_section = '';
-    //     $deduction_section = '';
-    //     $amount = 0;
-    //     $earning_amount = 0;
-    //     $deduction_amount = 0;
-    //     $gross_amount = 0;
-    //     $other_deduction = 0;
-        
-    //     $salarytypes = Salarytype::where('company_id', Auth::id())->where('status', '1')->get();
-    //     $gracesettings = GraceSetting::where('company_id', Auth::id())->get();
 
-    
-      
-    //     $grace_time = $gracesettings[0]->value;
-      
-    //     $grace_day = $gracesettings[1]->value;
-
-    //     if (!$salarytypes->isEmpty()) {
-            
-    //         $daily_salary = $basic_salary / 30;
-    //         $weekoffday = [];
-    //         $shift_time = '12:00:00';
-    //         if($employee->shifts){
-    //             foreach($employee->shifts as $shift){
-    //                 if($shift->sunday == 0){
-    //                     $weekoffday[] = 1;
-    //                 }
-    //                 if($shift->monday == 0){
-    //                     $weekoffday[] = 2;
-    //                 }
-    //                 if($shift->tuesday == 0){
-    //                     $weekoffday[] = 3;
-    //                 }
-    //                 if($shift->wednesday == 0){
-    //                     $weekoffday[] = 4;
-    //                 }
-    //                 if($shift->thursday == 0){
-    //                     $weekoffday[] = 5;
-    //                 }
-    //                 if($shift->friday == 0){
-    //                     $weekoffday[] = 6;
-    //                 }
-    //                 if($shift->saturday == 0){
-    //                     $weekoffday[] = 7;
-    //                 }
-    //                 $shift_time = $shift->start_time;
-    //             }
-    //         }
-    //         if(count($weekoffday)==0){
-    //             $weekoffday[] = 0;
-    //         }
-
-    //         $originalTime = Carbon::parse($shift_time);
-    //         $updatedTime = $originalTime->addMinutes($grace_time);
-    //         $grace_entry = $updatedTime->format('H:i:s');
-
-    //         $placeholders = implode(',', array_fill(0, count($weekoffday), '?'));
-
-    //         $absent = Attendance::where('employee_id', $id)->where('company_id', Auth::id())->whereMonth('date', $month)->where('attendance','Absent')->whereRaw("DAYOFWEEK(date) NOT IN ($placeholders)", $weekoffday)->count();
-    //         $halfday = Attendance::where('employee_id', $id)->where('company_id', Auth::id())->whereMonth('date', $month)->where('attendance','Present')->where('halfday',1)->count();
-    //         $entry = Attendance::where('employee_id', $id)->where('company_id', Auth::id())->whereMonth('date', $month)->where('attendance','Present')->where('in_time','>',$grace_entry)->count();
-    //         $late = floor($entry/$grace_day);
-
-    //         $employeeLeave = EmployeeLeave::where('employee_id', $id)->where('company_id', Auth::id())->whereMonth('from_date', $month)->get();
-
-    //         $rm_sum = Expense::where('employee_id', $id)->where('company_id', Auth::id())->whereMonth('created_at', $month)->where('status', 'Approved')->get();
-    //         $reimbursement = $rm_sum ->sum('amount');
-    //         $other_deduction = ($absent * $daily_salary) + ($late * $daily_salary) + ($halfday * ($daily_salary / 2));
-    //         $absent_days = $absent + $late + $halfday/2;
-    //         $other_deduction = round($other_deduction,2);
-    //         $holidayCount = $this->getHolidayDaysInMonth(date('Y'), $month);
-    //         $working_days = $this->getWorkingDaysInMonth(date('Y'), $month, $weekoffday);
-
-           
-    //         $working_days = $working_days - $holidayCount;
-
-    //         $section .= '<div class="col-md-6">
-    //                     <div class="form-group mb-3">
-    //                         <label for="basic_salary">Basic Salary</label>
-    //                         <input type="text" id="basic_salary" name="basic_salary" class="form-control" value="' . $basic_salary . '"
-    //                             required>
-    //                         <input type="hidden" name="absent_days" value="' . $absent_days . '">
-    //                         <input type="hidden" name="working_days" value="' . $working_days . '">
-    //                     </div>
-    //                 </div>';
-    //         foreach ($salarytypes as $salarytype) {
-    //             $salary_type_name = '';
-    //             if ($salarytype->amount_type == 'Flat') {
-    //                 $amount = $salarytype->amount;
-    //                 $salary_type_name = $salarytype->salary_type;
-    //             } else {
-    //                 $amount = ($basic_salary * $salarytype->amount / 100);
-    //                 $salary_type_name = $salarytype->salary_type . ' (' . $salarytype->amount . '%)';
-    //             }
-    //             if ($salarytype->payment_type == 'Earning') {
-    //                 $earning_amount = $earning_amount + $amount;
-    //                 $earning_section .= '<div class="col-md-6">
-    //                     <div class="form-group mb-3">
-    //                         <label for="salary_type">' . $salary_type_name . '</label>
-    //                         <input type="text" name="salary_type_' . $salarytype->id . '" class="form-control salary_type_amount" data-paymenttype="Earning" data-value="' . $amount . '" value="' . $amount . '" required>
-    //                     </div>
-    //                 </div>';
-    //             }
-    //             if ($salarytype->payment_type == 'Deduction') {
-    //                 $deduction_amount = $deduction_amount + $amount;
-    //                 $deduction_section .= '<div class="col-md-6">
-    //                     <div class="form-group mb-3">
-    //                         <label for="salary_type">' . $salary_type_name . '</label>
-    //                         <input type="text" name="salary_type_' . $salarytype->id . '" class="form-control salary_type_amount" data-paymenttype="Deduction" data-value="' . $amount . '" value="' . $amount . '" required>
-    //                     </div>
-    //                 </div>';
-    //             }
-    //         }
-
-    //         $earning_section .= '<div class="col-md-6">
-    //                     <div class="form-group mb-3">
-    //                         <label for="salary_type">Expense</label>
-    //                         <input type="text" name="reimbursement" class="form-control" data-paymenttype="Earning" data-value="' . $reimbursement . '" value="' . $reimbursement . '" >
-    //                     </div>
-    //                 </div>';
-
-    //         $deduction_section .= '<div class="col-md-6">
-    //                     <div class="form-group mb-3">
-    //                         <label for="salary_type"> Other Deduction </label>
-    //                         <input type="text" name="other_deduction" class="form-control" data-paymenttype="Deduction" data-value="' . $other_deduction . '" value="' . $other_deduction . '" required>
-    //                     </div>
-    //                 </div>';            
-
-    //         $gross_amount = $basic_salary + $earning_amount - $deduction_amount - $other_deduction;
-    //         $section .= '<div class="row">
-    //                         <div class="col-md-8">
-    //                             <h6>Earning Amount</h6>
-    //                         </div>' . $earning_section . '
-    //                     </div>';
-    //         $section .= '<div class="row">
-    //                     <div class="col-md-8">
-    //                         <h6>Deduction Amount</h6>
-    //                     </div>' . $deduction_section . '
-    //                 </div>';
-    //         $section .= '<div class="row">
-    //                         <div class="col-md-8">
-    //                             <label>Gross Salary: <span id="gross_text">' . $gross_amount . '<span></label>
-    //                             <input type="hidden" id="gross_amount" name="gross_amount" class="form-control" value="' . $gross_amount . '">
-    //                         </div>
-    //                     </div>';
-    //     }
-
-    //     $data['section'] = $section;
-    //     return response()->json($data);
-    // }
-
-
-// public function getEmployeeSalary(Request $request, $id)
-// {
-    
-//     $month = $request->month;
-//     $employee = Employee::where('id', $id)->first();
-//     $basic_salary = $employee->salary;
-//     if($request->basic_salary){
-//         $basic_salary = $request->basic_salary;
-//     }
-//     $section = '';
-//     $earning_section = '';
-//     $deduction_section = '';
-//     $amount = 0;
-//     $earning_amount = 0;
-//     $deduction_amount = 0;
-//     $gross_amount = 0;
-//     $other_deduction = 0;
-    
-//     $salarytypes = Salarytype::where('company_id', Auth::id())->where('status', '1')->get();
-//     $gracesettings = GraceSetting::where('company_id', Auth::id())->get();
-
-//     $grace_time = $gracesettings[0]->value;
-//     $grace_day = $gracesettings[1]->value;
-
-//     if (!$salarytypes->isEmpty()) {
-        
-//         $daily_salary = $basic_salary / 30;
-//         $weekoffday = [];
-//         $shift_time = '12:00:00';
-//         if($employee->shifts){
-//             foreach($employee->shifts as $shift){
-//                 if($shift->sunday == 0){
-//                     $weekoffday[] = 1;
-//                 }
-//                 if($shift->monday == 0){
-//                     $weekoffday[] = 2;
-//                 }
-//                 if($shift->tuesday == 0){
-//                     $weekoffday[] = 3;
-//                 }
-//                 if($shift->wednesday == 0){
-//                     $weekoffday[] = 4;
-//                 }
-//                 if($shift->thursday == 0){
-//                     $weekoffday[] = 5;
-//                 }
-//                 if($shift->friday == 0){
-//                     $weekoffday[] = 6;
-//                 }
-//                 if($shift->saturday == 0){
-//                     $weekoffday[] = 7;
-//                 }
-//                 $shift_time = $shift->start_time;
-//             }
-//         }
-//         if(count($weekoffday)==0){
-//             $weekoffday[] = 0;
-//         }
-
-//         $originalTime = Carbon::parse($shift_time);
-//         $updatedTime = $originalTime->addMinutes($grace_time);
-//         $grace_entry = $updatedTime->format('H:i:s');
-
-//         $placeholders = implode(',', array_fill(0, count($weekoffday), '?'));
-
-//         $absent = Attendance::where('employee_id', $id)->where('company_id', Auth::id())->whereMonth('date', $month)->where('attendance','Absent')->whereRaw("DAYOFWEEK(date) NOT IN ($placeholders)", $weekoffday)->count();
-//         $halfday = Attendance::where('employee_id', $id)->where('company_id', Auth::id())->whereMonth('date', $month)->where('attendance','Present')->where('halfday',1)->count();
-//         $entry = Attendance::where('employee_id', $id)->where('company_id', Auth::id())->whereMonth('date', $month)->where('attendance','Present')->where('in_time','>',$grace_entry)->count();
-//         $late = floor($entry/$grace_day);
-
-//         $employeeLeave = EmployeeLeave::where('employee_id', $id)->where('company_id', Auth::id())->whereMonth('from_date', $month)->get();
-
-//         $rm_sum = Expense::where('employee_id', $id)->where('company_id', Auth::id())->whereMonth('created_at', $month)->where('status', 'Approved')->get();
-//         $reimbursement = $rm_sum ->sum('amount');
-        
-//         // Calculate individual deduction amounts
-//         $absent_deduction = $absent * $daily_salary;
-//         $late_deduction = $late * $daily_salary;
-//         $halfday_deduction = $halfday * ($daily_salary / 2);
-//         $other_deduction = $absent_deduction + $late_deduction + $halfday_deduction;
-        
-//         $absent_days = $absent + $late + $halfday/2;
-//         $other_deduction = round($other_deduction,2);
-//         $holidayCount = $this->getHolidayDaysInMonth(date('Y'), $month);
-//         $working_days = $this->getWorkingDaysInMonth(date('Y'), $month, $weekoffday);
-//         $working_days = $working_days - $holidayCount;
-     
-
-//         $section .= '<div class="col-md-6">
-//                     <div class="form-group mb-3">
-//                         <label for="basic_salary">Basic Salary</label>
-//                         <input type="text" id="basic_salary" name="basic_salary" class="form-control" value="' . $basic_salary . '"
-//                             required>
-//                         <input type="hidden" name="absent_days" value="' . $absent_days . '">
-//                         <input type="hidden" name="working_days" value="' . $working_days . '">
-//                     </div>
-//                 </div>';
-        
-//         foreach ($salarytypes as $salarytype) {
-//             $salary_type_name = '';
-//             if ($salarytype->amount_type == 'Flat') {
-//                 $amount = $salarytype->amount;
-//                 $salary_type_name = $salarytype->salary_type;
-//             } else {
-//                 $amount = ($basic_salary * $salarytype->amount / 100);
-//                 $salary_type_name = $salarytype->salary_type . ' (' . $salarytype->amount . '%)';
-//             }
-//             if ($salarytype->payment_type == 'Earning') {
-//                 $earning_amount = $earning_amount + $amount;
-//                 $earning_section .= '<div class="col-md-6">
-//                     <div class="form-group mb-3">
-//                         <label for="salary_type">' . $salary_type_name . '</label>
-//                         <input type="text" name="salary_type_' . $salarytype->id . '" class="form-control salary_type_amount" data-paymenttype="Earning" data-value="' . $amount . '" value="' . $amount . '" required>
-//                     </div>
-//                 </div>';
-//             }
-//             if ($salarytype->payment_type == 'Deduction') {
-//                 $deduction_amount = $deduction_amount + $amount;
-//                 $deduction_section .= '<div class="col-md-6">
-//                     <div class="form-group mb-3">
-//                         <label for="salary_type">' . $salary_type_name . '</label>
-//                         <input type="text" name="salary_type_' . $salarytype->id . '" class="form-control salary_type_amount" data-paymenttype="Deduction" data-value="' . $amount . '" value="' . $amount . '" required>
-//                     </div>
-//                 </div>';
-//             }
-//         }
-
-//         $earning_section .= '<div class="col-md-6">
-//                     <div class="form-group mb-3">
-//                         <label for="salary_type">Expense Reimbursement</label>
-//                         <input type="text" name="reimbursement" class="form-control" data-paymenttype="Earning" data-value="' . $reimbursement . '" value="' . $reimbursement . '" >
-//                     </div>
-//                 </div>';
-
-//         // Enhanced deduction section with clear labels for each deduction type
-//         $deduction_section .= '<div class="col-md-6">
-//                     <div class="form-group mb-3">
-//                         <label for="absent_deduction">Absent Deduction (' . $absent . ' days × ' . round($daily_salary,2) . ')</label>
-//                         <input type="text" name="absent_deduction" class="form-control deduction_amount" data-paymenttype="Deduction" data-value="' . $absent_deduction . '" value="' . round($absent_deduction,2) . '" readonly>
-//                     </div>
-//                 </div>';
-        
-//         $deduction_section .= '<div class="col-md-6">
-//                     <div class="form-group mb-3">
-//                         <label for="late_deduction">Late Deduction (' . $late . ' days × ' . round($daily_salary,2) . ')</label>
-//                         <input type="text" name="late_deduction" class="form-control deduction_amount" data-paymenttype="Deduction" data-value="' . $late_deduction . '" value="' . round($late_deduction,2) . '" readonly>
-//                     </div>
-//                 </div>';
-        
-//         $deduction_section .= '<div class="col-md-6">
-//                     <div class="form-group mb-3">
-//                         <label for="halfday_deduction">Half Day Deduction (' . $halfday . ' days × ' . round($daily_salary/2,2) . ')</label>
-//                         <input type="text" name="halfday_deduction" class="form-control deduction_amount" data-paymenttype="Deduction" data-value="' . $halfday_deduction . '" value="' . round($halfday_deduction,2) . '" readonly>
-//                     </div>
-//                 </div>';
-        
-//         $deduction_section .= '<div class="col-md-6">
-//                     <div class="form-group mb-3">
-//                         <label for="other_deduction">Total Other Deduction</label>
-//                         <input type="text" name="other_deduction" class="form-control" data-paymenttype="Deduction" data-value="' . $other_deduction . '" value="' . $other_deduction . '" required>
-//                     </div>
-//                 </div>';            
-
-//         $gross_amount = $basic_salary + $earning_amount + $reimbursement - $deduction_amount - $other_deduction;
-        
-//         $section .= '<div class="row">
-//                         <div class="col-md-12">
-//                             <h5 class="mt-3 mb-2">Earnings</h5>
-//                         </div>
-//                         <div class="col-md-8">
-//                             <div class="row">' . $earning_section . '</div>
-//                         </div>
-//                     </div>';
-        
-//         $section .= '<div class="row">
-//                         <div class="col-md-12">
-//                             <h5 class="mt-3 mb-2">Deductions</h5>
-//                         </div>
-//                         <div class="col-md-8">
-//                             <div class="row">' . $deduction_section . '</div>
-//                         </div>
-//                     </div>';
-        
-//         $section .= '<div class="row mt-3">
-//                         <div class="col-md-8">
-//                             <div class="alert alert-info">
-//                                 <strong>Gross Salary Calculation:</strong><br>
-//                                 Basic Salary: ' . $basic_salary . '<br>
-//                                 + Total Earnings: ' . ($earning_amount + $reimbursement) . '<br>
-//                                 - Total Deductions: ' . ($deduction_amount + $other_deduction) . '<br>
-//                                 <hr>
-//                                 <strong>Gross Salary: <span id="gross_text">' . $gross_amount . '</span></strong>
-//                                 <input type="hidden" id="gross_amount" name="gross_amount" class="form-control" value="' . $gross_amount . '">
-//                             </div>
-//                         </div>
-//                     </div>';
-//     }
-
-//     $data['section'] = $section;
-//     return response()->json($data);
-// }
-
-
-public function getEmployeeSalary(Request $request, $id)
-{
-    
-    $month = $request->month;
-    $employee = Employee::where('id', $id)->first();
-    $basic_salary = $employee->salary;
-    if($request->basic_salary){
-        $basic_salary = $request->basic_salary;
+    /**
+     * Shared payroll calculator for accurate Indian HRMS calculations
+     */
+    private function calculateEmployeePayroll($employee, $month, $year, $overrideBasic = null)
+    {
+        return app(\App\Services\Payroll\PayrollCalculatorService::class)->calculate(
+            $employee,
+            (int)$month,
+            (int)$year,
+            $overrideBasic
+        );
     }
-    $section = '';
-    $earning_section = '';
-    $deduction_section = '';
-    $amount = 0;
-    $earning_amount = 0;
-    $deduction_amount = 0;
-    $gross_amount = 0;
-    $other_deduction = 0;
-    
-    $salarytypes = Salarytype::where('company_id', Auth::id())->where('status', '1')->get();
-    $gracesettings = GraceSetting::where('company_id', Auth::id())->get();
 
-    $grace_time = $gracesettings[0]->value;
-    $grace_day = $gracesettings[1]->value;
+    public function getEmployeeSalary(Request $request, $id)
+    {
+        $month = (int)$request->month;
+        $year = (int)($request->year ?? date('Y'));
 
-    if (!$salarytypes->isEmpty()) {
-        
-        $daily_salary = $basic_salary / 30;
-        $weekoffday = [];
-        $shift_time = '12:00:00';
-        if($employee->shifts){
-            foreach($employee->shifts as $shift){
-                if($shift->sunday == 0){ $weekoffday[] = 1; }
-                if($shift->monday == 0){ $weekoffday[] = 2; }
-                if($shift->tuesday == 0){ $weekoffday[] = 3; }
-                if($shift->wednesday == 0){ $weekoffday[] = 4; }
-                if($shift->thursday == 0){ $weekoffday[] = 5; }
-                if($shift->friday == 0){ $weekoffday[] = 6; }
-                if($shift->saturday == 0){ $weekoffday[] = 7; }
-                $shift_time = $shift->start_time;
-            }
-        }
-        if(count($weekoffday)==0){
-            $weekoffday[] = 0;
-        }
-
-        $originalTime = Carbon::parse($shift_time);
-        $updatedTime = $originalTime->addMinutes($grace_time);
-        $grace_entry = $updatedTime->format('H:i:s');
-
-        $placeholders = implode(',', array_fill(0, count($weekoffday), '?'));
-
-        // Get all dates in month
-        $startDate = Carbon::create(date('Y'), $month, 1)->startOfMonth();
-        $endDate = Carbon::create(date('Y'), $month, 1)->endOfMonth();
-        $allDates = [];
-        for ($date = $startDate->copy(); $date->lte($endDate); $date->addDay()) {
-            $allDates[] = $date->format('Y-m-d');
-        }
-
-        // Calculate total working days (excluding weekoffs)
-        $total_working_days = 0;
-        $working_dates = [];
-        foreach ($allDates as $date) {
-            $dayOfWeek = Carbon::parse($date)->dayOfWeek;
-            $mysqlDayOfWeek = $dayOfWeek + 1;
-            if ($mysqlDayOfWeek == 8) $mysqlDayOfWeek = 1;
-            
-            if (!in_array($mysqlDayOfWeek, $weekoffday)) {
-                $total_working_days++;
-                $working_dates[] = $date;
-            }
-        }
-
-        // Get holidays for the month
-        $holidayCount = $this->getHolidayDaysInMonth(date('Y'), $month);
-        
-        // Final working days after excluding holidays
-        $working_days = $total_working_days - $holidayCount;
-        
-        // Get attendance counts (only on working days)
-        $absent = Attendance::where('employee_id', $id)
+        $employee = Employee::with(['department', 'designation', 'shifts'])
             ->where('company_id', Auth::id())
-            ->whereMonth('date', $month)
-            ->where('attendance', 'Absent')
-            ->whereIn('date', $working_dates)
-            ->count();
-            
-        $halfday = Attendance::where('employee_id', $id)
-            ->where('company_id', Auth::id())
-            ->whereMonth('date', $month)
-            ->where('attendance', 'Present')
-            ->where('halfday', 1)
-            ->whereIn('date', $working_dates)
-            ->count();
-            
-        $entry = Attendance::where('employee_id', $id)
-            ->where('company_id', Auth::id())
-            ->whereMonth('date', $month)
-            ->where('attendance', 'Present')
-            ->where('in_time', '>', $grace_entry)
-            ->whereIn('date', $working_dates)
-            ->count();
-            
-        $late = floor($entry / $grace_day);
+            ->where('id', $id)
+            ->first();
 
-        $employeeLeave = EmployeeLeave::where('employee_id', $id)->where('company_id', Auth::id())->whereMonth('from_date', $month)->get();
-
-        $rm_sum = Expense::where('employee_id', $id)->where('company_id', Auth::id())->whereMonth('created_at', $month)->where('status', 'Approved')->get();
-        $reimbursement = $rm_sum->sum('amount');
-        
-        // Calculate individual deduction amounts
-        $absent_deduction = $absent * $daily_salary;
-        $late_deduction = $late * $daily_salary;
-        $halfday_deduction = $halfday * ($daily_salary / 2);
-        $other_deduction = $absent_deduction + $late_deduction + $halfday_deduction;
-        
-        // Calculate total absent days (including late converted to days)
-        $absent_days_count = $absent + $late + ($halfday / 2);
-        
-        // Validate - absent days cannot exceed working days
-        if ($absent_days_count > $working_days) {
-            $absent_days_count = $working_days;
+        if (!$employee) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Employee not found.',
+                'section' => '<div class="alert alert-danger py-3"><i class="fa-solid fa-triangle-exclamation me-2"></i> Employee not found.</div>'
+            ], 404);
         }
-        
-        $other_deduction = round($other_deduction, 2);
-        
-        // ==================== ACCORDION START ====================
-        $section .= '<div class="accordion" id="salaryAccordion">';
-        
-        // -------------------- ACCORDION 1: Basic Salary & Attendance --------------------
-        $section .= '
-        <div class="accordion-item mb-3 border-primary">
-            <h2 class="accordion-header" id="headingOne">
-                <button class="accordion-button bg-primary text-white fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
-                    <i class="fas fa-money-bill-wave me-2"></i> Basic Salary & Attendance Details
-                </button>
-            </h2>
-            <div id="collapseOne" class="accordion-collapse collapse show" aria-labelledby="headingOne" data-bs-parent="#salaryAccordion">
-                <div class="accordion-body">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="basic_salary" class="font-weight-bold">Basic Salary <span class="text-danger">*</span></label>
-                                <div class="input-group">
-                                    <div class="input-group-prepend">
-                                        <span class="input-group-text">₹</span>
-                                    </div>
-                                    <input type="text" id="basic_salary" name="basic_salary" class="form-control" value="' . $basic_salary . '" required>
-                                </div>
-                                <small class="form-text text-muted">Enter or modify basic salary</small>
-                                <input type="hidden" name="absent_days" value="' . $absent_days_count . '">
-                                <input type="hidden" name="working_days" value="' . $working_days . '">
-                            </div>
+
+        $calc = $this->calculateEmployeePayroll($employee, $month, $year, $request->basic_salary);
+
+        // Build Modern HRMS Preview HTML
+        $html = '';
+
+        // 1. Attendance & Base Salary Header Card
+        $html .= '
+        <div class="col-12 mb-3">
+            <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+                <div class="card-header bg-primary bg-gradient text-white py-3 px-4 d-flex align-items-center justify-content-between">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="rounded-circle bg-white text-primary d-flex align-items-center justify-content-center fw-bold" style="width: 44px; height: 44px; font-size: 1.1rem;">
+                            ' . strtoupper(substr($employee->name, 0, 1)) . '
                         </div>
-                        <div class="col-md-6">
-                            <div class="alert alert-info mb-0">
-                                <small><i class="fas fa-calendar-alt"></i> Total Working Days: <strong>' . $total_working_days . '</strong></small><br>
-                                <small><i class="fas fa-calendar-times"></i> Holidays: <strong>' . $holidayCount . '</strong></small><br>
-                                <small><i class="fas fa-user-clock"></i> Absent/Leave Days: <strong>' . $absent_days_count . '</strong></small><br>
-                                <small><i class="fas fa-check-circle text-success"></i> Present Days: <strong>' . ($working_days - $absent_days_count) . '</strong></small>
-                                <input type="hidden" name="total_working_days" value="' . $total_working_days . '">
-                                <input type="hidden" name="holiday_count" value="' . $holidayCount . '">
-                                <input type="hidden" name="working_days" value="' . $working_days . '">
-                                <input type="hidden" name="absent_days" value="' . $absent_days_count . '">
-                                <input type="hidden" name="present_days" value="' . ($working_days - $absent_days_count) . '">
+                        <div>
+                            <h5 class="mb-0 fw-bold text-white">' . e($employee->name) . '</h5>
+                            <small class="text-white-50">' . e($calc['department_name']) . ' &bull; Emp ID: ' . e($employee->emp_id ?? 'N/A') . '</small>
+                        </div>
+                    </div>
+                    <span class="badge bg-white text-primary fw-semibold px-3 py-2 rounded-pill">
+                        ' . Carbon::create($year, $month, 1)->format('F Y') . ' Cycle
+                    </span>
+                </div>
+                <div class="card-body p-4 bg-white">
+                    <div class="row g-3">
+                        <div class="col-12 col-md-4">
+                            <label class="form-label fw-bold text-dark mb-1">
+                                <i class="fa-solid fa-money-bill-wave text-success me-1"></i> Basic Salary <span class="text-danger">*</span>
+                            </label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light border-end-0 fw-bold text-muted">₹</span>
+                                <input type="number" step="0.01" id="basic_salary" name="basic_salary" class="form-control border-start-0 fw-bold text-dark fs-6" value="' . $calc['basic_salary'] . '" required>
+                            </div>
+                            <small class="text-muted">Daily Rate: ₹' . number_format($calc['daily_salary'], 2) . ' / day</small>
+                        </div>
+                        <div class="col-12 col-md-8">
+                            <div class="row g-2">
+                                <div class="col-6 col-sm-3">
+                                    <div class="p-2 rounded-3 bg-light text-center border">
+                                        <small class="text-muted d-block">Working Days</small>
+                                        <span class="fw-bold text-dark fs-6">' . $calc['working_days'] . '</span>
+                                    </div>
+                                </div>
+                                <div class="col-6 col-sm-3">
+                                    <div class="p-2 rounded-3 bg-light text-center border">
+                                        <small class="text-muted d-block">Holidays</small>
+                                        <span class="fw-bold text-primary fs-6">' . $calc['holiday_count'] . '</span>
+                                    </div>
+                                </div>
+                                <div class="col-6 col-sm-3">
+                                    <div class="p-2 rounded-3 bg-success bg-opacity-10 text-center border border-success border-opacity-25">
+                                        <small class="text-success fw-semibold d-block">Present Days</small>
+                                        <span class="fw-bold text-success fs-6">' . $calc['present_days'] . '</span>
+                                    </div>
+                                </div>
+                                <div class="col-6 col-sm-3">
+                                    <div class="p-2 rounded-3 bg-danger bg-opacity-10 text-center border border-danger border-opacity-25">
+                                        <small class="text-danger fw-semibold d-block">Absent / LOP</small>
+                                        <span class="fw-bold text-danger fs-6">' . $calc['absent_days'] . '</span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>';
-        
-        // -------------------- ACCORDION 2: Earnings Section --------------------
-        $earning_html = '';
-        foreach ($salarytypes as $salarytype) {
-            $salary_type_name = '';
-            if ($salarytype->amount_type == 'Flat') {
-                $amount = $salarytype->amount;
-                $salary_type_name = $salarytype->salary_type;
-            } else {
-                $amount = ($basic_salary * $salarytype->amount / 100);
-                $salary_type_name = $salarytype->salary_type . ' (' . $salarytype->amount . '%)';
-            }
-            if ($salarytype->payment_type == 'Earning') {
-                $earning_amount = $earning_amount + $amount;
-                $earning_html .= '<div class="col-md-6 mb-3">
-                                    <div class="card border-success h-100">
-                                        <div class="card-body py-2">
-                                            <label class="font-weight-bold text-success mb-1">' . $salary_type_name . '</label>
-                                            <div class="input-group input-group-sm">
-                                                <div class="input-group-prepend">
-                                                    <span class="input-group-text">₹</span>
-                                                </div>
-                                                <input type="text" name="salary_type_' . $salarytype->id . '" class="form-control salary_type_amount" data-paymenttype="Earning" data-value="' . $amount . '" value="' . number_format($amount, 2) . '" required>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>';
-            }
-            if ($salarytype->payment_type == 'Deduction') {
-                $deduction_amount = $deduction_amount + $amount;
-                $deduction_section .= '<div class="col-md-6 mb-3">
-                                        <div class="card border-danger h-100">
-                                            <div class="card-body py-2">
-                                                <label class="font-weight-bold text-danger mb-1">' . $salary_type_name . '</label>
-                                                <div class="input-group input-group-sm">
-                                                    <div class="input-group-prepend">
-                                                        <span class="input-group-text">₹</span>
-                                                    </div>
-                                                    <input type="text" name="salary_type_' . $salarytype->id . '" class="form-control salary_type_amount" data-paymenttype="Deduction" data-value="' . $amount . '" value="' . number_format($amount, 2) . '" required>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>';
+
+        // Hidden Calculation Data Inputs for Form Submission
+        $html .= '
+        <input type="hidden" name="department_name" value="' . e($calc['department_name']) . '">
+        <input type="hidden" name="total_working_days" value="' . $calc['total_working_days'] . '">
+        <input type="hidden" name="holiday_count" value="' . $calc['holiday_count'] . '">
+        <input type="hidden" name="working_days" value="' . $calc['working_days'] . '">
+        <input type="hidden" name="absent_days" value="' . $calc['absent_days'] . '">
+        <input type="hidden" name="present_days" value="' . $calc['present_days'] . '">
+        <input type="hidden" name="other_deduction" id="other_deduction_input" value="' . ($calc['other_deduction'] ?? 0) . '">
+        <input type="hidden" name="absent_deduction" value="' . ($calc['absent_deduction'] ?? 0) . '">
+        <input type="hidden" name="late_deduction" value="' . ($calc['late_deduction'] ?? 0) . '">
+        <input type="hidden" name="halfday_deduction" value="' . ($calc['halfday_deduction'] ?? 0) . '">
+        <input type="hidden" name="reimbursement" id="reimbursement_input" value="' . ($calc['reimbursement'] ?? 0) . '">
+        <input type="hidden" name="gross_amount" id="gross_amount" value="' . ($calc['net_salary'] ?? 0) . '">';
+
+        // 2. Earnings & Deductions Split (Side by Side)
+        $html .= '<div class="col-12 col-lg-6 mb-3">
+            <div class="card border-0 shadow-sm rounded-4 h-100 overflow-hidden">
+                <div class="card-header bg-success bg-gradient text-white py-3 px-4 d-flex align-items-center justify-content-between">
+                    <span class="fw-bold"><i class="fa-solid fa-arrow-trend-up me-2"></i> Earnings & Allowances</span>
+                    <span class="badge bg-white text-success fw-bold">₹' . number_format($calc['gross_earnings'], 2) . '</span>
+                </div>
+                <div class="card-body p-4 bg-white">
+                    <div class="d-flex align-items-center justify-content-between py-2 border-bottom">
+                        <div>
+                            <span class="fw-semibold text-dark">Basic Salary</span>
+                            <small class="text-muted d-block">Base compensation</small>
+                        </div>
+                        <span class="fw-bold text-dark basic-salary-display">₹' . number_format($calc['basic_salary'], 2) . '</span>
+                    </div>';
+
+        if (!empty($calc['earnings'])) {
+            foreach ($calc['earnings'] as $earn) {
+                $html .= '
+                <div class="d-flex align-items-center justify-content-between py-2 border-bottom">
+                    <div>
+                        <span class="fw-semibold text-dark">' . e($earn['label']) . '</span>
+                        <small class="text-muted d-block">' . e($earn['amount_type']) . ' allowance</small>
+                    </div>
+                    <div class="input-group input-group-sm" style="width: 140px;">
+                        <span class="input-group-text bg-light">₹</span>
+                        <input type="number" step="0.01" name="salary_type_' . $earn['id'] . '" class="form-control text-end fw-semibold salary_type_amount" data-paymenttype="Earning" value="' . $earn['amount'] . '">
+                    </div>
+                </div>';
             }
         }
 
-        // Add Reimbursement to Earnings
-        $earning_html .= '<div class="col-md-6 mb-3">
-                            <div class="card border-info h-100">
-                                <div class="card-body py-2">
-                                    <label class="font-weight-bold text-info mb-1">Expense Reimbursement</label>
-                                    <div class="input-group input-group-sm">
-                                        <div class="input-group-prepend">
-                                            <span class="input-group-text">₹</span>
-                                        </div>
-                                        <input type="text" name="reimbursement" class="form-control" data-paymenttype="Earning" data-value="' . $reimbursement . '" value="' . number_format($reimbursement, 2) . '">
-                                    </div>
-                                    <small class="form-text text-muted">Approved expenses for this month</small>
-                                </div>
-                            </div>
-                        </div>';
-        
-        $section .= '
-        <div class="accordion-item mb-3 border-success">
-            <h2 class="accordion-header" id="headingTwo">
-                <button class="accordion-button collapsed bg-success text-white fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
-                    <i class="fas fa-plus-circle me-2"></i> Earnings Components
-                </button>
-            </h2>
-            <div id="collapseTwo" class="accordion-collapse collapse" aria-labelledby="headingTwo" data-bs-parent="#salaryAccordion">
-                <div class="accordion-body">
-                    <div class="row">' . $earning_html . '</div>
+        if ($calc['reimbursement'] > 0) {
+            $html .= '
+            <div class="d-flex align-items-center justify-content-between py-2 border-bottom">
+                <div>
+                    <span class="fw-semibold text-info">Expense Reimbursement</span>
+                    <small class="text-muted d-block">Approved claims</small>
                 </div>
-            </div>
-        </div>';
-        
-        // -------------------- ACCORDION 3: Attendance Deductions --------------------
-        $attendance_deduction_html = '';
-        if($absent > 0 || $late > 0 || $halfday > 0){
-            $attendance_deduction_html .= '<div class="row">';
-            
-            if($absent > 0){
-                $attendance_deduction_html .= '<div class="col-md-4 mb-2">
-                                                    <div class="alert alert-danger mb-0 p-2">
-                                                        <small><strong>Absent Deduction</strong></small><br>
-                                                        <small>' . $absent . ' days × ' . number_format($daily_salary, 2) . '</small>
-                                                        <h6 class="mb-0 mt-1">₹ ' . number_format($absent_deduction, 2) . '</h6>
-                                                        <input type="hidden" name="absent_deduction" value="' . $absent_deduction . '">
-                                                    </div>
-                                                </div>';
-            }
-            
-            if($late > 0){
-                $attendance_deduction_html .= '<div class="col-md-4 mb-2">
-                                                    <div class="alert alert-warning mb-0 p-2">
-                                                        <small><strong>Late Deduction</strong></small><br>
-                                                        <small>' . $late . ' days × ' . number_format($daily_salary, 2) . '</small>
-                                                        <h6 class="mb-0 mt-1">₹ ' . number_format($late_deduction, 2) . '</h6>
-                                                        <input type="hidden" name="late_deduction" value="' . $late_deduction . '">
-                                                    </div>
-                                                </div>';
-            }
-            
-            if($halfday > 0){
-                $attendance_deduction_html .= '<div class="col-md-4 mb-2">
-                                                    <div class="alert alert-info mb-0 p-2">
-                                                        <small><strong>Half Day Deduction</strong></small><br>
-                                                        <small>' . $halfday . ' days × ' . number_format($daily_salary/2, 2) . '</small>
-                                                        <h6 class="mb-0 mt-1">₹ ' . number_format($halfday_deduction, 2) . '</h6>
-                                                        <input type="hidden" name="halfday_deduction" value="' . $halfday_deduction . '">
-                                                    </div>
-                                                </div>';
-            }
-            
-            $attendance_deduction_html .= '</div>';
-        }
-        
-        // Total Attendance Deduction Card
-        $attendance_deduction_html .= '<div class="row mt-3">
-                                        <div class="col-md-6">
-                                            <div class="card border-dark">
-                                                <div class="card-body py-2">
-                                                    <label class="font-weight-bold mb-1">Total Attendance Deduction</label>
-                                                    <div class="input-group">
-                                                        <div class="input-group-prepend">
-                                                            <span class="input-group-text">₹</span>
-                                                        </div>
-                                                        <input type="text" name="other_deduction" class="form-control font-weight-bold" data-paymenttype="Deduction" data-value="' . $other_deduction . '" value="' . number_format($other_deduction, 2) . '" readonly>
-                                                    </div>
-                                                    <small class="form-text text-muted">Absent + Late + Half Day deductions</small>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>';
-        
-        $section .= '
-        <div class="accordion-item mb-3 border-warning">
-            <h2 class="accordion-header" id="headingThree">
-                <button class="accordion-button collapsed bg-warning text-dark fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
-                    <i class="fas fa-clock me-2"></i> Attendance Based Deductions
-                </button>
-            </h2>
-            <div id="collapseThree" class="accordion-collapse collapse" aria-labelledby="headingThree" data-bs-parent="#salaryAccordion">
-                <div class="accordion-body">
-                    ' . $attendance_deduction_html . '
-                </div>
-            </div>
-        </div>';
-        
-        // -------------------- ACCORDION 4: Other Deductions --------------------
-        if(!empty($deduction_section)){
-            $section .= '
-            <div class="accordion-item mb-3 border-danger">
-                <h2 class="accordion-header" id="headingFour">
-                    <button class="accordion-button collapsed bg-danger text-white fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFour" aria-expanded="false" aria-controls="collapseFour">
-                        <i class="fas fa-minus-circle me-2"></i> Other Deductions
-                    </button>
-                </h2>
-                <div id="collapseFour" class="accordion-collapse collapse" aria-labelledby="headingFour" data-bs-parent="#salaryAccordion">
-                    <div class="accordion-body">
-                        <div class="row">' . $deduction_section . '</div>
-                    </div>
-                </div>
+                <span class="fw-bold text-info">₹' . number_format($calc['reimbursement'], 2) . '</span>
             </div>';
         }
-        
-        // Calculate Gross Amount
-        $total_earnings = $earning_amount + $reimbursement;
-        $total_deductions = $deduction_amount + $other_deduction;
-        $gross_amount = $basic_salary + $total_earnings - $total_deductions;
-        
-        // -------------------- ACCORDION 5: Salary Summary (Always Visible) --------------------
-        $section .= '
-        <div class="accordion-item border-primary">
-            <h2 class="accordion-header" id="headingFive">
-                <button class="accordion-button bg-primary text-white fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFive" aria-expanded="true" aria-controls="collapseFive">
-                    <i class="fas fa-calculator me-2"></i> Salary Summary
-                </button>
-            </h2>
-            <div id="collapseFive" class="accordion-collapse collapse show" aria-labelledby="headingFive" data-bs-parent="#salaryAccordion">
-                <div class="accordion-body">
-                    <div class="table-responsive">
-                        <table class="table table-bordered table-hover">
-                            <tbody>
-                                <tr class="table-info">
-                                    <td width="60%"><strong>Basic Salary</strong></td>
-                                    <td class="text-right"><strong>₹ ' . number_format($basic_salary, 2) . '</strong></td>
-                                </tr>
-                                <tr class="table-success">
-                                    <td><strong>Total Earnings</strong> <small class="text-muted">(Salary Types + Reimbursement)</small></td>
-                                    <td class="text-right"><strong class="text-success">+ ₹ ' . number_format($total_earnings, 2) . '</strong></td>
-                                </tr>
-                                <tr class="table-danger">
-                                    <td><strong>Total Deductions</strong> <small class="text-muted">(Salary Types + Attendance)</small></td>
-                                    <td class="text-right"><strong class="text-danger">- ₹ ' . number_format($total_deductions, 2) . '</strong></td>
-                                <table>
-                                <tr class="table-warning">
-                                    <td colspan="2" class="text-center py-2">
-                                        <hr class="my-1">
-                                    </td>
-                                </tr>
-                                <tr class="table-primary">
-                                    <td><strong><i class="fas fa-rupee-sign"></i> Net Gross Salary</strong></td>
-                                    <td class="text-right"><strong style="font-size: 18px;">₹ ' . number_format($gross_amount, 2) . '</strong>
-                                        <input type="hidden" id="gross_amount" name="gross_amount" value="' . $gross_amount . '">
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
+
+        $html .= '
+                    <div class="d-flex align-items-center justify-content-between pt-3 mt-2 fw-bold text-success fs-6">
+                        <span>Total Gross Earnings</span>
+                        <span id="total_earnings_display">₹' . number_format($calc['gross_earnings'], 2) . '</span>
                     </div>
                 </div>
             </div>
         </div>';
-        
-        $section .= '</div>'; // Close accordion
-        
-    }
 
-    $data['section'] = $section;
-    return response()->json($data);
-}
+        // Deductions Column
+        $html .= '<div class="col-12 col-lg-6 mb-3">
+            <div class="card border-0 shadow-sm rounded-4 h-100 overflow-hidden">
+                <div class="card-header bg-danger bg-gradient text-white py-3 px-4 d-flex align-items-center justify-content-between">
+                    <span class="fw-bold"><i class="fa-solid fa-arrow-trend-down me-2"></i> Deductions & LOP</span>
+                    <span class="badge bg-white text-danger fw-bold">₹' . number_format($calc['total_deductions'], 2) . '</span>
+                </div>
+                <div class="card-body p-4 bg-white">';
 
-
-    // public function saveEmployeeSalary(Request $request)
-    // {
-    //   //  dd($request->all());
-    //     $request->validate([
-    //         'employee' => 'required',
-    //         'month' => 'required',
-    //     ]);
-    //     $salarytypes = Salarytype::where('company_id', Auth::id())->where('status', '1')->get();
-    //     $is_exist = EmployeeSalary::where('company_id', Auth::id())->where('employee_id', $request->employee)->where('salary_month', $request->month)->where('salary_year', date('Y'))->first();
-    //     if ($is_exist) {
-    //         return redirect()->route('generateSalary')->with('error', 'Salary already generated for this employee for this month.');
-    //     }
-    //     if (!$salarytypes->isEmpty()) {
-    //         $total_amount = 0;
-    //         foreach ($salarytypes as $salarytype) {
-
-    //             $salary = new EmployeeSalary();
-    //             $salary->company_id = Auth::id();
-    //             $salary->employee_id = $request->employee;
-    //             $salary->salary_month = $request->month;
-    //             $salary->salary_year = date('Y');
-    //             $salary->salary_type_id = $salarytype->id;
-    //             $salary->salary_type_amount = $salarytype->amount;
-    //             $salary->salary_type_amount_type = $salarytype->amount_type;
-    //             $salary->amount = $request->input('salary_type_' . $salarytype->id);
-    //             $salary->label = $salarytype->salary_type;
-    //             $salary->basic_salary = $request->basic_salary;
-    //             $salary->gross_salary = $request->gross_amount;
-    //             $salary->other_deduction = $request->other_deduction;
-    //             $salary->absent_days = $request->absent_days;
-    //             $salary->working_days = $request->working_days;
-    //             $salary->reimbursement = $request->reimbursement;
-    //             $salary->save();
-    //         }
-    //     }
-    //     return redirect()->route('generateSalary')->with('success', 'Employee salary saved successfully.');
-    // }
-
-
-public function saveEmployeeSalary(Request $request)
-{
-    $request->validate([
-        'employee' => 'required|exists:employees,id',
-        'month' => 'required'
-       
-    ]);
-    
-    // Check if salary already exists
-    $is_exist = EmployeeSalary::where('company_id', Auth::id())
-        ->where('employee_id', $request->employee)
-        ->where('salary_month', $request->month)
-        ->where('salary_year', date('Y'))
-        ->first();
-        
-    if ($is_exist) {
-        return redirect()->route('generateSalary')->with('error', 'Salary already generated for this employee for this month.');
-    }
-    
-    $salarytypes = Salarytype::where('company_id', Auth::id())->where('status', '1')->get();
-    
-    if (!$salarytypes->isEmpty()) {
-        
-        // Get employee details
-        $employee = Employee::find($request->employee);
-    
-        
-        // Calculate totals
-        $total_earning = 0;
-        $total_deduction = 0;
-        
-        foreach ($salarytypes as $salarytype) {
-            
-            $salary = new EmployeeSalary();
-            $salary->company_id = Auth::id();
-            $salary->employee_id = $request->employee;
-            $salary->salary_month = $request->month;
-            $salary->salary_year = date('Y');
-            $salary->salary_type_id = $salarytype->id;
-            $salary->salary_type_amount = $salarytype->amount;
-            $salary->salary_type_amount_type = $salarytype->amount_type;
-            $salary->amount = str_replace(',', '', $request->input('salary_type_' . $salarytype->id));
-            $salary->label = $salarytype->salary_type;
-            $salary->basic_salary = str_replace(',', '', $request->basic_salary);
-            $salary->gross_salary = str_replace(',', '', $request->gross_amount);
-            $salary->other_deduction = str_replace(',', '', $request->other_deduction);
-            $salary->absent_days = $request->absent_days;
-            $salary->working_days = $request->working_days;
-            $salary->reimbursement = str_replace(',', '', $request->reimbursement ?? 0);
-            $salary->save();
-            
-            // Calculate totals for summary
-            if ($salarytype->payment_type == 'Earning') {
-                $total_earning += str_replace(',', '', $request->input('salary_type_' . $salarytype->id));
-            } else {
-                $total_deduction += str_replace(',', '', $request->input('salary_type_' . $salarytype->id));
+        if (!empty($calc['deductions'])) {
+            foreach ($calc['deductions'] as $ded) {
+                $html .= '
+                <div class="d-flex align-items-center justify-content-between py-2 border-bottom">
+                    <div>
+                        <span class="fw-semibold text-dark">' . e($ded['label']) . '</span>
+                        <small class="text-muted d-block">Statutory / policy deduction</small>
+                    </div>
+                    <div class="input-group input-group-sm" style="width: 140px;">
+                        <span class="input-group-text bg-light">₹</span>
+                        <input type="number" step="0.01" name="salary_type_' . $ded['id'] . '" class="form-control text-end fw-semibold salary_type_amount" data-paymenttype="Deduction" value="' . $ded['amount'] . '">
+                    </div>
+                </div>';
             }
         }
-        
-        // Save salary summary in a separate table or update employee salary record
-        $salarySummary = EmployeeSalarySummary::updateOrCreate(
+
+        // Attendance Deduction Box
+        $html .= '
+                <div class="p-3 bg-light rounded-3 my-2 border">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <span class="fw-semibold text-danger"><i class="fa-solid fa-clock-rotate-left me-1"></i> Attendance Loss of Pay (LOP)</span>
+                        <span class="fw-bold text-danger" id="lop_display">₹' . number_format($calc['other_deduction'], 2) . '</span>
+                    </div>
+                    <div class="row g-1 text-muted" style="font-size: 0.8rem;">
+                        <div class="col-4">Absent: <strong>' . ($calc['absent_count'] ?? $calc['absent_days'] ?? 0) . 'd</strong> (₹' . number_format($calc['absent_deduction'] ?? 0, 2) . ')</div>
+                        <div class="col-4">Late: <strong>' . ($calc['late_count'] ?? 0) . 'd</strong> (₹' . number_format($calc['late_deduction'] ?? 0, 2) . ')</div>
+                        <div class="col-4">Half-day: <strong>' . ($calc['halfday_count'] ?? 0) . 'd</strong> (₹' . number_format($calc['halfday_deduction'] ?? 0, 2) . ')</div>
+                    </div>
+                </div>';
+
+        $html .= '
+                    <div class="d-flex align-items-center justify-content-between pt-3 mt-2 fw-bold text-danger fs-6">
+                        <span>Total Deductions</span>
+                        <span id="total_deductions_display">₹' . number_format($calc['total_deductions'], 2) . '</span>
+                    </div>
+                </div>
+            </div>
+        </div>';
+
+        // 3. Net Take-Home Hero Pill
+        $html .= '
+        <div class="col-12 mt-2">
+            <div class="card border-0 rounded-4 overflow-hidden" style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); color: white;">
+                <div class="card-body p-4">
+                    <div class="row align-items-center g-3">
+                        <div class="col-12 col-md-7">
+                            <span class="text-white-50 text-uppercase small fw-bold letter-spacing d-block mb-1">Calculated Net Payable (Take Home)</span>
+                            <h2 class="fw-bold text-white mb-1" id="net_salary_display">₹' . number_format($calc['net_salary'], 2) . '</h2>
+                            <small class="text-white-50" id="net_words_display">
+                                <i class="fa-solid fa-receipt me-1"></i> ' . ucwords(\App\Helpers\Helper::convert($calc['net_salary'])) . ' Only
+                            </small>
+                        </div>
+                        <div class="col-12 col-md-5 text-md-end">
+                            <div class="d-inline-flex align-items-center gap-2 px-3 py-2 rounded-pill bg-white bg-opacity-10 border border-white border-opacity-20 text-white">
+                                <i class="fa-solid fa-circle-check text-success"></i>
+                                <span class="small fw-semibold">Ready for Disbursement</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>';
+
+        return response()->json([
+            'status' => 'success',
+            'department_name' => $calc['department_name'],
+            'department_id' => $employee->department_id,
+            'employee_name' => $employee->name,
+            'data' => $calc,
+            'section' => $html
+        ]);
+    }
+
+    public function saveEmployeeSalary(Request $request)
+    {
+        $request->validate([
+            'employee' => 'required|exists:employees,id',
+            'month' => 'required|integer|between:1,12',
+        ]);
+
+        $employeeId = $request->employee;
+        $month = (int)$request->month;
+        $year = (int)($request->year ?? date('Y'));
+
+        $employee = Employee::where('company_id', Auth::id())->findOrFail($employeeId);
+
+        // Delete any existing components for this month/year to allow clean re-generation
+        EmployeeSalary::where('company_id', Auth::id())
+            ->where('employee_id', $employeeId)
+            ->where('salary_month', $month)
+            ->where('salary_year', $year)
+            ->delete();
+
+        $basicSalary = (float)str_replace(',', '', $request->input('basic_salary', $employee->salary ?? 0));
+        $grossAmount = (float)str_replace(',', '', $request->input('gross_amount', 0));
+        $otherDeduction = (float)str_replace(',', '', $request->input('other_deduction', 0));
+        $reimbursement = (float)str_replace(',', '', $request->input('reimbursement', 0));
+        $absentDays = (float)$request->input('absent_days', 0);
+        $workingDays = (int)$request->input('working_days', 26);
+        $totalWorkingDays = (int)$request->input('total_working_days', 26);
+        $holidayCount = (int)$request->input('holiday_count', 0);
+        $presentDays = (float)$request->input('present_days', max(0, $workingDays - $absentDays));
+        $departmentName = $request->input('department_name', $employee->department ? $employee->department->name : 'General');
+
+        // Fetch salary types for this department or company
+        $salarytypes = collect();
+        if ($employee->department_id) {
+            $salarytypes = Salarytype::where('company_id', Auth::id())
+                ->where('department_id', $employee->department_id)
+                ->where('status', '1')
+                ->get();
+        }
+        if ($salarytypes->isEmpty()) {
+            $salarytypes = Salarytype::where('company_id', Auth::id())
+                ->where(function ($q) {
+                    $q->whereNull('department_id')->orWhere('department_id', 0);
+                })
+                ->where('status', '1')
+                ->get();
+        }
+
+        $totalEarning = 0;
+        $totalDeduction = 0;
+
+        if (!$salarytypes->isEmpty()) {
+            foreach ($salarytypes as $salarytype) {
+                $componentAmount = str_replace(',', '', $request->input('salary_type_' . $salarytype->id));
+                $componentAmount = is_numeric($componentAmount) ? (float)$componentAmount : 0;
+
+                $salary = new EmployeeSalary();
+                $salary->company_id = Auth::id();
+                $salary->employee_id = $employeeId;
+                $salary->salary_month = $month;
+                $salary->salary_year = $year;
+                $salary->salary_type_id = $salarytype->id;
+                $salary->salary_type_amount = $salarytype->amount;
+                $salary->salary_type_amount_type = $salarytype->amount_type;
+                $salary->amount = $componentAmount;
+                $salary->label = $salarytype->salary_type;
+                $salary->basic_salary = $basicSalary;
+                $salary->gross_salary = $grossAmount;
+                $salary->other_deduction = $otherDeduction;
+                $salary->absent_days = $absentDays;
+                $salary->working_days = $workingDays;
+                $salary->reimbursement = $reimbursement;
+                $salary->save();
+
+                if ($salarytype->payment_type == 'Earning') {
+                    $totalEarning += $componentAmount;
+                } else {
+                    $totalDeduction += $componentAmount;
+                }
+            }
+        } else {
+            // If no custom salary types configured, record base salary component
+            $salary = new EmployeeSalary();
+            $salary->company_id = Auth::id();
+            $salary->employee_id = $employeeId;
+            $salary->salary_month = $month;
+            $salary->salary_year = $year;
+            $salary->salary_type_id = null;
+            $salary->salary_type_amount = $basicSalary;
+            $salary->salary_type_amount_type = 'Flat';
+            $salary->amount = $basicSalary;
+            $salary->label = 'Basic Salary';
+            $salary->basic_salary = $basicSalary;
+            $salary->gross_salary = $grossAmount;
+            $salary->other_deduction = $otherDeduction;
+            $salary->absent_days = $absentDays;
+            $salary->working_days = $workingDays;
+            $salary->reimbursement = $reimbursement;
+            $salary->save();
+        }
+
+        // Save canonical EmployeeSalarySummary record
+        EmployeeSalarySummary::updateOrCreate(
             [
                 'company_id' => Auth::id(),
-                'employee_id' => $request->employee,
-                'salary_month' => $request->month,
-                'salary_year' => date('Y')
+                'employee_id' => $employeeId,
+                'salary_month' => $month,
+                'salary_year' => $year
             ],
             [
                 'employee_name' => $employee->name,
-                'basic_salary' => str_replace(',', '', $request->basic_salary),
-                'total_earning' => $total_earning,
-                'total_deduction' => $total_deduction,
-                'other_deduction' => str_replace(',', '', $request->other_deduction),
-                'reimbursement' => str_replace(',', '', $request->reimbursement ?? 0),
-                'net_salary' => str_replace(',', '', $request->gross_amount),
-                'absent_days' => $request->absent_days,
-                'working_days' => $request->working_days,
-                'total_working_days' => $request->total_working_days,
-                'holiday_count' => $request->holiday_count,
-                'present_days' => $request->present_days,
+                'department_name' => $departmentName,
+                'basic_salary' => $basicSalary,
+                'total_earning' => $totalEarning,
+                'total_deduction' => $totalDeduction,
+                'other_deduction' => $otherDeduction,
+                'reimbursement' => $reimbursement,
+                'net_salary' => $grossAmount,
+                'absent_days' => $absentDays,
+                'working_days' => $workingDays,
+                'total_working_days' => $totalWorkingDays,
+                'holiday_count' => $holidayCount,
+                'present_days' => $presentDays,
                 'status' => 'Generated',
                 'generated_date' => now()
             ]
         );
-        
-        // Optional: Send notification to employee
-        // Notification::send($employee, new SalaryGeneratedNotification($salarySummary));
-        
-        // return redirect()->route('generateSalary')->with('success', 'Employee salary saved successfully. <a href="'.route('salarySlip', ['id' => $request->employee, 'month' => $request->month]).'" class="alert-link">View Salary Slip</a>');
+
+        return redirect()->route('employeeSalaryList', [
+            'month' => $month,
+            'year' => $year,
+            'employee_id' => $employeeId
+        ])->with('success', 'Payroll successfully generated for ' . $employee->name . ' (' . Carbon::create($year, $month, 1)->format('F Y') . ').');
     }
-    
-     return redirect()->route('generateSalary')->with('success', 'Employee salary saved successfully.');
-}
 
+    public function generateAllSalary(Request $request)
+    {
+        $month = (int)$request->month;
+        $year = (int)($request->year ?? date('Y'));
 
+        if (!$month || $month < 1 || $month > 12) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Please select a valid payroll month.'
+            ], 422);
+        }
+
+        $companyId = Auth::id();
+        $employees = Employee::with(['department', 'shifts'])
+            ->where('company_id', $companyId)
+            ->where('status', '1')
+            ->get();
+
+        if ($employees->isEmpty()) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'No active employees found to generate salary for.'
+            ], 404);
+        }
+
+        $payrollService = app(\App\Services\Payroll\PayrollCalculatorService::class);
+        $processedCount = 0;
+
+        foreach ($employees as $employee) {
+            $calc = $payrollService->calculate($employee, $month, $year);
+            $payrollService->savePayrollRecord($companyId, $employee->id, $month, $year, $calc);
+            $processedCount++;
+        }
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Payroll generated successfully for ' . $processedCount . ' employees.',
+            'processed_count' => $processedCount,
+            'redirect' => route('employeeSalaryList') . '?month=' . $month . '&year=' . $year
+        ]);
+    }
 
     public function employeeSalaryList(Request $request)
     {
@@ -1104,34 +656,78 @@ public function saveEmployeeSalary(Request $request)
         if ($is_verified == 'No') {
             return view('user.verify_check');
         }
-        $month = $request->input('month', date('m') - 1);
-        $year = $request->input('year', date('Y'));
+
+        $companyId = Auth::id();
+        $month = (int)$request->input('month', date('m'));
+        $year = (int)$request->input('year', date('Y'));
         $employee_id = $request->input('employee_id', '');
+        $department_id = $request->input('department_id', '');
 
         $monthArray = array('January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December');
-        $employees = Employee::where('company_id', Auth::id())->select('id', 'name')->get();
-        $employeeSalariesQuery = EmployeeSalary::where('company_id', Auth::id())->groupBy('salary_month', 'salary_year', 'employee_id')->where('salary_month', $month)->where('salary_year', $year);
-        if ($employee_id != '') {
-            $employeeSalariesQuery->where('employee_id', $employee_id);
-        }
-        $employeeSalaries = $employeeSalariesQuery->get();
-        //dd($employeeSalary);
-        //$salarytypes = Salarytype::where('company_id', Auth::id())->where('status', '1')->get();
-        return view('user.salarytype.employee_salary', compact('employeeSalaries', 'monthArray', 'employees', 'month', 'year', 'employee_id'));
-    }
 
-    // public function employeeSalaryDetails($emp_id, Request $request)
-    // {
-    //     $is_verified = Auth::user()->is_verified;
-    //     if ($is_verified == 'No') {
-    //         return view('user.verify_check');
-    //     }
-    //     $company = Auth::user();
-    //     $monthArray = array('January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December');
-    //     $employeeSalaries = EmployeeSalary::where('company_id', Auth::id())->where('salary_month', $request->month)->where('salary_year', $request->year)->where('employee_id', $emp_id)->get();
-    //     //dd($employeeSalary);
-    //     return view('user.salarytype.employee_salary_details', compact('employeeSalaries', 'monthArray', 'company'));
-    // }
+        $employees = Employee::where('company_id', $companyId)
+            ->where('status', '1')
+            ->select('id', 'name', 'emp_id', 'department_id', 'designation_id')
+            ->orderBy('name')
+            ->get();
+
+        $departments = Department::where('company_id', $companyId)
+            ->where('status', '1')
+            ->orderBy('name')
+            ->get();
+
+        $summariesQuery = EmployeeSalarySummary::with(['employee.department', 'employee.designation'])
+            ->where('company_id', $companyId)
+            ->where('salary_month', $month)
+            ->where('salary_year', $year);
+
+        if (!empty($employee_id)) {
+            $summariesQuery->where('employee_id', $employee_id);
+        }
+
+        if (!empty($department_id)) {
+            $summariesQuery->whereHas('employee', function ($q) use ($department_id) {
+                $q->where('department_id', $department_id);
+            });
+        }
+
+        $salarySummaries = $summariesQuery->orderBy('id', 'desc')->paginate(20);
+
+        // KPI metrics for current selected period
+        $kpiQuery = EmployeeSalarySummary::where('company_id', $companyId)
+            ->where('salary_month', $month)
+            ->where('salary_year', $year);
+
+        if (!empty($employee_id)) {
+            $kpiQuery->where('employee_id', $employee_id);
+        }
+
+        $totalDisbursed = (float)$kpiQuery->sum('net_salary');
+        $employeesPaid = (int)$kpiQuery->count();
+        $totalBasic = (float)$kpiQuery->sum('basic_salary');
+        $totalEarnings = (float)$kpiQuery->sum('total_earning');
+        $totalDeductions = (float)($kpiQuery->sum('total_deduction') + $kpiQuery->sum('other_deduction'));
+
+        // Alias for backwards-compatibility with views referencing $employeeSalaries
+        $employeeSalaries = $salarySummaries;
+
+        return view('user.salarytype.employee_salary', compact(
+            'salarySummaries',
+            'employeeSalaries',
+            'monthArray',
+            'employees',
+            'departments',
+            'month',
+            'year',
+            'employee_id',
+            'department_id',
+            'totalDisbursed',
+            'employeesPaid',
+            'totalBasic',
+            'totalEarnings',
+            'totalDeductions'
+        ));
+    }
 
     public function employeeSalaryDetails($emp_id, Request $request)
     {
@@ -1139,40 +735,42 @@ public function saveEmployeeSalary(Request $request)
         if ($is_verified == 'No') {
             return view('user.verify_check');
         }
-        
+
         $company = Auth::user();
+        $month = (int)($request->month ?? date('m'));
+        $year = (int)($request->year ?? date('Y'));
         $monthArray = array('January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December');
-        
-        // Get salary summary for the employee
-        $salarySummary = EmployeeSalarySummary::where('company_id', Auth::id())
-            ->where('salary_month', $request->month)
-            ->where('salary_year', $request->year)
+
+        $salarySummary = EmployeeSalarySummary::with(['employee.department', 'employee.designation', 'employee.bankAccount'])
+            ->where('company_id', Auth::id())
+            ->where('salary_month', $month)
+            ->where('salary_year', $year)
             ->where('employee_id', $emp_id)
             ->first();
-        
+
         if (!$salarySummary) {
             return back()->with('error', 'Salary details not found for the selected period.');
         }
-        
-        // Get all salary components (earnings and deductions)
-        $employeeSalaries = EmployeeSalary::where('company_id', Auth::id())
-            ->where('salary_month', $request->month)
-            ->where('salary_year', $request->year)
+
+        $employeeSalaries = EmployeeSalary::with('salarytype')
+            ->where('company_id', Auth::id())
+            ->where('salary_month', $month)
+            ->where('salary_year', $year)
             ->where('employee_id', $emp_id)
             ->get();
-        
+
         return view('user.salarytype.employee_salary_details', compact('salarySummary', 'employeeSalaries', 'monthArray', 'company'));
     }
 
     public function salaryPDF(Request $request)
     {
-        //dd($request->all());
+        
         $is_verified = Auth::user()->is_verified;
         if ($is_verified == 'No') {
             return view('user.verify_check');
         }
+
         $company = Auth::user();
-        // dd($company);
         $emp_id = $request->emp_id;
         $month = $request->month;
         $year = $request->year;
@@ -1180,146 +778,33 @@ public function saveEmployeeSalary(Request $request)
         return $export->export();
     }
 
-    public function generateAllSalary(Request $request)
+    public function deleteSalary($id)
     {
-      
-        $month = $request->month;
-        $employees = Employee::where('company_id', Auth::id())->get();
-        foreach($employees as $employee){        
-            $data['basic_salary'] = $employee->salary;
-            $section = '';
-            $earning_section = '';
-            $deduction_section = '';
-            $amount = 0;
-            $earning_amount = 0;
-            $deduction_amount = 0;
-            $gross_amount = 0;
-            $other_deduction = 0;
-            
-            $salarytypes = Salarytype::where('company_id', Auth::id())->where('status', '1')->get();
-            $gracesettings = GraceSetting::where('company_id', Auth::id())->get();
-            $grace_time = $gracesettings[0]->value;
-            $grace_day = $gracesettings[1]->value;
-
-            if (!$salarytypes->isEmpty()) {
-                $basic_salary = $employee->salary;
-                $daily_salary = $basic_salary / 30;
-                $weekoffday = [];
-                $shift_time = '12:00:00';
-                if($employee->shifts){
-                    foreach($employee->shifts as $shift){
-                        if($shift->sunday == 0){
-                            $weekoffday[] = 1;
-                        }
-                        if($shift->monday == 0){
-                            $weekoffday[] = 2;
-                        }
-                        if($shift->tuesday == 0){
-                            $weekoffday[] = 3;
-                        }
-                        if($shift->wednesday == 0){
-                            $weekoffday[] = 4;
-                        }
-                        if($shift->thursday == 0){
-                            $weekoffday[] = 5;
-                        }
-                        if($shift->friday == 0){
-                            $weekoffday[] = 6;
-                        }
-                        if($shift->saturday == 0){
-                            $weekoffday[] = 7;
-                        }
-                        $shift_time = $shift->start_time;
-                    }
-                }
-                if(count($weekoffday)==0){
-                    $weekoffday[] = 0;
-                }
-
-                $originalTime = Carbon::parse($shift_time);
-                $updatedTime = $originalTime->addMinutes($grace_time);
-                $grace_entry = $updatedTime->format('H:i:s');
-
-                $placeholders = implode(',', array_fill(0, count($weekoffday), '?'));
-                $employee_id = $employee->id;
-                $id = $employee_id;
-                $absent = Attendance::where('employee_id', $id)->where('company_id', Auth::id())->whereMonth('date', $month)->where('attendance','Absent')->whereRaw("DAYOFWEEK(date) NOT IN ($placeholders)", $weekoffday)->count();
-                $halfday = Attendance::where('employee_id', $id)->where('company_id', Auth::id())->whereMonth('date', $month)->where('attendance','Present')->where('halfday',1)->count();
-                $entry = Attendance::where('employee_id', $id)->where('company_id', Auth::id())->whereMonth('date', $month)->where('attendance','Present')->where('in_time','>',$grace_entry)->count();
-                $late = floor($entry/$grace_day);
-
-                // $employeeLeave = EmployeeLeave::where('employee_id', $id)->where('company_id', Auth::id())->whereMonth('from_date', $month)->where('status','approved')->sum('days')->get();
-
-                $rm_sum = Reimbursement::where('employee_id', $id)->where('company_id', Auth::id())->whereMonth('date', $month)->where('status', 'Approved')->get();
-                $reimbursement = $rm_sum ->sum('amount');
-                $other_deduction = ($absent * $daily_salary) + ($late * $daily_salary) + ($halfday * ($daily_salary / 2));
-                $absent_days = $absent + $late + $halfday/2;
-                $other_deduction = round($other_deduction,2);
-                
-                $holidayCount = $this->getHolidayDaysInMonth(date('Y'), $month);
-               
-                $working_days = $this->getWorkingDaysInMonth(date('Y'), $month, $weekoffday);
-
-                $working_days = $working_days - $holidayCount;
-                
-                foreach ($salarytypes as $salarytype) {
-                    $salary_type_name = '';
-                    if ($salarytype->amount_type == 'Flat') {
-                        $amount = $salarytype->amount;
-                        $salary_type_name = $salarytype->salary_type;
-                    } else {
-                        $amount = ($basic_salary * $salarytype->amount / 100);
-                        $salary_type_name = $salarytype->salary_type . ' (' . $salarytype->amount . '%)';
-                    }
-                    if ($salarytype->payment_type == 'Earning') {
-                        $earning_amount = $earning_amount + $amount;                    
-                    }
-                    if ($salarytype->payment_type == 'Deduction') {
-                        $deduction_amount = $deduction_amount + $amount;                    
-                    }
-                }         
-
-                $gross_amount = $basic_salary + $earning_amount - $deduction_amount - $other_deduction;
-                
-            }
-
-            
-            $is_exist = EmployeeSalary::where('company_id', Auth::id())->where('employee_id', $id)->where('salary_month', $month)->where('salary_year', date('Y'))->first();
-            if (!$is_exist) {
-                
-                $total_amount = 0;
-                foreach ($salarytypes as $salarytype) {
-
-                    $salary = new EmployeeSalary();
-                    $salary->company_id = Auth::id();
-                    $salary->employee_id = $employee->id;
-                    $salary->salary_month = $month;
-                    $salary->salary_year = date('Y');
-                    $salary->salary_type_id = $salarytype->id;
-                    $salary->salary_type_amount = $salarytype->amount;
-                    $salary->salary_type_amount_type = $salarytype->amount_type;                   
-
-                    if ($salarytype->amount_type == 'Flat') {
-                        $amount = $salarytype->amount;
-                        $salary->amount = $amount;//$salarytype->salary_type;
-                    } else {
-                        $amount = ($basic_salary * $salarytype->amount / 100);
-                        $salary->amount = $amount;//$salarytype->salary_type . ' (' . $salarytype->amount . '%)';
-                    }
-                    $salary->label = $salarytype->salary_type;
-                    $salary->basic_salary = $basic_salary;
-                    $salary->gross_salary = $gross_amount;
-                    $salary->other_deduction = $other_deduction;
-                    $salary->absent_days = $absent_days;
-                    $salary->working_days = $working_days;
-                    $salary->reimbursement = $reimbursement;
-                    $salary->save();
-                }
-            }
+        $is_verified = Auth::user()->is_verified;
+        if ($is_verified == 'No') {
+            return view('user.verify_check');
         }
-        $data['message'] = 'Salary generated successfully for all employees.';
-        $data['status'] = 'success';
-        return response()->json($data);
+
+        $companyId = Auth::user()->id;
+        $summary = EmployeeSalarySummary::where('id', $id)
+            ->where('company_id', $companyId)
+            ->first();
+
+        if ($summary) {
+            // Delete associated employee_salaries component records
+            EmployeeSalary::where('employee_id', $summary->employee_id)
+                ->where('salary_month', $summary->salary_month)
+                ->where('salary_year', $summary->salary_year)
+                ->where('company_id', $companyId)
+                ->delete();
+
+            $empName = $summary->employee_name ?? 'Employee';
+            $summary->delete();
+
+            return redirect()->back()->with('success', "Salary disbursement record for {$empName} has been deleted successfully.");
+        }
+
+        return redirect()->back()->with('error', 'Salary record not found or unauthorized.');
     }
 
     public function export(Request $request)

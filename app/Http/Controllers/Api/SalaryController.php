@@ -126,158 +126,63 @@ class SalaryController extends Controller
             'employee_id' => 'required|numeric',
         ]);
 
-        $company_id = $request->company_id;
-        $employee_id = $request->employee_id;
-        $month= date('m');//$request->month ?? date('m');
+        $company_id = (int)$request->company_id;
+        $employee_id = (int)$request->employee_id;
+        $month = (int)($request->month ?? date('m'));
+        $year = (int)($request->year ?? date('Y'));
 
-        $employee = Employee::where('id', $employee_id)->where('company_id', $company_id)->first();
+        $employee = Employee::with(['department', 'shifts'])
+            ->where('id', $employee_id)
+            ->where('company_id', $company_id)
+            ->first();
+
         if (!$employee) {
             return response()->json(['success' => false, 'message' => 'Employee not found.'], 404);
         }
 
-        // dd($company_id);
-        $salarytypes = Salarytype::where('company_id', $company_id)->where('status', '1')->get();
-        $gracesettings = GraceSetting::where('company_id', $company_id)->get();
-        
-        if(count($gracesettings)>0){
-            $grace_time = $gracesettings[0]->value;
-            $grace_day = $gracesettings[1]->value;
-        }else{
-            $grace_time = 15;
-            $grace_day = 2;
-        }
-        $basic_salary = $employee->salary;
+        $payrollService = app(\App\Services\Payroll\PayrollCalculatorService::class);
+        $calc = $payrollService->calculate($employee, $month, $year, $request->basic_salary);
+
         $earning = [];
-        $deduction = [];
-        $earning_amount = 0;
-        $deduction_amount = 0;
-        $daily_salary = $basic_salary / 30;
-        $weekoffday = [];
-        $shift_time = '12:00:00';
-
-        if($employee->shifts){
-                foreach($employee->shifts as $shift){
-                    if($shift->sunday == 0){
-                        $weekoffday[] = 1;
-                    }
-                    if($shift->monday == 0){
-                        $weekoffday[] = 2;
-                    }
-                    if($shift->tuesday == 0){
-                        $weekoffday[] = 3;
-                    }
-                    if($shift->wednesday == 0){
-                        $weekoffday[] = 4;
-                    }
-                    if($shift->thursday == 0){
-                        $weekoffday[] = 5;
-                    }
-                    if($shift->friday == 0){
-                        $weekoffday[] = 6;
-                    }
-                    if($shift->saturday == 0){
-                        $weekoffday[] = 7;
-                    }
-                    $shift_time = $shift->start_time;
-                }
-            }
-            if(count($weekoffday)==0){
-                $weekoffday[] = 0;
-            }
-
-            $originalTime = Carbon::parse($shift_time);
-            $updatedTime = $originalTime->addMinutes($grace_time);
-            $grace_entry = $updatedTime->format('H:i:s');
-
-            $placeholders = implode(',', array_fill(0, count($weekoffday), '?'));
-
-            $absent = Attendance::where('employee_id', $employee_id)->where('company_id', $company_id)->whereMonth('date', $month)->where('attendance','Absent')->whereRaw("DAYOFWEEK(date) NOT IN ($placeholders)", $weekoffday)->count();
-            $halfday = Attendance::where('employee_id',$employee_id)->where('company_id', $company_id)->whereMonth('date', $month)->where('attendance','Present')->where('halfday',1)->count();
-            $entry = Attendance::where('employee_id', $employee_id)->where('company_id', $company_id)->whereMonth('date', $month)->where('attendance','Present')->where('in_time','>',$grace_entry)->count();
-            $late = floor($entry/$grace_day);
-            
-            $other_deduction = ($absent * $daily_salary) + ($late * $daily_salary) + ($halfday * ($daily_salary / 2));
-            $absent_days = $absent + $late + $halfday/2;
-
-            $other_deduction = round($other_deduction,2);
-
-            $rm_sum = Expense::where('employee_id', $employee_id)->where('company_id', $company_id)->whereMonth('created_at', $month)->where('status', 'Approved')->get();
-            if(empty($rm_sum)){
-                $expense = 0;
-            }else{
-                $expense = $rm_sum->sum('amount');
-            }
-
-            $holidayCount = $this->getHolidayDaysInMonth(date('Y'), $month, $company_id);
-            $working_days = $this->getWorkingDaysInMonth(date('Y'), $month, $weekoffday);
-
-            $working_days = $working_days - $holidayCount;
-
-        // foreach ($salarytypes as $salarytype) {
-        //     $amount = ($salarytype->amount_type === 'Flat') ? $salarytype->amount : ($basic_salary * $salarytype->amount / 100);
-
-
-
-
-        //     $type_data = [
-        //         'id' => $salarytype->id,
-        //         'label' => $salarytype->salary_type,
-        //         'amount' => round($amount),
-        //         'amount_type' => $salarytype->amount_type,
-        //         'payment_type' => $salarytype->payment_type,
-        //     ];
-
-        //     if ($salarytype->payment_type === 'Earning') {
-        //         $earning_amount += $amount;
-        //         $earning[] = $type_data;
-        //     } elseif ($salarytype->payment_type === 'Deduction') {
-        //         $deduction_amount += $amount;
-        //         $deduction[] = $type_data;
-        //     }
-        // }
-
-        foreach ($salarytypes as $salarytype) {
-            $isPercentage = $salarytype->amount_type === 'Percentage';
-            $amount = ($salarytype->amount_type === 'Flat')
-                ? $salarytype->amount
-                : ($basic_salary * $salarytype->amount / 100);
-
-            $type_data = [
-                'id' => $salarytype->id,
-                'label' => $salarytype->salary_type,
-                'amount' => round($amount),
-                'amount_type' => $salarytype->amount_type,
-                'payment_type' => $salarytype->payment_type,
-                'percentage' => $isPercentage ? $salarytype->amount : null, // Always present
-
+        foreach ($calc['earnings'] as $e) {
+            $earning[] = [
+                'id' => $e['id'],
+                'label' => $e['label'] ?? $e['name'],
+                'amount' => $e['amount'],
+                'amount_type' => $e['amount_type'],
+                'payment_type' => 'Earning',
+                'percentage' => ($e['amount_type'] === 'Percentage') ? $e['rate'] : null,
             ];
-
-
-            if ($salarytype->payment_type === 'Earning') {
-                $earning_amount += $amount;
-                $earning[] = $type_data;
-            } elseif ($salarytype->payment_type === 'Deduction') {
-                $deduction_amount += $amount;
-                $deduction[] = $type_data;
-            }
         }
 
-
-        $gross_salary = $basic_salary + $earning_amount - $deduction_amount - $other_deduction;
+        $deduction = [];
+        foreach ($calc['deductions'] as $d) {
+            $deduction[] = [
+                'id' => $d['id'],
+                'label' => $d['label'] ?? $d['name'],
+                'amount' => $d['amount'],
+                'amount_type' => $d['amount_type'],
+                'payment_type' => 'Deduction',
+                'percentage' => ($d['amount_type'] === 'Percentage') ? $d['rate'] : null,
+            ];
+        }
 
         return response()->json([
             'success' => true,
             'message' => 'Salary preview generated.',
             'data' => [
-                'basic_salary' => $basic_salary,
+                'basic_salary' => $calc['basic_salary'],
                 'earning' => $earning,
                 'deduction' => $deduction,
-                'other_deduction' => $other_deduction,
-                'gross_salary' => round($gross_salary),
-                'absent_days' => $absent_days,
-                'working_days' => $working_days,
-                'expense' => $expense,
-                
+                'other_deduction' => $calc['other_deduction'],
+                'gross_salary' => $calc['net_salary'],
+                'gross_earnings' => $calc['gross_earnings'],
+                'absent_days' => $calc['absent_days'],
+                'working_days' => $calc['working_days'],
+                'expense' => $calc['reimbursement'],
+                'pf_employee' => $calc['pf_employee'],
+                'esi_employee' => $calc['esi_employee'],
+                'pt_amount' => $calc['pt_amount'],
             ]
         ], 200);
     }
@@ -289,8 +194,6 @@ class SalaryController extends Controller
             'employee_id' => 'required|numeric',
             'month' => 'required|numeric|min:1|max:12',
             'basic_salary' => 'required|numeric',
-            'gross_salary' => 'required|numeric',
-            'components' => 'required|array',
         ]);
 
         if ($validator->fails()) {
@@ -298,48 +201,40 @@ class SalaryController extends Controller
                 'success' => false,
                 'message' => 'Validation failed.',
                 'errors' => $validator->errors(),
-            ], 201);
+            ], 422);
         }
 
-        $year = date('Y');
-        $alreadyExists = EmployeeSalary::where('company_id', $request->company_id)
-            ->where('employee_id', $request->employee_id)
-            ->where('salary_month', $request->month)
-            ->where('salary_year', $year)
-            ->exists();
+        $companyId = (int)$request->company_id;
+        $employeeId = (int)$request->employee_id;
+        $month = (int)$request->month;
+        $year = (int)($request->year ?? date('Y'));
 
-        if ($alreadyExists) {
+        $employee = Employee::with(['department', 'shifts'])
+            ->where('id', $employeeId)
+            ->where('company_id', $companyId)
+            ->first();
+
+        if (!$employee) {
+            return response()->json(['success' => false, 'message' => 'Employee not found.'], 404);
+        }
+
+        $payrollService = app(\App\Services\Payroll\PayrollCalculatorService::class);
+        $calc = $payrollService->calculate($employee, $month, $year, $request->basic_salary);
+
+        try {
+            $summary = $payrollService->savePayrollRecord($companyId, $employeeId, $month, $year, $calc);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Salary saved successfully.',
+                'data' => $summary,
+            ], 200);
+        } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Salary already saved for this employee for this month.',
-            ], 201);
+                'message' => $e->getMessage(),
+            ], 400);
         }
-
-        foreach ($request->components as $component) {
-            EmployeeSalary::create([
-                'company_id' => $request->company_id,
-                'employee_id' => $request->employee_id,
-                'salary_month' => $request->month,
-                'salary_year' => $year,
-                'salary_type_id' => $component['id'],
-                'salary_type_amount' => $component['amount'],
-                'salary_type_amount_type' => $component['amount_type'],
-                'amount' => $component['amount'],
-                'label' => $component['label'],
-                'basic_salary' => $request->basic_salary,
-                'gross_salary' => $request->gross_salary,
-                'other_deduction' => $request->other_deduction,
-                'absent_days' => $request->absent_days,
-                'working_days' => $request->working_days,
-                'reimbursement' => $request->expense,
-            ]);
-        }
-
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Salary saved successfully.',
-        ], 200);
     }
 
 
@@ -513,158 +408,40 @@ class SalaryController extends Controller
     public function generateAllSalary(Request $request)
     {
         try {
-            $month = $request->month;
-            $company_id = $request->company_id;
-            $employees = Employee::where('company_id', $company_id)->get();
-            foreach($employees as $employee){        
-                $data['basic_salary'] = $employee->salary;
-                $section = '';
-                $earning_section = '';
-                $deduction_section = '';
-                $amount = 0;
-                $earning_amount = 0;
-                $deduction_amount = 0;
-                $gross_amount = 0;
-                $other_deduction = 0;
-                
-                $salarytypes = Salarytype::where('company_id', $company_id)->where('status', '1')->get();
-                $gracesettings = GraceSetting::where('company_id', $company_id)->get();
-                $grace_time = $gracesettings[0]->value;
-                $grace_day = $gracesettings[1]->value;
+            $month = (int)($request->month ?? date('m'));
+            $year = (int)($request->year ?? date('Y'));
+            $company_id = (int)$request->company_id;
 
-                if (!$salarytypes->isEmpty()) {
-                    $basic_salary = $employee->salary;
-                    $daily_salary = $basic_salary / 30;
-                    $weekoffday = [];
-                    $shift_time = '12:00:00';
-                    if($employee->shifts){
-                        foreach($employee->shifts as $shift){
-                            if($shift->sunday == 0){
-                                $weekoffday[] = 1;
-                            }
-                            if($shift->monday == 0){
-                                $weekoffday[] = 2;
-                            }
-                            if($shift->tuesday == 0){
-                                $weekoffday[] = 3;
-                            }
-                            if($shift->wednesday == 0){
-                                $weekoffday[] = 4;
-                            }
-                            if($shift->thursday == 0){
-                                $weekoffday[] = 5;
-                            }
-                            if($shift->friday == 0){
-                                $weekoffday[] = 6;
-                            }
-                            if($shift->saturday == 0){
-                                $weekoffday[] = 7;
-                            }
-                            $shift_time = $shift->start_time;
-                        }
-                    }
-                    if(count($weekoffday)==0){
-                        $weekoffday[] = 0;
-                    }
+            $employees = Employee::with(['department', 'shifts'])
+                ->where('company_id', $company_id)
+                ->where('status', '1')
+                ->get();
 
-                    $originalTime = Carbon::parse($shift_time);
-                    $updatedTime = $originalTime->addMinutes($grace_time);
-                    $grace_entry = $updatedTime->format('H:i:s');
+            if ($employees->isEmpty()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No active employees found to generate salary for.'
+                ], 404);
+            }
 
-                    $placeholders = implode(',', array_fill(0, count($weekoffday), '?'));
-                    $employee_id = $employee->id;
-                    $absent = Attendance::where('employee_id', $employee_id)->where('company_id', $company_id)->whereMonth('date', $month)->where('attendance','Absent')->whereRaw("DAYOFWEEK(date) NOT IN ($placeholders)", $weekoffday)->count();
-                    $halfday = Attendance::where('employee_id', $employee_id)->where('company_id', $company_id)->whereMonth('date', $month)->where('attendance','Present')->where('halfday',1)->count();
-                    $entry = Attendance::where('employee_id', $employee_id)->where('company_id', $company_id)->whereMonth('date', $month)->where('attendance','Present')->where('in_time','>',$grace_entry)->count();
-                    $late = floor($entry/$grace_day);
+            $payrollService = app(\App\Services\Payroll\PayrollCalculatorService::class);
+            $processedCount = 0;
 
-                    $employeeLeave = EmployeeLeave::where('employee_id', $employee_id)->where('company_id', $company_id)->whereMonth('from_date', $month)->where('status','approved')->whereIn('leave_type',[1,2])->sum('days')->get();
-
-                    $rm_sum = Reimbursement::where('employee_id', $employee_id)->where('company_id', $company_id)->whereMonth('date', $month)->where('status', 'Approved')->get();
-                    $reimbursement = $rm_sum ->sum('amount');
-                    $other_deduction = ($absent * $daily_salary) + ($late * $daily_salary) + ($halfday * ($daily_salary / 2));
-                    $absent_days = $absent + $late + $halfday/2;
-                    $other_deduction = round($other_deduction,2);
-
-                    $holidayCount = $this->getHolidayDaysInMonth(date('Y'), $month);
-                    $working_days = $this->getWorkingDaysInMonth(date('Y'), $month, $weekoffday);
-
-                    $working_days = $working_days - $holidayCount;
-                    
-                    foreach ($salarytypes as $salarytype) {
-                        $salary_type_name = '';
-                        if ($salarytype->amount_type == 'Flat') {
-                            $amount = $salarytype->amount;
-                            $salary_type_name = $salarytype->salary_type;
-                        } else {
-                            $amount = ($basic_salary * $salarytype->amount / 100);
-                            $salary_type_name = $salarytype->salary_type . ' (' . $salarytype->amount . '%)';
-                        }
-                        if ($salarytype->payment_type == 'Earning') {
-                            $earning_amount = $earning_amount + $amount;                    
-                        }
-                        if ($salarytype->payment_type == 'Deduction') {
-                            $deduction_amount = $deduction_amount + $amount;                    
-                        }
-                    }         
-
-                    $gross_amount = $basic_salary + $earning_amount - $deduction_amount - $other_deduction;
-                    
-                }
-
-                
-                $is_exist = EmployeeSalary::where('company_id', Auth::id())->where('employee_id', $employee_id)->where('salary_month', $month)->where('salary_year', date('Y'))->first();
-                if (!$is_exist) {
-                    
-                    $total_amount = 0;
-                    foreach ($salarytypes as $salarytype) {
-
-                        $salary = new EmployeeSalary();
-                        $salary->company_id = Auth::id();
-                        $salary->employee_id = $employee->id;
-                        $salary->salary_month = $month;
-                        $salary->salary_year = date('Y');
-                        $salary->salary_type_id = $salarytype->id;
-                        $salary->salary_type_amount = $salarytype->amount;
-                        $salary->salary_type_amount_type = $salarytype->amount_type;                   
-
-                        if ($salarytype->amount_type == 'Flat') {
-                            $amount = $salarytype->amount;
-                            $salary->amount = $amount;
-                        } else {
-                            $amount = ($basic_salary * $salarytype->amount / 100);
-                            $salary->amount = $amount;
-                        }
-                        $salary->label = $salarytype->salary_type;
-                        $salary->basic_salary = $basic_salary;
-                        $salary->gross_salary = $gross_amount;
-                        $salary->other_deduction = $other_deduction;
-                        $salary->absent_days = $absent_days;
-                        $salary->working_days = $working_days;
-                        $salary->reimbursement = $reimbursement;
-                        $salary->save();
-                    }
-                }
+            foreach ($employees as $employee) {
+                $calc = $payrollService->calculate($employee, $month, $year);
+                $payrollService->savePayrollRecord($company_id, $employee->id, $month, $year, $calc);
+                $processedCount++;
             }
 
             return response()->json([
-                'message' => 'Salary generated successfully.',
                 'success' => true,
+                'message' => 'Salary generated successfully for ' . $processedCount . ' employees.',
+                'processed_count' => $processedCount,
             ], 200);
-        } catch (ModelNotFoundException $e) {
+        } catch (\Exception $e) {
             return response()->json([
-                'message' => $e->getMessage()
-            ], 200);
-        } catch (ValidationException $e) {
-            return response()->json([
-                'message' => 'Validation error.',
                 'success' => false,
-                'errors' => $e->errors()
-            ], 200);
-        } catch (Exception $e) {
-            return response()->json([
-                'message' => 'An error occurred while updating the record.',
-                'error' => $e->getMessage()
+                'message' => 'An error occurred while generating payroll: ' . $e->getMessage(),
             ], 500);
         }
     }

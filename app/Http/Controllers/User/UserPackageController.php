@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\User;
 
 use App\Models\Package;
+use App\Models\Features;
 use App\Models\CompanyDetail;
 use App\Models\PaymentInfo;
 use Illuminate\Http\Request;
@@ -16,12 +17,12 @@ class UserPackageController extends Controller
      */
     public function index()
     {
-        // $packages = Package::all();
-        $packages = Package::with('features')->where('status','active')->get();  // Eager load features
+        $packages = Package::with('features')->where('status', 'active')->orderBy('price', 'asc')->get();
         $userId = Auth::id();
-        $company = CompanyDetail::find($userId);
+        $company = CompanyDetail::with('package')->find($userId);
+        $features = Features::where('status', 1)->get();
 
-        return view('user.packages.index', compact('packages','company'));
+        return view('user.packages.index', compact('packages', 'company', 'features'));
     }
 
     /**

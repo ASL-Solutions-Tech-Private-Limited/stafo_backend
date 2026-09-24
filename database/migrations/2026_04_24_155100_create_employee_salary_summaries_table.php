@@ -11,7 +11,8 @@ return new class extends Migration
      */
    public function up()
 {
-    Schema::create('employee_salary_summaries', function (Blueprint $table) {
+    if (!Schema::hasTable('employee_salary_summaries')) {
+        Schema::create('employee_salary_summaries', function (Blueprint $table) {
         $table->id();
         $table->unsignedBigInteger('company_id');
         $table->unsignedBigInteger('employee_id');
@@ -33,6 +34,7 @@ return new class extends Migration
         $table->foreign('employee_id')->references('id')->on('employees')->onDelete('cascade');
         $table->index(['company_id', 'employee_id', 'salary_month', 'salary_year']);
     });
+    }
 }
     /**
      * Reverse the migrations.

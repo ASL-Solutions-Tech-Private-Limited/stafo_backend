@@ -3,136 +3,137 @@
 
 <head>
     <meta charset="utf-8">
-    <title>@yield('title', 'Stafo')</title>
+    <title>@yield('title', 'Super Admin') | STAFO HRMS</title>
     <meta content="width=device-width, initial-scale=1.0" name="viewport">
-    <meta content="" name="keywords">
-    <meta content="" name="description">
     <meta name="csrf-token" content="{{ csrf_token() }}">
+
     <!-- Favicon -->
     <link href="{{ asset('main/images/favicon_io (1)/favicon-32x32.png') }}" rel="icon">
 
-    <!-- Google Web Fonts -->
-    <!-- <link rel="preconnect" href="https://fonts.googleapis.com">
+    <!-- Google Web Fonts: Plus Jakarta Sans & Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700&display=swap" rel="stylesheet"> -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
-    <!-- Icon Font Stylesheet -->
-    <!-- <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.10.0/css/all.min.css" rel="stylesheet"> -->
-    <link href="{{ asset('lib/css/all.min.css') }}" rel="stylesheet" />
+    <!-- FontAwesome 6 -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
 
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.4.1/font/bootstrap-icons.css" rel="stylesheet">
+    <!-- Bootstrap 5.3 -->
+    <link href="{{ asset('main/css/bootstrap.min-5.3.css') }}" rel="stylesheet">
 
     <!-- Libraries Stylesheet -->
-    <link href="{{ asset('lib/owlcarousel/assets/owl.carousel.min.css') }}" rel="stylesheet">
-    <link href="{{ asset('lib/tempusdominus/css/tempusdominus-bootstrap-4.min.css') }}" rel="stylesheet" />
-
-    <!-- Customized Bootstrap Stylesheet -->
     <link href="{{ asset('css/bootstrap-datepicker.min.css') }}" rel="stylesheet">
-    <!-- <link href="{{ asset('css/bootstrap.min.css') }}" rel="stylesheet"> -->
-    <link href="{{ asset('main/css/bootstrap.min-5.3.css') }}" rel="stylesheet">
-    <!-- Template Stylesheet -->
-    <link href="{{ asset('css/style.css') }}" rel="stylesheet">
-    <link href="{{ asset('css/admin-dashboard.css') }}" rel="stylesheet">
     <link href="{{ asset('css/tom-select.css') }}" rel="stylesheet">
+
+    <!-- Modern Admin Design System -->
+    <link href="{{ asset('css/admin-modern.css') }}?v={{ file_exists(public_path('css/admin-modern.css')) ? filemtime(public_path('css/admin-modern.css')) : time() }}" rel="stylesheet">
+
     @yield('css')
 </head>
 
-<body>
-    <div class="container-xxl position-relative bg-white d-flex p-0">
-        <!-- Spinner Start -->
-        <div id="spinner"
-            class="show bg-white position-fixed translate-middle w-100 vh-100 top-50 start-50 d-flex align-items-center justify-content-center">
-            <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status">
-                <span class="sr-only">Loading...</span>
-            </div>
-        </div>
-        <!-- Spinner End -->
+<body class="admin-body">
+    <!-- Admin Wrapper -->
+    <div class="admin-wrapper" id="adminWrapper">
 
-
+        <!-- Sidebar Navigation -->
         @include('admin.layouts.sidebar')
 
-
-        <!-- Content Start -->
-        <div class="content">
+        <!-- Main Content Column -->
+        <div class="admin-main">
+            <!-- Topbar Header -->
             @include('admin.layouts.header')
 
+            <!-- Body View Area -->
+            <main class="admin-content-body">
+                @yield('content')
+            </main>
 
-            <div class="container-fluid pt-4 px-4">
-                <div class="row g-8">
-                    @yield('content')
-                </div>
-            </div>
-
+            <!-- Footer -->
             @include('admin.layouts.footer')
-
         </div>
-        <!-- Content End -->
 
-
-        <!-- Back to Top -->
-        <a href="#" class="btn btn-lg btn-primary btn-lg-square back-to-top" id="backToTopBtn"><i
-                class="bi bi-arrow-up"></i></a>
+        <!-- Back to Top Button -->
+        <button type="button" id="backToTopBtn" aria-label="Back to Top" title="Back to Top">
+            <i class="fa-solid fa-arrow-up"></i>
+        </button>
     </div>
+
+    <!-- SweetAlert -->
     <script src="//cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    @include('sweetalert::alert') <!-- Include SweetAlert -->
-    <!-- JavaScript Libraries -->
-    <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
-    <!-- <script src="{{ asset('main/js/jquery-3.4.1.min.js') }}"></script> -->
+    @include('sweetalert::alert')
 
-    <!-- <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/js/bootstrap.bundle.min.js"></script> -->
+    <!-- Scripts -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="{{ asset('main/js/bootstrap.bundle.min5.3.js') }}"></script>
-
     <script src="{{ asset('lib/chart/chart.min.js') }}"></script>
-    <script src="{{ asset('lib/easing/easing.min.js') }}"></script>
-    <script src="{{ asset('lib/waypoints/waypoints.min.js') }}"></script>
-    <script src="{{ asset('lib/owlcarousel/owl.carousel.min.js') }}"></script>
-    <script src="{{ asset('lib/tempusdominus/js/moment.min.js') }}"></script>
-    <script src="{{ asset('lib/tempusdominus/js/moment-timezone.min.js') }}"></script>
-    <script src="{{ asset('lib/tempusdominus/js/tempusdominus-bootstrap-4.min.js') }}"></script>
-    <script
-        src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/js/bootstrap-datepicker.min.js"></script>
-
-    <!-- Template Javascript -->
-    <script src="{{ asset('js/main.js') }}"></script>
     <script src="{{ asset('js/tom-select.complete.min.js') }}"></script>
-    @yield('scripts')
 
     <script>
-        var mybutton = document.getElementById("backToTopBtn");
-        window.onscroll = function () {
-            if (document.body.scrollTop > 200 || document.documentElement.scrollTop > 200) {
-                mybutton.style.display = "block";
-            } else {
-                mybutton.style.display = "none";
-            }
-        };
-        mybutton.addEventListener('click', function (event) {
-            event.preventDefault();
-            window.scrollTo({
-                top: 0,
-                behavior: "smooth"
-            });
-        });
+        // Responsive Sidebar Drawer & Desktop Toggle
+        document.addEventListener('DOMContentLoaded', function () {
+            const wrapper = document.getElementById('adminWrapper');
+            const sidebar = document.getElementById('adminSidebar');
+            const backdrop = document.getElementById('adminSidebarBackdrop');
+            const toggleBtn = document.getElementById('sidebarToggleBtn');
+            const closeBtn = document.getElementById('closeSidebarBtn');
 
-        new TomSelect('.tomselect', {
-            create: false,
-            plugins: ['remove_button'],
-            persist: false,
-            sortField: {
-                field: "text",
-                direction: "asc"
+            function toggleSidebar() {
+                if (window.innerWidth < 992) {
+                    sidebar.classList.toggle('show');
+                    backdrop.classList.toggle('show');
+                } else {
+                    wrapper.classList.toggle('sidebar-collapsed');
+                }
             }
-        });
-        new TomSelect('.tomselect2', {
-            create: false,
-            plugins: ['remove_button'],
-            persist: false,
-            sortField: {
-                field: "text",
-                direction: "asc"
+
+            function closeMobileSidebar() {
+                sidebar.classList.remove('show');
+                backdrop.classList.remove('show');
+            }
+
+            if (toggleBtn) toggleBtn.addEventListener('click', toggleSidebar);
+            if (closeBtn) closeBtn.addEventListener('click', closeMobileSidebar);
+            if (backdrop) backdrop.addEventListener('click', closeMobileSidebar);
+
+            // Back to Top Functionality
+            const backToTop = document.getElementById("backToTopBtn");
+            window.addEventListener('scroll', function () {
+                if (window.scrollY > 300) {
+                    backToTop.style.display = "inline-flex";
+                } else {
+                    backToTop.style.display = "none";
+                }
+            });
+
+            if (backToTop) {
+                backToTop.addEventListener('click', function () {
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                });
+            }
+
+            // Initialize TomSelect if elements exist
+            if (document.querySelector('.tomselect')) {
+                new TomSelect('.tomselect', {
+                    create: false,
+                    plugins: ['remove_button'],
+                    persist: false,
+                    sortField: { field: "text", direction: "asc" }
+                });
+            }
+
+            if (document.querySelector('.tomselect2')) {
+                new TomSelect('.tomselect2', {
+                    create: false,
+                    plugins: ['remove_button'],
+                    persist: false,
+                    sortField: { field: "text", direction: "asc" }
+                });
             }
         });
     </script>
+
+    @yield('scripts')
 </body>
 
 </html>

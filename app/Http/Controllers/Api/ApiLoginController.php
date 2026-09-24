@@ -227,64 +227,105 @@ class ApiLoginController extends Controller
     public function sendOtp(Request $request)
     {
         try {
-            // Validate the input mobile number
-            $validator = Validator::make($request->all(), [
-                'mobile_number' => 'required|digits:10',  // Ensure it is exactly 10 digits
-            ]);
+            $input = trim($request->input('mobile_number'));
 
-            // If validation fails, return a response with validation errors
-            if ($validator->fails()) {
+            if (empty($input)) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Invalid mobile number.',
-                    'errors' => $validator->errors(),
+                    'message' => 'Please enter a mobile number or email.',
                 ], 200);
             }
 
-            $phone = $request->input('mobile_number');
+            // Check if input is an email address
+            if (filter_var($input, FILTER_VALIDATE_EMAIL)) {
+                $user = CompanyDetail::where('email', $input)->where('status', '1')->first();
+                if (!$user) {
+                    $user = Employee::where(function($q) use ($input) {
+                        $q->where('email', $input)->orWhere('official_email_id', $input);
+                    })->where('status', '1')->first();
+                }
+                if (!$user) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'No active company or employee found with this email.',
+                    ], 200);
+                }
+                $phone = $user instanceof Employee ? $user->phone : $user->mobile_no;
+                if (empty($phone)) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'No registered mobile number associated with this account.',
+                    ], 200);
+                }
+            } else {
+                $phone = preg_replace('/[^0-9]/', '', $input);
+                if (strlen($phone) > 10) {
+                    $phone = substr($phone, -10);
+                }
+                if (strlen($phone) < 10) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Please enter a valid 10-digit mobile number.',
+                    ], 200);
+                }
+
+                $user = CompanyDetail::where('mobile_no', $phone)->where('status', '1')->first();
+                if (!$user) {
+                    $user = Employee::where('phone', $phone)->where('status', '1')->first();
+                }
+            }
+
+            if (!$user) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No registered company or active employee account found with this number.',
+                ], 200);
+            }
 
             // Generate a 6-digit OTP
             $otp = rand(100000, 999999);
-            if ($request->mobile_number == '9999999999' || $request->mobile_number == '8888888888') {
+            if ($phone == '9999999999' || $phone == '8888888888') {
                 $otp = 111111;
             }
-            $user = CompanyDetail::where('mobile_no', $request->mobile_number)->where('status', '1')->first();
-            if (!$user) {
-                $user = Employee::where('phone', $request->mobile_number)->where('status', '1')->first();
-            }
-            if ($user) {
-                $user->otp = $otp;
-                $user->save();
-            } else {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'User not found.',
-                ], 200);
+
+            $user->otp = $otp;
+            $user->save();
+
+            // Cache OTP for both phone and input
+            Cache::put('otp_' . $phone, $otp, now()->addMinutes(10));
+            if ($input !== $phone) {
+                Cache::put('otp_' . $input, $otp, now()->addMinutes(10));
             }
 
-            // Call the SmsHelper to send the OTP
-            $response = SmsHelper::sendOtp1($phone, $otp);
-
-            // Check if the response from the helper was successful
-            if ($response['success']) {
-                // Store the OTP in the cache for 5 minutes
-                Cache::put('otp_' . $phone, $otp, now()->addMinutes(5));
-
+            // Call the SmsHelper to send the OTP (if not demo)
+            if ($phone == '9999999999' || $phone == '8888888888') {
                 return response()->json([
                     'success' => true,
-                    'message' => 'OTP sent successfully.',
-                    'otp' => $otp,  // Optionally return OTP for testing
+                    'message' => 'OTP sent successfully. (Demo OTP: 111111)',
+                    'otp' => $otp,
+                    'user_type' => $user instanceof Employee ? 'employee' : 'company',
+                    'phone' => substr($phone, 0, 2) . '******' . substr($phone, -2),
+                ], 200);
+            }
+
+            $response = SmsHelper::sendOtp1($phone, $otp);
+
+            if ($response['success']) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'OTP sent successfully to registered number.',
+                    'otp' => $otp,
+                    'user_type' => $user instanceof Employee ? 'employee' : 'company',
+                    'phone' => substr($phone, 0, 2) . '******' . substr($phone, -2),
                 ], 200);
             } else {
-                // If sending SMS fails, return the error message from the helper
                 return response()->json([
                     'success' => false,
                     'message' => 'Failed to send OTP.',
-                    'error' => $response['message'], // Add the message from the helper response
+                    'error' => $response['message'] ?? 'SMS gateway error',
                 ], 200);
             }
         } catch (\Exception $e) {
-            // Handle unexpected exceptions
             return response()->json([
                 'success' => false,
                 'message' => 'An unexpected error occurred.',
@@ -478,21 +519,31 @@ class ApiLoginController extends Controller
                 }
                 $device = DeviceSession::where('employee_id', $employee_id)->latest()->first();
                 
-                //dd($device);
+                if (!$device && $request->filled('device_id')) {
+                    $device = new DeviceSession;
+                    $device->employee_device_id = $request->device_id;
+                    $device->employee_id = $user->id;
+                    $device->company_id = $user->company_id;
+                    $device->save();
+                }
+
+                if ($request->filled('device_name')) {
+                    $user->device_name = $request->device_name;
+                }
 
                 if ($device && $status === 'pending') {
-                    $user->device_status = $status;
-                    //$user->device_id = $device->employee_device_id;
+                    $user->device_status = 'pending';
                     $user->save();
 
                     return response()->json([
                         'success' => true,
-                        'message' => 'please wait company will apperove your device',
+                        'message' => 'Please wait, company will approve your device request.',
                     ], 200);
                 }
 
-                if ($device && $status === 'approve') {
+                if ($device && ($status === 'approve' || $status === 'approved')) {
                     $user->device_id = $device->employee_device_id;
+                    $user->device_status = 'approved';
                     $user->save();
 
                     return response()->json([
@@ -523,10 +574,17 @@ class ApiLoginController extends Controller
 
                 // Find the last inserted device record for this company
                 $device = DeviceSession::where('company_id', $company_id)->latest()->first();
+                if (!$device && $request->filled('device_id')) {
+                    $device = new DeviceSession;
+                    $device->company_device_id = $request->device_id;
+                    $device->employee_device_id = $request->device_id;
+                    $device->company_id = $user->id;
+                    $device->save();
+                }
 
                 // If a device record is found and the status is "approved", update the device ID
-                if ($device && $status === 'approve') {
-                    $user->device_id = $device->employee_device_id;
+                if ($device && ($status === 'approve' || $status === 'approved')) {
+                    $user->device_id = $device->employee_device_id ?: $device->company_device_id;
                     $user->save();
 
                     return response()->json([

@@ -1,4 +1,6 @@
 /vendor
 .env
 /public/uploads
-
+cookies.txt
+node_modules/
+chat-server/node_modules/

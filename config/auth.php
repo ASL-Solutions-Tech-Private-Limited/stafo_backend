@@ -40,6 +40,10 @@ return [
             'driver' => 'session',
             'provider' => 'users',
         ],
+        'employee' => [
+            'driver' => 'session',
+            'provider' => 'employees',
+        ],
         'admin' => [
             'driver'   => 'session',
             'provider' => 'admin',
@@ -75,6 +79,10 @@ return [
             //'model' => App\Models\User::class,
             'driver' => 'eloquent',
             'model' => App\Models\CompanyDetail::class,  // Custom model for ProprietorDetail
+        ],
+        'employees' => [
+            'driver' => 'eloquent',
+            'model' => App\Models\Employee::class,
         ],
         'admin' => [
             'driver' => 'eloquent',
