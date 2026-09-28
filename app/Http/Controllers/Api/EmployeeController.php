@@ -27,11 +27,13 @@ use Illuminate\Support\Facades\Artisan;
 use Illuminate\Validation\ValidationException;
 use SapientPro\ImageComparatorLaravel\Facades\Comparator;
 use SapientPro\ImageComparator\Strategy\DifferenceHashStrategy;
+use App\Services\FaceVerificationService;
 use App\Helpers\Helper;
 use App\Models\Shift;
 use App\Models\AttendanceRequest;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 
 
 class EmployeeController extends Controller
@@ -1106,57 +1108,230 @@ class EmployeeController extends Controller
     public function selfieAttendance(Request $request)
     {
         try {
-            // $request->validate([
-            //     'employee_id' => 'required',
-            //     'image' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
-            // ]);
-
-            $employee = Employee::find($request->employee_id);
-            $similarity = 100;
-            if ($employee->selfie_image != null) {
-                $employeeImage = asset('uploads/employees/selfie') . '/' . $employee->selfie_image;
-                Comparator::setHashStrategy(new DifferenceHashStrategy());
-                $similarity = Comparator::compare($employeeImage, $request->file('image')->getPathname());
+            $employeeId = $request->input('employee_id');
+            if (!$employeeId && Auth::guard('sanctum')->check()) {
+                $employeeId = Auth::guard('sanctum')->id();
             }
 
-
-            if ($similarity < 30) {
-                $word = $employee->id . "<" . date('Y-m-d H:i:s') . ">" . "=" . $similarity;
-                //$filePath = storage_path('app/selfie.txt');
-                //file_put_contents($filePath, $word . PHP_EOL, FILE_APPEND);
-
+            if (!$employeeId) {
                 return response()->json([
                     'status' => false,
-                    'similarity' => $similarity,
-                    'message' => 'Selfie does not match with the employee image',
+                    'message' => 'The employee_id field is required.',
+                ], 422);
+            }
+
+            $employee = Employee::find($employeeId);
+            
+            if (!$employee) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Employee not found.',
+                ], 404);
+            }
+
+            // 1. Handle captured selfie image input (file upload, base64, or image string)
+            $capturedImageTempPath = null;
+            $punchImageName = '';
+            $punchinDir = public_path('uploads/employees/punchin');
+            $punchoutDir = public_path('uploads/employees/punchout');
+            $selfieDir = public_path('uploads/employees/selfie');
+
+            if (!file_exists($punchinDir)) {
+                @mkdir($punchinDir, 0777, true);
+            }
+            if (!file_exists($punchoutDir)) {
+                @mkdir($punchoutDir, 0777, true);
+            }
+            if (!file_exists($selfieDir)) {
+                @mkdir($selfieDir, 0777, true);
+            }
+
+            if ($request->hasFile('image')) {
+                $imageFile = $request->file('image');
+                $punchImageName = 'selfie_' . time() . '_' . Str::random(6) . '.' . $imageFile->getClientOriginalExtension();
+                $imageFile->move($punchinDir, $punchImageName);
+                $capturedImageTempPath = $punchinDir . '/' . $punchImageName;
+            } elseif ($request->filled('image_base64')) {
+                $base64 = $request->input('image_base64');
+                if (preg_match('/^data:image\/(\w+);base64,/', $base64, $type)) {
+                    $base64 = substr($base64, strpos($base64, ',') + 1);
+                    $type = strtolower($type[1]);
+                    $base64Data = base64_decode($base64);
+                    if ($base64Data !== false) {
+                        $punchImageName = 'selfie_' . time() . '_' . Str::random(6) . '.' . ($type === 'jpeg' ? 'jpg' : $type);
+                        file_put_contents($punchinDir . '/' . $punchImageName, $base64Data);
+                        @chmod($punchinDir . '/' . $punchImageName, 0666);
+                        $capturedImageTempPath = $punchinDir . '/' . $punchImageName;
+                    }
+                }
+            } elseif ($request->filled('image') && is_string($request->input('image'))) {
+                $rawImage = $request->input('image');
+                if (str_starts_with($rawImage, 'data:image/') || base64_decode($rawImage, true) !== false) {
+                    if (preg_match('/^data:image\/(\w+);base64,/', $rawImage, $type)) {
+                        $rawImage = substr($rawImage, strpos($rawImage, ',') + 1);
+                        $type = strtolower($type[1]);
+                    } else {
+                        $type = 'jpg';
+                    }
+                    $base64Data = base64_decode($rawImage);
+                    if ($base64Data !== false) {
+                        $punchImageName = 'selfie_' . time() . '_' . Str::random(6) . '.' . ($type === 'jpeg' ? 'jpg' : $type);
+                        file_put_contents($punchinDir . '/' . $punchImageName, $base64Data);
+                        @chmod($punchinDir . '/' . $punchImageName, 0666);
+                        $capturedImageTempPath = $punchinDir . '/' . $punchImageName;
+                    }
+                }
+            }
+
+            if (!$capturedImageTempPath || !file_exists($capturedImageTempPath)) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Selfie image is required to mark attendance.',
                 ], 200);
+            }
+
+            // 2. Determine Punch Action (Punch-In vs Punch-Out)
+            $currentDate = now()->toDateString();
+            $nowTime = now();
+            $currentDateTime = $nowTime->toDateTimeString();
+
+            $existingPunch = EmployeePunch::where('employee_id', $employee->id)
+                ->whereDate('punch_in', $currentDate)
+                ->whereNull('punch_out')
+                ->latest()
+                ->first();
+
+            $actionType = $existingPunch ? 'punch_out' : 'punch_in';
+
+            // 3. Strict Face Verification Check
+            $similarity = 100;
+            $isFirstRegistration = false;
+            $referenceImagePath = !empty($employee->selfie_image) ? public_path('uploads/employees/selfie/' . $employee->selfie_image) : null;
+
+            // If reference selfie is not registered or file missing, auto-register this first selfie image as the reference face
+            if (empty($employee->selfie_image) || !$referenceImagePath || !file_exists($referenceImagePath)) {
+                $ext = pathinfo($punchImageName, PATHINFO_EXTENSION) ?: 'jpg';
+                $registeredSelfieName = 'employees_' . time() . '_' . Str::random(6) . '.' . $ext;
+                @copy($capturedImageTempPath, $selfieDir . '/' . $registeredSelfieName);
+                @chmod($selfieDir . '/' . $registeredSelfieName, 0666);
+
+                $employee->selfie_image = $registeredSelfieName;
+                $employee->save();
+
+                $similarity = 100;
+                $isFirstRegistration = true;
             } else {
-                $currentDate = now()->toDateString();
-                $currentDateTime = now()->toDateTimeString();
+                // Primary Check: Compare captured face with registered profile face using Python AI face recognition
+                $verifyResult = FaceVerificationService::verify($referenceImagePath, $capturedImageTempPath);
+               
+              
+                $similarity = $verifyResult['similarity'] ?? 0;
+                $actionLabel = ($actionType === 'punch_out') ? 'Punch Out' : 'Punch In';
+
+                // For Punch-Out: Also verify against today's punch-in image if available
+                $punchinVerifyResult = null;
+                if ($actionType === 'punch_out') {
+                    $todayAtt = Attendance::where('employee_id', $employee->id)
+                        ->whereDate('date', $currentDate)
+                        ->first();
+
+                    if ($todayAtt && !empty($todayAtt->punchin_image)) {
+                        $todayPunchinPath = public_path('uploads/employees/punchin/' . $todayAtt->punchin_image);
+                        if (file_exists($todayPunchinPath)) {
+                            $punchinVerifyResult = FaceVerificationService::verify($todayPunchinPath, $capturedImageTempPath);
+                        }
+                    }
+                }
+
+                // Match is valid if registered profile photo matches, OR for punch-out if today's punch-in photo matches
+                $isMatch = !empty($verifyResult['match']);
+                $effectiveScore = $similarity;
+
+                if ($actionType === 'punch_out' && $punchinVerifyResult !== null) {
+                    if (!empty($punchinVerifyResult['match'])) {
+                        $isMatch = true;
+                    }
+                    $effectiveScore = max($similarity, (float)($punchinVerifyResult['similarity'] ?? 0));
+                }
+
+                // If face verification fails
+                if (!$isMatch) {
+                    if (file_exists($capturedImageTempPath)) {
+                        @unlink($capturedImageTempPath);
+                    }
+
+                    $errorCode = $verifyResult['error_code'] ?? ($punchinVerifyResult['error_code'] ?? null);
+                    if ($errorCode === 'NO_FACE_IN_QUERY') {
+                        $errorMessage = 'Face not detected in selfie. Please take a clear photo.';
+                    } elseif ($errorCode === 'NO_FACE_IN_REF') {
+                        $errorMessage = 'Face not detected in registered profile photo.';
+                    } else {
+                        $errorMessage = 'Face does not match registered employee.';
+                    }
+
+                    return response()->json([
+                        'status' => false,
+                        'face_matched' => false,
+                        'action' => $actionType,
+                        'similarity' => round($effectiveScore, 2),
+                        'engine' => $verifyResult['engine'] ?? ($punchinVerifyResult['engine'] ?? 'face_service'),
+                        'employee_id' => $employee->id,
+                        'employee_name' => $employee->name,
+                        'message' => $errorMessage,
+                    ], 200);
+                }
+            }
+
+            // 4. Face Verified Successfully -> Record Punch-In or Punch-Out
+            if ($existingPunch) {
+                // Punch OUT
+                if (file_exists($punchinDir . '/' . $punchImageName)) {
+                    @copy($punchinDir . '/' . $punchImageName, $punchoutDir . '/' . $punchImageName);
+                }
+
+                $existingPunch->update([
+                    'punch_out' => $nowTime,
+                ]);
+
                 $attendance = Attendance::where('employee_id', $employee->id)
                     ->whereDate('date', $currentDate)
                     ->first();
-                if ($attendance) {
-                    $punchoutImage = '';
-                    if ($request->hasFile('image')) {
-                        // dd("test");
-                        $image = $request->file('image');
-                        $punchoutImage = 'punchout_' . time() . '.' . $image->getClientOriginalExtension();
-                        $image->move(public_path('uploads/employees/punchout'), $punchoutImage);
-                    }
 
+                if ($attendance) {
                     $attendance->update([
                         'out_time' => $currentDateTime,
-                        'punchout_image' => $punchoutImage,
+                        'punchout_image' => $punchImageName,
+                    ]);
+                }
+
+                return response()->json([
+                    'status' => true,
+                    'face_matched' => true,
+                    'is_first_registration' => $isFirstRegistration,
+                    'type' => 'punch_out',
+                    'similarity' => round($similarity, 2),
+                    'message' => 'Selfie Out successfully at ' . $nowTime->format('h:i A') . '.',
+                    'time' => $nowTime->format('h:i A'),
+                    'image' => asset('uploads/employees/punchout/' . $punchImageName),
+                ], 200);
+            } else {
+                // Punch IN
+                $punchIn = EmployeePunch::create([
+                    'employee_id' => $employee->id,
+                    'punch_in' => $nowTime,
+                ]);
+
+                $existsAttendance = Attendance::where('employee_id', $employee->id)
+                    ->whereDate('date', $currentDate)
+                    ->first();
+
+                if ($existsAttendance) {
+                    $existsAttendance->update([
+                        'in_time' => $currentDateTime,
+                        'punchin_image' => $punchImageName,
+                        'attendance' => 'Present',
                     ]);
                 } else {
-                    $punchinImage = '';
-                    if ($request->hasFile('image')) {
-                        $image = $request->file('image');
-                        $punchinImage = 'punchin_' . time() . '.' . $image->getClientOriginalExtension();
-
-                        $image->move(public_path('uploads/employees/punchin'), $punchinImage);
-                    }
                     Attendance::create([
                         'company_id' => $employee->company_id,
                         'branch_id' => $employee->branch_id,
@@ -1166,76 +1341,22 @@ class EmployeeController extends Controller
                         'date' => $currentDate,
                         'in_time' => $currentDateTime,
                         'out_time' => null,
-                        'punchin_image' => $punchinImage,
+                        'punchin_image' => $punchImageName,
                     ]);
                 }
 
-
-
-                // Get the current date (to ensure punch-ins and punch-outs are on the same day)
-                $currentDate = now()->toDateString();
-
-                // Check if the employee has already punched in today
-                $existingPunch = EmployeePunch::where('employee_id', $employee->id)
-                    ->whereDate('punch_in', $currentDate) // Ensure the punch-in is for today
-                    ->whereNull('punch_out') // Ensure there's no punch-out yet
-                    ->latest()
-                    ->first();
-
-                // If the employee has punched in today, only allow punch-out
-                if ($existingPunch) {
-                    // If there's an existing punch-in record (today), it's time to punch-out
-                    $existingPunch->update([
-                        'punch_out' => now(), // Set punch-out time as the current timestamp
-                    ]);
-
-                    // Update the attendance table with the punch-out time
-                    $attendance = Attendance::where('employee_id', $employee->id)
-                        ->whereDate('date', $currentDate)
-                        ->first();
-
-                    if ($attendance) {
-                        // If attendance exists, update the out_time
-                        $attendance->update([
-                            'out_time' => now(),
-                        ]);
-                    }
-
-                    return response()->json([
-                        'status' => true,
-                        'similarity' => $similarity,
-                        'message' => 'Selfie Out successfully.',
-                    ], 200);
-                } else {
-                    // If the employee hasn't punched in today, create a new punch-in record
-                    $punchIn = EmployeePunch::create([
-                        'employee_id' => $employee->id,
-                        'punch_in' => now(), // Record punch-in time as the current timestamp
-                    ]);
-
-                    $existsAttendance = Attendance::where('employee_id', $employee->id)
-                        ->whereDate('date', $currentDate)
-                        ->first();
-                    if (!$existsAttendance) {
-                        // Create a new attendance record for the punch-in action
-                        Attendance::create([
-                            'company_id' => $employee->company_id,
-                            'branch_id' => $employee->branch_id,
-                            'department_id' => $employee->department_id,
-                            'employee_id' => $employee->id,
-                            'attendance' => 'Present', // Set as 'Present' for the punch-in
-                            'date' => $currentDate,
-                            'in_time' => now(),
-                            'out_time' => null, // No punch-out yet
-                        ]);
-                    }
-
-                    return response()->json([
-                        'status' => true,
-                        'similarity' => $similarity,
-                        'message' => 'Selfie In successfully.',
-                    ], 200);
-                }
+                return response()->json([
+                    'status' => true,
+                    'face_matched' => true,
+                    'is_first_registration' => $isFirstRegistration,
+                    'type' => 'punch_in',
+                    'similarity' => round($similarity, 2),
+                    'message' => $isFirstRegistration 
+                        ? 'Profile selfie registered & Selfie In recorded successfully at ' . $nowTime->format('h:i A') . '.'
+                        : 'Selfie In successfully at ' . $nowTime->format('h:i A') . '.',
+                    'time' => $nowTime->format('h:i A'),
+                    'image' => asset('uploads/employees/punchin/' . $punchImageName),
+                ], 200);
             }
         } catch (ValidationException $e) {
             return response()->json([
@@ -1246,7 +1367,7 @@ class EmployeeController extends Controller
         } catch (Exception $e) {
             return response()->json([
                 'status' => false,
-                'message' => 'An error occurred while creating the request.',
+                'message' => 'An error occurred while processing selfie attendance.',
                 'error' => $e->getMessage()
             ], 500);
         }

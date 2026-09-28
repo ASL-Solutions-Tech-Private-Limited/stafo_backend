@@ -178,8 +178,8 @@
                                 </td>
                                 <td class="text-center">
                                     @if ($attendance->punchin_image)
-                                        <div class="position-relative d-inline-block" style="cursor: pointer;" onclick="viewPunchInImage('{{ url('uploads/employees/punchin/' . $attendance->punchin_image) }}')">
-                                            <img src="{{ url('uploads/employees/punchin/' . $attendance->punchin_image) }}"
+                                        <div class="position-relative d-inline-block" style="cursor: pointer;" onclick="viewPunchInImage('{{ url('public/uploads/employees/punchin/' . $attendance->punchin_image) }}')">
+                                            <img src="{{ url('public/uploads/employees/punchin/' . $attendance->punchin_image) }}"
                                                 alt="Punch In" class="rounded-2 shadow-sm border" 
                                                 style="width: 40px; height: 40px; object-fit: cover; transition: transform 0.2s ease;"
                                                 onmouseover="this.style.transform='scale(1.15)'" onmouseout="this.style.transform='scale(1)'" />
@@ -190,8 +190,8 @@
                                 </td>
                                 <td class="text-center">
                                     @if ($attendance->punchout_image)
-                                        <div class="position-relative d-inline-block" style="cursor: pointer;" onclick="viewPunchOutImage('{{ url('uploads/employees/punchout/' . $attendance->punchout_image) }}')">
-                                            <img src="{{ url('uploads/employees/punchout/' . $attendance->punchout_image) }}"
+                                        <div class="position-relative d-inline-block" style="cursor: pointer;" onclick="viewPunchOutImage('{{ url('public/uploads/employees/punchout/' . $attendance->punchout_image) }}')">
+                                            <img src="{{ url('public/uploads/employees/punchout/' . $attendance->punchout_image) }}"
                                                 alt="Punch Out" class="rounded-2 shadow-sm border" 
                                                 style="width: 40px; height: 40px; object-fit: cover; transition: transform 0.2s ease;"
                                                 onmouseover="this.style.transform='scale(1.15)'" onmouseout="this.style.transform='scale(1)'" />

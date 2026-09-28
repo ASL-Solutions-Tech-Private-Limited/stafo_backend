@@ -27,6 +27,9 @@ use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use RealRashid\SweetAlert\Facades\Alert;
+use SapientPro\ImageComparatorLaravel\Facades\Comparator;
+use SapientPro\ImageComparator\Strategy\DifferenceHashStrategy;
+use App\Services\FaceVerificationService;
 use Exception;
 
 class EmployeeDashboardController extends Controller
@@ -50,6 +53,7 @@ class EmployeeDashboardController extends Controller
         }
 
         $employee_info = Employee::with(['company', 'branch', 'department', 'shift', 'employeeType'])->find($employee->id);
+       // dd($employee_info);
         $company_id = $employee_info->company_id;
 
         $today = date('Y-m-d');
@@ -1013,6 +1017,49 @@ class EmployeeDashboardController extends Controller
                     'status' => false,
                     'message' => 'Selfie image is required to complete selfie attendance.'
                 ], 422);
+            }
+
+            // Face verification / auto-registration against registered profile selfie
+            $selfieDir = public_path('uploads/employees/selfie');
+            if (!file_exists($selfieDir)) {
+                @mkdir($selfieDir, 0777, true);
+            }
+            $capturedPath = $punchinDir . '/' . $imageName;
+
+            if (empty($employee_info->selfie_image) || !file_exists($selfieDir . '/' . $employee_info->selfie_image)) {
+                $ext = pathinfo($imageName, PATHINFO_EXTENSION) ?: 'jpg';
+                $registeredSelfieName = 'employees_' . time() . '_' . Str::random(6) . '.' . $ext;
+                if (file_exists($capturedPath)) {
+                    @copy($capturedPath, $selfieDir . '/' . $registeredSelfieName);
+                    @chmod($selfieDir . '/' . $registeredSelfieName, 0666);
+                    $employee_info->selfie_image = $registeredSelfieName;
+                    $employee_info->save();
+                }
+            } else {
+                $refPath = $selfieDir . '/' . $employee_info->selfie_image;
+                if (file_exists($refPath) && file_exists($capturedPath)) {
+                    $verifyResult = FaceVerificationService::verify($refPath, $capturedPath);
+                    if (empty($verifyResult['match'])) {
+                        @unlink($capturedPath);
+                        $similarity = $verifyResult['similarity'] ?? 0;
+                        $msg = $verifyResult['message'] ?? 'Face mismatch detected!';
+                        if (!empty($verifyResult['error_code']) && $verifyResult['error_code'] === 'NO_FACE_IN_QUERY') {
+                            $msg = 'Face not detected in selfie. Please take a clear photo.';
+                        } elseif (!empty($verifyResult['error_code']) && $verifyResult['error_code'] === 'NO_FACE_IN_REF') {
+                            $msg = 'Face not detected in registered profile photo.';
+                        } else {
+                            $msg = 'Face does not match registered employee.';
+                        }
+
+                        return response()->json([
+                            'status' => false,
+                            'face_matched' => false,
+                            'similarity' => round($similarity, 2),
+                            'engine' => $verifyResult['engine'] ?? 'face_service',
+                            'message' => $msg,
+                        ], 422);
+                    }
+                }
             }
 
             // Check active punch-in
