@@ -12,6 +12,23 @@ use Illuminate\Support\Facades\Auth;
 
 class PerformanceController extends Controller
 {
+    /**
+     * @OA\Post(
+     *     path="/api/performancetype/list",
+     *     summary="List performance types for authenticated company",
+     *     tags={"Performance"},
+     *     security={{"sanctum":{}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Record Display successfully."),
+     *             @OA\Property(property="data", type="array", @OA\Items(type="object"))
+     *         )
+     *     )
+     * )
+     */
     public function list(Request $request)
     {
         try {
@@ -33,6 +50,31 @@ class PerformanceController extends Controller
         }
     }
 
+    /**
+     * @OA\Post(
+     *     path="/api/performancetype/add",
+     *     summary="Add a new performance type",
+     *     tags={"Performance"},
+     *     security={{"sanctum":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"name"},
+     *             @OA\Property(property="name", type="string", example="Communication"),
+     *             @OA\Property(property="description", type="string", example="Communication skill assessment")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Record added successfully."),
+     *             @OA\Property(property="data", type="object")
+     *         )
+     *     )
+     * )
+     */
     public function store(Request $request)
     {
         try {
@@ -58,6 +100,37 @@ class PerformanceController extends Controller
         }
     }
 
+    /**
+     * @OA\Post(
+     *     path="/api/performancetype/update/{id}",
+     *     summary="Update a performance type",
+     *     tags={"Performance"},
+     *     security={{"sanctum":{}}},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         description="Performance Type ID",
+     *         @OA\Schema(type="integer", example=1)
+     *     ),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="name", type="string", example="Updated Skill"),
+     *             @OA\Property(property="description", type="string", example="Updated description")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Record updated successfully."),
+     *             @OA\Property(property="data", type="object")
+     *         )
+     *     )
+     * )
+     */
     public function update(Request $request)
     {
         try {
@@ -81,6 +154,29 @@ class PerformanceController extends Controller
         }
     }
 
+    /**
+     * @OA\Delete(
+     *     path="/api/performancetype/delete/{id}",
+     *     summary="Delete a performance type",
+     *     tags={"Performance"},
+     *     security={{"sanctum":{}}},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         description="Performance Type ID",
+     *         @OA\Schema(type="integer", example=1)
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Record added successfully.")
+     *         )
+     *     )
+     * )
+     */
     public function delete($id)
     {
         try {
@@ -101,6 +197,40 @@ class PerformanceController extends Controller
         }
     }
 
+    /**
+     * @OA\Post(
+     *     path="/api/performance/save",
+     *     summary="Save employee performance scores",
+     *     tags={"Performance"},
+     *     security={{"sanctum":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"emp_id","month","year","performances"},
+     *             @OA\Property(property="emp_id", type="integer", example=5),
+     *             @OA\Property(property="month", type="string", example="09"),
+     *             @OA\Property(property="year", type="string", example="2026"),
+     *             @OA\Property(
+     *                 property="performances",
+     *                 type="array",
+     *                 @OA\Items(
+     *                     type="object",
+     *                     @OA\Property(property="type_id", type="integer", example=1),
+     *                     @OA\Property(property="points", type="number", example=8.5)
+     *                 )
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Record added successfully.")
+     *         )
+     *     )
+     * )
+     */
     public function saveEmployeePerformance(Request $request)
     {
         try {
@@ -135,6 +265,34 @@ class PerformanceController extends Controller
         }
     }
     
+    /**
+     * @OA\Post(
+     *     path="/api/performance/rank-list",
+     *     summary="Get employee performance rank list",
+     *     tags={"Performance"},
+     *     security={{"sanctum":{}}},
+     *     @OA\RequestBody(
+     *         required=false,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="month", type="string", example="09"),
+     *             @OA\Property(property="year", type="string", example="2026"),
+     *             @OA\Property(property="employee_id", type="integer", example=5)
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Record listed successfully."),
+     *             @OA\Property(property="ranklist", type="array", @OA\Items(type="object")),
+     *             @OA\Property(property="month", type="string", example="09"),
+     *             @OA\Property(property="year", type="string", example="2026"),
+     *             @OA\Property(property="employee_id", type="string", example="5")
+     *         )
+     *     )
+     * )
+     */
     public function rankList(Request $request)
     {
         try {
@@ -170,6 +328,34 @@ class PerformanceController extends Controller
         }
     }
 
+    /**
+     * @OA\Post(
+     *     path="/api/performance/rank-details",
+     *     summary="Get employee performance details",
+     *     tags={"Performance"},
+     *     security={{"sanctum":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"employee_id"},
+     *             @OA\Property(property="employee_id", type="integer", example=5),
+     *             @OA\Property(property="month", type="string", example="09"),
+     *             @OA\Property(property="year", type="string", example="2026")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Record show successfully."),
+     *             @OA\Property(property="data", type="array", @OA\Items(type="object")),
+     *             @OA\Property(property="month", type="string", example="09"),
+     *             @OA\Property(property="year", type="string", example="2026")
+     *         )
+     *     )
+     * )
+     */
     public function rankDetails(Request $request)
     {
         try {

@@ -12,12 +12,23 @@ use Illuminate\Support\Facades\Validator;
 
 class NotificationController extends Controller
 {
-    //
-
     /**
-     * Send notification to an employee
+     * @OA\Post(
+     *      path="/api/send-notification",
+     *      operationId="sendNotification",
+     *      tags={"Notifications"},
+     *      security={{"sanctum":{}}},
+     *      summary="Send notification to an employee",
+     *      @OA\RequestBody(
+     *          required=true,
+     *          @OA\JsonContent(
+     *              @OA\Property(property="employee_id", type="integer", example=1),
+     *              @OA\Property(property="message", type="string", example="Please submit your expense reports.")
+     *          )
+     *      ),
+     *      @OA\Response(response=200, description="Notification sent successfully")
+     * )
      */
-
     public function sendNotification(Request $request)
     {
         try {
@@ -75,7 +86,20 @@ class NotificationController extends Controller
 
 
     /**
-     * Get unread notifications for an employee
+     * @OA\Post(
+     *      path="/api/notifications",
+     *      operationId="getNotifications",
+     *      tags={"Notifications"},
+     *      security={{"sanctum":{}}},
+     *      summary="Get notifications for an employee",
+     *      @OA\RequestBody(
+     *          required=true,
+     *          @OA\JsonContent(
+     *              @OA\Property(property="employee_id", type="integer", example=1)
+     *          )
+     *      ),
+     *      @OA\Response(response=200, description="Notifications retrieved successfully")
+     * )
      */
     public function getNotifications(Request $request)
     {
@@ -111,7 +135,21 @@ class NotificationController extends Controller
 
 
     /**
-     * Mark a notification as read
+     * @OA\Post(
+     *      path="/api/notifications/read",
+     *      operationId="markNotificationAsRead",
+     *      tags={"Notifications"},
+     *      security={{"sanctum":{}}},
+     *      summary="Mark a notification status (read/unread)",
+     *      @OA\RequestBody(
+     *          required=true,
+     *          @OA\JsonContent(
+     *              @OA\Property(property="notification_id", type="integer", example=1),
+     *              @OA\Property(property="status", type="string", enum={"read", "unread"}, example="read")
+     *          )
+     *      ),
+     *      @OA\Response(response=200, description="Notification marked status")
+     * )
      */
     public function markAsRead(Request $request)
     {

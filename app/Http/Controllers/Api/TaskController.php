@@ -22,6 +22,31 @@ class TaskController extends Controller
     // {
     //     $this->middleware('auth:sanctum');
     // }
+    /**
+     * @OA\Get(
+     *     path="/api/task/list",
+     *     summary="Get task list",
+     *     tags={"Tasks"},
+     *     security={{"sanctum":{}}},
+     *     @OA\Parameter(
+     *         name="company_id",
+     *         in="query",
+     *         required=false,
+     *         description="Company ID",
+     *         @OA\Schema(type="integer", example=1)
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Record fetched successfully."),
+     *             @OA\Property(property="data", type="array", @OA\Items(type="object")),
+     *             @OA\Property(property="file_path", type="string", example="https://stafo.in/uploads/task")
+     *         )
+     *     )
+     * )
+     */
     public function list(Request $request)
     {
 
@@ -50,7 +75,41 @@ class TaskController extends Controller
 
 
 
-    // Create a new branch
+    /**
+     * @OA\Post(
+     *     path="/api/task/create",
+     *     summary="Create a new task",
+     *     tags={"Tasks"},
+     *     security={{"sanctum":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\MediaType(
+     *             mediaType="multipart/form-data",
+     *             @OA\Schema(
+     *                 required={"title"},
+     *                 @OA\Property(property="company_id", type="integer", example=1),
+     *                 @OA\Property(property="title", type="string", example="Build API documentation"),
+     *                 @OA\Property(property="description", type="string", example="Add Swagger annotations"),
+     *                 @OA\Property(property="start_date", type="string", format="date", example="2026-09-26"),
+     *                 @OA\Property(property="end_date", type="string", format="date", example="2026-09-30"),
+     *                 @OA\Property(property="status", type="string", example="Pending"),
+     *                 @OA\Property(property="priority", type="string", example="High"),
+     *                 @OA\Property(property="task_assign[]", type="array", @OA\Items(type="integer", example=5)),
+     *                 @OA\Property(property="files[]", type="array", @OA\Items(type="string", format="binary"))
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=201,
+     *         description="Created successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Record added successfully."),
+     *             @OA\Property(property="data", type="object")
+     *         )
+     *     )
+     * )
+     */
     public function store(Request $request)
     {
         try {
@@ -110,7 +169,46 @@ class TaskController extends Controller
         }
     }
 
-    // Update an existing branch
+    /**
+     * @OA\Post(
+     *     path="/api/task/update/{id}",
+     *     summary="Update a task",
+     *     tags={"Tasks"},
+     *     security={{"sanctum":{}}},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         description="Task ID",
+     *         @OA\Schema(type="integer", example=1)
+     *     ),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\MediaType(
+     *             mediaType="multipart/form-data",
+     *             @OA\Schema(
+     *                 @OA\Property(property="title", type="string", example="Updated Task Title"),
+     *                 @OA\Property(property="description", type="string", example="Updated task description"),
+     *                 @OA\Property(property="start_date", type="string", format="date", example="2026-09-26"),
+     *                 @OA\Property(property="end_date", type="string", format="date", example="2026-10-05"),
+     *                 @OA\Property(property="status", type="string", example="In Progress"),
+     *                 @OA\Property(property="priority", type="string", example="Medium"),
+     *                 @OA\Property(property="task_assign[]", type="array", @OA\Items(type="integer", example=5)),
+     *                 @OA\Property(property="files[]", type="array", @OA\Items(type="string", format="binary"))
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Updated successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Record updated successfully."),
+     *             @OA\Property(property="data", type="object")
+     *         )
+     *     )
+     * )
+     */
     public function update(Request $request, $id)
     {
         try {
@@ -181,7 +279,29 @@ class TaskController extends Controller
         }
     }
 
-    // Delete a branch
+    /**
+     * @OA\Delete(
+     *     path="/api/task/delete/{id}",
+     *     summary="Delete a task",
+     *     tags={"Tasks"},
+     *     security={{"sanctum":{}}},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         description="Task ID",
+     *         @OA\Schema(type="integer", example=1)
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Deleted successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Record deleted successfully."),
+     *             @OA\Property(property="status", type="boolean", example=true)
+     *         )
+     *     )
+     * )
+     */
     public function destroy($id)
     {
         try {
@@ -210,6 +330,31 @@ class TaskController extends Controller
         }
     }
 
+    /**
+     * @OA\Post(
+     *     path="/api/task/comment-create",
+     *     summary="Add a comment to task",
+     *     tags={"Tasks"},
+     *     security={{"sanctum":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"task_id","comment"},
+     *             @OA\Property(property="task_id", type="integer", example=1),
+     *             @OA\Property(property="employee_id", type="integer", example=5),
+     *             @OA\Property(property="comment", type="string", example="Task is progressing well.")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=201,
+     *         description="Created successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Record added successfully."),
+     *             @OA\Property(property="data", type="object")
+     *         )
+     *     )
+     * )
+     */
     public function commentStore(Request $request)
     {
         try {
@@ -235,6 +380,31 @@ class TaskController extends Controller
         }
     }
 
+    /**
+     * @OA\Get(
+     *     path="/api/task/comment-list",
+     *     summary="Get comments for a task",
+     *     tags={"Tasks"},
+     *     security={{"sanctum":{}}},
+     *     @OA\Parameter(
+     *         name="task_id",
+     *         in="query",
+     *         required=true,
+     *         description="Task ID",
+     *         @OA\Schema(type="integer", example=1)
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Record fetched successfully."),
+     *             @OA\Property(property="logged_id", type="integer", example=1),
+     *             @OA\Property(property="data", type="array", @OA\Items(type="object"))
+     *         )
+     *     )
+     * )
+     */
     public function commentList(Request $request)
     {
 
@@ -259,6 +429,29 @@ class TaskController extends Controller
         }
     }
 
+    /**
+     * @OA\Delete(
+     *     path="/api/task/comment-delete/{id}",
+     *     summary="Delete a task comment",
+     *     tags={"Tasks"},
+     *     security={{"sanctum":{}}},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         description="Comment ID",
+     *         @OA\Schema(type="integer", example=1)
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Deleted successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Record deleted successfully."),
+     *             @OA\Property(property="status", type="boolean", example=true)
+     *         )
+     *     )
+     * )
+     */
     public function commentDelete($id)
     {
         try {
@@ -287,6 +480,29 @@ class TaskController extends Controller
         }
     }
 
+    /**
+     * @OA\Delete(
+     *     path="/api/task/file-delete/{id}",
+     *     summary="Delete a task attachment file",
+     *     tags={"Tasks"},
+     *     security={{"sanctum":{}}},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         description="Task Image/File ID",
+     *         @OA\Schema(type="integer", example=1)
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Deleted successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Record deleted successfully."),
+     *             @OA\Property(property="status", type="boolean", example=true)
+     *         )
+     *     )
+     * )
+     */
     public function fileDelete($id)
     {
         try {
@@ -320,6 +536,33 @@ class TaskController extends Controller
         }
     }
 
+    /**
+     * @OA\Post(
+     *     path="/api/task/file-uploads",
+     *     summary="Upload files to a task",
+     *     tags={"Tasks"},
+     *     security={{"sanctum":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\MediaType(
+     *             mediaType="multipart/form-data",
+     *             @OA\Schema(
+     *                 required={"task_id","files"},
+     *                 @OA\Property(property="task_id", type="integer", example=1),
+     *                 @OA\Property(property="files[]", type="array", @OA\Items(type="string", format="binary"))
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Updated successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Record updated successfully.")
+     *         )
+     *     )
+     * )
+     */
     public function fileUploads(Request $request)
     {
         try {
@@ -365,6 +608,37 @@ class TaskController extends Controller
         }
     }
 
+    /**
+     * @OA\Post(
+     *     path="/api/task/status-change/{id}",
+     *     summary="Change task status",
+     *     tags={"Tasks"},
+     *     security={{"sanctum":{}}},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         description="Task ID",
+     *         @OA\Schema(type="integer", example=1)
+     *     ),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"status"},
+     *             @OA\Property(property="status", type="string", example="Completed")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Updated successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Record updated successfully."),
+     *             @OA\Property(property="data", type="object")
+     *         )
+     *     )
+     * )
+     */
     public function statusChange(Request $request, $id)
     {
         try {

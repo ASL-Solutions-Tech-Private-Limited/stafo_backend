@@ -56,6 +56,7 @@ use App\Http\Controllers\admin\ProprietorDetailController;
 use App\Http\Controllers\User\UserCompanyDetailController;
 use App\Http\Controllers\User\PerformanceController;
 use App\Http\Controllers\User\ChatController;
+use App\Http\Controllers\User\UserNotificationController;
 use App\Http\Controllers\admin\AdminChatController;
 use App\Http\Controllers\admin\NotificationController;
 use App\Http\Controllers\admin\AdminProfileController;
@@ -149,6 +150,8 @@ Route::prefix('employee')->middleware('auth:employee')->group(function () {
     Route::post('punch/qr', [EmployeeDashboardController::class, 'webQrPunch'])->name('employee.punch.qr');
     Route::get('punch/status', [EmployeeDashboardController::class, 'webPunchStatus'])->name('employee.punch.status');
     Route::post('geo-tracking/respond', [EmployeeDashboardController::class, 'respondGeoTracking'])->name('employee.geoTracking.respond');
+    Route::get('missed-punchouts', [EmployeeDashboardController::class, 'missedPunchouts'])->name('employee.missedPunchouts');
+    Route::post('missed-punchouts/apply', [EmployeeDashboardController::class, 'applyMissedPunchout'])->name('employee.missedPunchout.apply');
 
     // Role-Based Management Modules (guarded by designation permissions & company_id)
     Route::prefix('management')->name('employee.management.')->group(function () {
@@ -354,6 +357,13 @@ Route::prefix('company')->namespace('App\Http\Controllers')->middleware('auth')-
     Route::resource('myteam', MyTeamController::class);
     Route::resource('shifts', ShiftController::class);
     Route::resource('attendance', UserAttendanceController::class);
+    Route::get('attendance-requests', [UserAttendanceController::class, 'missedPunchouts'])->name('user.attendanceRequests.index');
+    Route::post('attendance-requests/action', [UserAttendanceController::class, 'actionMissedPunchout'])->name('user.attendanceRequests.action');
+
+    // Company Real-Time Notifications
+    Route::get('notifications', [UserNotificationController::class, 'index'])->name('user.notifications.index');
+    Route::get('notifications/feed', [UserNotificationController::class, 'getNotifications'])->name('user.notifications.feed');
+    Route::post('notifications/mark-read/{id?}', [UserNotificationController::class, 'markAsRead'])->name('user.notifications.markRead');
 
     Route::get('attendances/export', [UserAttendanceController::class, 'export'])->name('user.attendances.export');
     Route::post('attendances/import', [UserAttendanceController::class, 'import'])->name('user.attendances.import');

@@ -417,44 +417,6 @@
         </form>
     </div>
 
-    <!-- Attendance & Shift Guidelines Marquee Ticker -->
-    <div class="stafo-marquee-bar mb-4">
-        <div class="stafo-marquee-pill" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">
-            <span class="pulse-dot"></span>
-            <i class="fa-solid fa-business-time"></i>
-            <span>Shift Guidelines</span>
-        </div>
-        <div class="stafo-marquee-container">
-            <marquee behavior="scroll" direction="left" scrollamount="5" onmouseover="this.stop();" onmouseout="this.start();" class="stafo-marquee-content">
-                <span class="marquee-chip chip-attendance">
-                    <i class="fa-solid fa-fingerprint text-success"></i>
-                    <strong>Dual Punch:</strong> Remember to log both your Punch IN at shift start and Punch OUT when leaving.
-                </span>
-                <span class="marquee-divider">•</span>
-
-                <span class="marquee-chip chip-policy">
-                    <i class="fa-solid fa-location-dot text-primary"></i>
-                    <strong>GPS Geofence:</strong> Mobile and kiosk punches require location access to verify valid office coordinates.
-                </span>
-                <span class="marquee-divider">•</span>
-
-                <span class="marquee-chip chip-holiday">
-                    <i class="fa-solid fa-clock text-warning"></i>
-                    <strong>Grace Period:</strong> Shifts include a standard grace window for arrival before late-mark calculation.
-                </span>
-                <span class="marquee-divider">•</span>
-
-                <span class="marquee-chip chip-payroll">
-                    <i class="fa-solid fa-file-signature text-info"></i>
-                    <strong>Regularization:</strong> Missed a punch due to outdoor duty or glitch? Request regularization within 48 hours.
-                </span>
-            </marquee>
-        </div>
-        <div class="d-none d-md-flex align-items-center text-muted small ps-2 border-start" style="font-size: 0.72rem; white-space: nowrap;">
-            <i class="fa-solid fa-hand-pointer text-warning me-1"></i> Hover to pause
-        </div>
-    </div>
-
     {{-- Interactive Live Attendance Punch Card & Terminal --}}
     @include('employee.partials.attendance_punch')
 

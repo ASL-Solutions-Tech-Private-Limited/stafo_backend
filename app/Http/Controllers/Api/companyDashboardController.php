@@ -17,6 +17,18 @@ use App\Models\PackageFeature;
 
 class companyDashboardController extends Controller
 {
+    /**
+     * @OA\Post(
+     *      path="/api/company-dashboard",
+     *      operationId="companyDashboard",
+     *      tags={"Company Dashboard"},
+     *      security={{"sanctum":{}}},
+     *      summary="Get Company Dashboard statistics and overview",
+     *      description="Fetches stats on employee count, attendance, birthdays, anniversaries, and active package info",
+     *      @OA\Response(response=200, description="Dashboard data fetched successfully"),
+     *      @OA\Response(response=401, description="Unauthenticated")
+     * )
+     */
     public function dashboard()
     {
         $company_id = Auth::id();
@@ -50,6 +62,16 @@ class companyDashboardController extends Controller
     }
 
 
+    /**
+     * @OA\Post(
+     *      path="/api/employeesOnLeave",
+     *      operationId="employeesOnLeave",
+     *      tags={"Company Dashboard"},
+     *      security={{"sanctum":{}}},
+     *      summary="Get employees currently on leave",
+     *      @OA\Response(response=200, description="List of employees on leave")
+     * )
+     */
     public function employeesOnLeave()
     {
         $company_id = Auth::id();
@@ -60,6 +82,15 @@ class companyDashboardController extends Controller
         return response()->json(['leave' => $employeesOnLeave]);
     }
 
+    /**
+     * @OA\Get(
+     *      path="/api/app-banner",
+     *      operationId="getAppBanners",
+     *      tags={"Company Dashboard"},
+     *      summary="Get active mobile app promotional banners",
+     *      @OA\Response(response=200, description="Banner images and path")
+     * )
+     */
     public function appbanner(){
        $appbanner =  AppBanner::where('type', '1')->where('status', '1')->get();
        $data = [];
@@ -73,6 +104,16 @@ class companyDashboardController extends Controller
         ], 200);
     }
 
+    /**
+     * @OA\Post(
+     *      path="/api/referral-list",
+     *      operationId="getReferralList",
+     *      tags={"Company Dashboard"},
+     *      security={{"sanctum":{}}},
+     *      summary="Get referral details and referred companies",
+     *      @OA\Response(response=200, description="Referral count and list")
+     * )
+     */
     public function referralList(){
         $company_id = Auth::id();
         //$company_id = '18';

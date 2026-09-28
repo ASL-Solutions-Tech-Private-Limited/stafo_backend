@@ -14,44 +14,6 @@
         </a>
     </div>
 
-    <!-- Task Workflow & Priority Guidelines Marquee Ticker -->
-    <div class="stafo-marquee-bar mb-4">
-        <div class="stafo-marquee-pill" style="background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);">
-            <span class="pulse-dot"></span>
-            <i class="fa-solid fa-list-check"></i>
-            <span>Task Pulse</span>
-        </div>
-        <div class="stafo-marquee-container">
-            <marquee behavior="scroll" direction="left" scrollamount="5" onmouseover="this.stop();" onmouseout="this.start();" class="stafo-marquee-content">
-                <span class="marquee-chip chip-task">
-                    <i class="fa-solid fa-fire text-danger"></i>
-                    <strong>High Priority:</strong> Please prioritize tasks with critical deadlines and keep status updated in real time.
-                </span>
-                <span class="marquee-divider">•</span>
-
-                <span class="marquee-chip chip-attendance">
-                    <i class="fa-solid fa-spinner text-success"></i>
-                    <strong>Status Workflow:</strong> Switch tasks from 'Pending' to 'In Progress' when beginning execution.
-                </span>
-                <span class="marquee-divider">•</span>
-
-                <span class="marquee-chip chip-payroll">
-                    <i class="fa-solid fa-circle-check text-info"></i>
-                    <strong>Task Completion:</strong> Mark tasks as 'Done' upon final review by your reporting lead.
-                </span>
-                <span class="marquee-divider">•</span>
-
-                <span class="marquee-chip chip-policy">
-                    <i class="fa-solid fa-comments text-primary"></i>
-                    <strong>Collaboration:</strong> Reach out to your team supervisor if you need deadline extensions or clarification.
-                </span>
-            </marquee>
-        </div>
-        <div class="d-none d-md-flex align-items-center text-muted small ps-2 border-start" style="font-size: 0.72rem; white-space: nowrap;">
-            <i class="fa-solid fa-hand-pointer text-warning me-1"></i> Hover to pause
-        </div>
-    </div>
-
     <div class="card border-0 shadow-sm rounded-4 mb-4">
         <div class="card-header bg-white border-bottom py-3 d-flex align-items-center justify-content-between">
             <h6 class="fw-bold mb-0 text-dark">

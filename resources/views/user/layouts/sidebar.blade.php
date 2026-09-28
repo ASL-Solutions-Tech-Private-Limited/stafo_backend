@@ -13,6 +13,13 @@
                 </div>
             </a>
 
+            <a href="{{ route('user.notifications.index') }}" class="sidebar-nav-item {{ request()->is('company/notifications*') ? 'active' : '' }}">
+                <div class="nav-link-content">
+                    <i class="fa-solid fa-bell nav-icon"></i>
+                    <span>Notifications & Activity</span>
+                </div>
+            </a>
+
             <!-- Section 2: People & Organization -->
             <div class="sidebar-section-title">Employees & Org</div>
 
@@ -55,7 +62,7 @@
             <div class="sidebar-section-title">Time & Attendance</div>
 
             <!-- Attendance Dropdown -->
-            <a href="#" class="sidebar-nav-item {{ request()->is('company/attendance*', 'attendance*', 'company/shifts*', 'company/shift*', 'shifts*', 'shift*', 'company/deviceList*', 'company/device-list*', 'deviceList*') ? 'active' : 'collapsed' }}" 
+            <a href="#" class="sidebar-nav-item {{ request()->is('company/attendance*', 'attendance*', 'company/attendance-requests*', 'attendance-requests*', 'company/shifts*', 'company/shift*', 'shifts*', 'shift*', 'company/deviceList*', 'company/device-list*', 'deviceList*') ? 'active' : 'collapsed' }}" 
                data-bs-toggle="collapse" data-bs-target="#desktopAttendanceMenu">
                 <div class="nav-link-content">
                     <i class="fa-solid fa-user-clock nav-icon"></i>
@@ -63,9 +70,12 @@
                 </div>
                 <i class="fa-solid fa-chevron-right chevron-arrow"></i>
             </a>
-            <div id="desktopAttendanceMenu" class="collapse {{ request()->is('company/attendance*', 'attendance*', 'company/shifts*', 'company/shift*', 'shifts*', 'shift*', 'company/deviceList*', 'company/device-list*', 'deviceList*') ? 'show' : '' }}" data-bs-parent="#desktopSidebarNav">
-                <a href="{{ route('attendance.index') }}" class="sidebar-sub-item {{ request()->is('company/attendance*', 'attendance*') ? 'active' : '' }}">
+            <div id="desktopAttendanceMenu" class="collapse {{ request()->is('company/attendance*', 'attendance*', 'company/attendance-requests*', 'attendance-requests*', 'company/shifts*', 'company/shift*', 'shifts*', 'shift*', 'company/deviceList*', 'company/device-list*', 'deviceList*') ? 'show' : '' }}" data-bs-parent="#desktopSidebarNav">
+                <a href="{{ route('attendance.index') }}" class="sidebar-sub-item {{ request()->is('company/attendance', 'attendance', 'company/attendance/*') ? 'active' : '' }}">
                     <span class="sub-dot"></span> Daily Attendance
+                </a>
+                <a href="{{ route('user.attendanceRequests.index') }}" class="sidebar-sub-item {{ request()->is('company/attendance-requests*', 'attendance-requests*') ? 'active' : '' }}">
+                    <span class="sub-dot"></span> Missed Punch-Outs
                 </a>
                 <a href="{{ route('shifts.index') }}" class="sidebar-sub-item {{ request()->is('company/shifts*', 'company/shift*', 'shifts*', 'shift*') ? 'active' : '' }}">
                     <span class="sub-dot"></span> Shift Timings
@@ -271,6 +281,13 @@
                     </div>
                 </a>
 
+                <a href="{{ route('user.notifications.index') }}" class="sidebar-nav-item {{ request()->is('company/notifications*') ? 'active' : '' }}">
+                    <div class="nav-link-content">
+                        <i class="fa-solid fa-bell nav-icon"></i>
+                        <span>Notifications & Activity</span>
+                    </div>
+                </a>
+
                 <!-- Section 2: Employees & Organization -->
                 <div class="sidebar-section-title">Employees & Org</div>
 
@@ -307,7 +324,7 @@
                 <div class="sidebar-section-title">Time & Attendance</div>
 
                 <!-- Attendance Dropdown -->
-                <a href="#" class="sidebar-nav-item {{ request()->is('company/attendance*', 'attendance*', 'company/shifts*', 'company/shift*', 'shifts*', 'shift*', 'company/deviceList*', 'company/device-list*', 'deviceList*') ? 'active' : 'collapsed' }}" 
+                <a href="#" class="sidebar-nav-item {{ request()->is('company/attendance*', 'attendance*', 'company/attendance-requests*', 'attendance-requests*', 'company/shifts*', 'company/shift*', 'shifts*', 'shift*', 'company/deviceList*', 'company/device-list*', 'deviceList*') ? 'active' : 'collapsed' }}" 
                    data-bs-toggle="collapse" data-bs-target="#mobileAttendanceMenu">
                     <div class="nav-link-content">
                         <i class="fa-solid fa-user-clock nav-icon"></i>
@@ -315,9 +332,12 @@
                     </div>
                     <i class="fa-solid fa-chevron-right chevron-arrow"></i>
                 </a>
-                <div id="mobileAttendanceMenu" class="collapse {{ request()->is('company/attendance*', 'attendance*', 'company/shifts*', 'company/shift*', 'shifts*', 'shift*', 'company/deviceList*', 'company/device-list*', 'deviceList*') ? 'show' : '' }}" data-bs-parent="#mobileSidebarNav">
-                    <a href="{{ route('attendance.index') }}" class="sidebar-sub-item {{ request()->is('company/attendance*', 'attendance*') ? 'active' : '' }}">
+                <div id="mobileAttendanceMenu" class="collapse {{ request()->is('company/attendance*', 'attendance*', 'company/attendance-requests*', 'attendance-requests*', 'company/shifts*', 'company/shift*', 'shifts*', 'shift*', 'company/deviceList*', 'company/device-list*', 'deviceList*') ? 'show' : '' }}" data-bs-parent="#mobileSidebarNav">
+                    <a href="{{ route('attendance.index') }}" class="sidebar-sub-item {{ request()->is('company/attendance', 'attendance', 'company/attendance/*') ? 'active' : '' }}">
                         <span class="sub-dot"></span> Daily Attendance
+                    </a>
+                    <a href="{{ route('user.attendanceRequests.index') }}" class="sidebar-sub-item {{ request()->is('company/attendance-requests*', 'attendance-requests*') ? 'active' : '' }}">
+                        <span class="sub-dot"></span> Missed Punch-Outs
                     </a>
                     <a href="{{ route('shifts.index') }}" class="sidebar-sub-item {{ request()->is('company/shifts*', 'company/shift*', 'shifts*', 'shift*') ? 'active' : '' }}">
                         <span class="sub-dot"></span> Shift Timings

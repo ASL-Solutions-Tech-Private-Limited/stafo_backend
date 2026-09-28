@@ -16,10 +16,18 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class ExpenseController extends Controller
 {
-    // public function __construct()
-    // {
-    //     $this->middleware('auth:sanctum');
-    // }
+    /**
+     * @OA\Get(
+     *      path="/api/expense/list",
+     *      operationId="getExpenseList",
+     *      tags={"Expenses"},
+     *      security={{"sanctum":{}}},
+     *      summary="List expenses",
+     *      @OA\Parameter(name="company_id", in="query", required=true, @OA\Schema(type="integer"), example=1),
+     *      @OA\Parameter(name="employee_id", in="query", required=false, @OA\Schema(type="integer"), example=1),
+     *      @OA\Response(response=200, description="Expenses fetched successfully")
+     * )
+     */
     public function index(Request $request)
     {
 
@@ -50,7 +58,29 @@ class ExpenseController extends Controller
 
 
 
-    // Create a new expense
+    /**
+     * @OA\Post(
+     *      path="/api/expense/create",
+     *      operationId="createExpense",
+     *      tags={"Expenses"},
+     *      security={{"sanctum":{}}},
+     *      summary="Create a new expense claim",
+     *      @OA\RequestBody(
+     *          required=true,
+     *          @OA\MediaType(
+     *              mediaType="multipart/form-data",
+     *              @OA\Schema(
+     *                  @OA\Property(property="company_id", type="integer", example=1),
+     *                  @OA\Property(property="employee_id", type="integer", example=1),
+     *                  @OA\Property(property="amount", type="number", example=550.00),
+     *                  @OA\Property(property="expensetype_id", type="integer", example=1),
+     *                  @OA\Property(property="attachments[]", type="array", @OA\Items(type="string", format="binary"))
+     *              )
+     *          )
+     *      ),
+     *      @OA\Response(response=201, description="Expense created successfully")
+     * )
+     */
     public function store(Request $request)
     {
         try {
@@ -113,7 +143,29 @@ class ExpenseController extends Controller
         }
     }
 
-    // Update an existing expense
+    /**
+     * @OA\Post(
+     *      path="/api/expense/update/{id}",
+     *      operationId="updateExpense",
+     *      tags={"Expenses"},
+     *      security={{"sanctum":{}}},
+     *      summary="Update an existing expense",
+     *      @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer"), example=1),
+     *      @OA\RequestBody(
+     *          required=false,
+     *          @OA\MediaType(
+     *              mediaType="multipart/form-data",
+     *              @OA\Schema(
+     *                  @OA\Property(property="company_id", type="integer", example=1),
+     *                  @OA\Property(property="employee_id", type="integer", example=1),
+     *                  @OA\Property(property="amount", type="number", example=600.00),
+     *                  @OA\Property(property="status", type="string", example="approved")
+     *              )
+     *          )
+     *      ),
+     *      @OA\Response(response=200, description="Expense updated successfully")
+     * )
+     */
     public function update(Request $request, $id)
     {
         try {
@@ -181,6 +233,19 @@ class ExpenseController extends Controller
         }
     }
 
+    /**
+     * @OA\Get(
+     *      path="/api/expense/details",
+     *      operationId="getExpenseDetails",
+     *      tags={"Expenses"},
+     *      security={{"sanctum":{}}},
+     *      summary="Get expense details with attachments",
+     *      @OA\Parameter(name="expense_id", in="query", required=true, @OA\Schema(type="integer"), example=1),
+     *      @OA\Parameter(name="company_id", in="query", required=false, @OA\Schema(type="integer"), example=1),
+     *      @OA\Parameter(name="employee_id", in="query", required=false, @OA\Schema(type="integer"), example=1),
+     *      @OA\Response(response=200, description="Expense details fetched successfully")
+     * )
+     */
     public function expense_details(Request $request)
     {
 
@@ -211,7 +276,17 @@ class ExpenseController extends Controller
         }
     }
 
-    // Delete a expense
+    /**
+     * @OA\Delete(
+     *      path="/api/expense/delete/{id}",
+     *      operationId="deleteExpense",
+     *      tags={"Expenses"},
+     *      security={{"sanctum":{}}},
+     *      summary="Delete an expense claim",
+     *      @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer"), example=1),
+     *      @OA\Response(response=200, description="Expense deleted")
+     * )
+     */
     public function destroy($id)
     {
         try {
@@ -239,6 +314,17 @@ class ExpenseController extends Controller
         }
     }
 
+    /**
+     * @OA\Delete(
+     *      path="/api/expense/attachment-delete/{id}",
+     *      operationId="deleteExpenseAttachment",
+     *      tags={"Expenses"},
+     *      security={{"sanctum":{}}},
+     *      summary="Delete an expense attachment file",
+     *      @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer"), example=1),
+     *      @OA\Response(response=200, description="Attachment deleted")
+     * )
+     */
     public function attachmentDelete($id)
     {
         try {
@@ -272,6 +358,23 @@ class ExpenseController extends Controller
         }
     }
 
+    /**
+     * @OA\Post(
+     *      path="/api/expense/status-change",
+     *      operationId="changeExpenseStatus",
+     *      tags={"Expenses"},
+     *      security={{"sanctum":{}}},
+     *      summary="Change status of an expense (e.g. approved, rejected)",
+     *      @OA\RequestBody(
+     *          required=true,
+     *          @OA\JsonContent(
+     *              @OA\Property(property="id", type="integer", example=1),
+     *              @OA\Property(property="status", type="string", enum={"approved", "rejected", "pending"}, example="approved")
+     *          )
+     *      ),
+     *      @OA\Response(response=200, description="Expense status changed")
+     * )
+     */
     public function statusChange(Request $request)
     {
         try {

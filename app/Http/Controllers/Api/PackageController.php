@@ -17,6 +17,17 @@ use Illuminate\Support\Facades\File;
 class PackageController extends Controller
 {
    
+    /**
+     * @OA\Get(
+     *      path="/api/package",
+     *      operationId="getPackageList",
+     *      tags={"Packages & Subscriptions"},
+     *      summary="List all active packages",
+     *      description="Fetches all active subscription packages with features",
+     *      @OA\Response(response=200, description="Packages fetched successfully"),
+     *      @OA\Response(response=500, description="Server Error")
+     * )
+     */
     public function package()
     {
         try {
@@ -43,6 +54,17 @@ class PackageController extends Controller
         }
     }
 
+    /**
+     * @OA\Get(
+     *      path="/api/package-feature/{package_id}",
+     *      operationId="getPackageFeatures",
+     *      tags={"Packages & Subscriptions"},
+     *      summary="Get package features by package ID",
+     *      @OA\Parameter(name="package_id", in="path", required=true, @OA\Schema(type="integer"), example=1),
+     *      @OA\Response(response=200, description="Package features fetched successfully"),
+     *      @OA\Response(response=500, description="Server Error")
+     * )
+     */
     public function packageFeature($package_id)
     {
         try {
@@ -69,6 +91,22 @@ class PackageController extends Controller
         }
     }
 
+    /**
+     * @OA\Post(
+     *      path="/api/hasgenerate",
+     *      operationId="generatePayUHash",
+     *      tags={"Packages & Subscriptions"},
+     *      summary="Generate PayU hash for package purchase",
+     *      @OA\RequestBody(
+     *          required=true,
+     *          @OA\JsonContent(
+     *              @OA\Property(property="company_id", type="integer", example=1),
+     *              @OA\Property(property="package_id", type="integer", example=1)
+     *          )
+     *      ),
+     *      @OA\Response(response=200, description="Hash generated successfully")
+     * )
+     */
     public function hasgenerate(Request $request){
 
         $company = CompanyDetail::find($request->company_id);
@@ -112,6 +150,26 @@ class PackageController extends Controller
         ], 200);
     }
 
+    /**
+     * @OA\Post(
+     *      path="/api/success",
+     *      operationId="paymentSuccessCallback",
+     *      tags={"Packages & Subscriptions"},
+     *      summary="Handle payment success callback",
+     *      @OA\RequestBody(
+     *          required=true,
+     *          @OA\JsonContent(
+     *              @OA\Property(property="udf1", type="integer", description="Company ID", example=1),
+     *              @OA\Property(property="udf2", type="integer", description="Duration days", example=30),
+     *              @OA\Property(property="udf3", type="integer", description="Package ID", example=1),
+     *              @OA\Property(property="amount", type="number", example=999.00),
+     *              @OA\Property(property="txnid", type="string", example="tx12345"),
+     *              @OA\Property(property="status", type="string", example="success")
+     *          )
+     *      ),
+     *      @OA\Response(response=200, description="Payment processed")
+     * )
+     */
     public function success(Request $request){
         $userId = $request->udf1;
         $duration = $request->udf2;
@@ -146,6 +204,26 @@ class PackageController extends Controller
         ], 200);
     }
 
+    /**
+     * @OA\Post(
+     *      path="/api/failure",
+     *      operationId="paymentFailureCallback",
+     *      tags={"Packages & Subscriptions"},
+     *      summary="Handle payment failure callback",
+     *      @OA\RequestBody(
+     *          required=true,
+     *          @OA\JsonContent(
+     *              @OA\Property(property="udf1", type="integer", description="Company ID", example=1),
+     *              @OA\Property(property="udf3", type="integer", description="Package ID", example=1),
+     *              @OA\Property(property="amount", type="number", example=999.00),
+     *              @OA\Property(property="txnid", type="string", example="tx12345"),
+     *              @OA\Property(property="status", type="string", example="failure"),
+     *              @OA\Property(property="error_Message", type="string", example="Transaction cancelled by user")
+     *          )
+     *      ),
+     *      @OA\Response(response=200, description="Payment failed logged")
+     * )
+     */
     public function failure(Request $request){
         
         PaymentInfo::create([
@@ -166,6 +244,27 @@ class PackageController extends Controller
         ], 200);
     }
 
+    /**
+     * @OA\Post(
+     *      path="/api/paymentUpdate",
+     *      operationId="paymentUpdate",
+     *      tags={"Packages & Subscriptions"},
+     *      summary="Update payment status",
+     *      @OA\RequestBody(
+     *          required=true,
+     *          @OA\JsonContent(
+     *              @OA\Property(property="company_id", type="integer", example=1),
+     *              @OA\Property(property="duration", type="integer", example=30),
+     *              @OA\Property(property="packageId", type="integer", example=1),
+     *              @OA\Property(property="amount", type="number", example=999.00),
+     *              @OA\Property(property="txnid", type="string", example="tx12345"),
+     *              @OA\Property(property="status", type="string", example="success"),
+     *              @OA\Property(property="payment_Message", type="string", example="Paid successfully")
+     *          )
+     *      ),
+     *      @OA\Response(response=200, description="Payment updated")
+     * )
+     */
     public function paymentUpdate(Request $request){
         $company_id = $request->company_id;
         $duration = $request->duration;
@@ -205,6 +304,17 @@ class PackageController extends Controller
         ], 200);
     }
 
+    /**
+     * @OA\Get(
+     *      path="/api/subscription-info",
+     *      operationId="getSubscriptionInfo",
+     *      tags={"Packages & Subscriptions"},
+     *      security={{"sanctum":{}}},
+     *      summary="Get active subscription info and invoice PDF",
+     *      @OA\Response(response=200, description="Subscription info fetched successfully"),
+     *      @OA\Response(response=401, description="Unauthenticated")
+     * )
+     */
     public function subscriptionInfo(Request $request){
         $company_id = Auth::id(); 
         $subscription = CompanyDetail::with('package')->where('id', $company_id)->select('id','company_name','package_id','package_price','subscription_start','subscription_end')->first();

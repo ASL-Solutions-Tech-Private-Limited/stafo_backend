@@ -11,6 +11,7 @@ class Kernel extends ConsoleKernel
 
     protected $commands = [
         Commands\MarkAbsentEmployees::class,
+        Commands\AutoPunchOutEmployees::class,
     ];
 
     /**
@@ -23,8 +24,8 @@ class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule)
     {
         // Schedule the command to run every day at 9 AM
-        // $schedule->command('employee:mark-absent')->dailyAt('09:00');
-        $schedule->command('employee:mark-absent')->everyMinute();
+        $schedule->command('employee:mark-absent')->dailyAt('09:00');
+        $schedule->command('employee:auto-punchout')->dailyAt('23:55');
     }
 
 

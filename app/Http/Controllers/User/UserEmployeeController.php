@@ -1197,14 +1197,18 @@ class UserEmployeeController extends Controller
                 return response()->json(['status' => false, 'message' => 'Employee not found'], 404);
             }
 
-            if ((string)$employee->geo_status !== '2') {
+
+            //  dd($employee);
+
+            if ($employee->geo_status !== '2') {
+                //dd($employee->geo_status);
                 return response()->json([
                     'status' => false,
                     'tracking_active' => false,
                     'geo_status' => (string)$employee->geo_status,
                     'message' => (string)$employee->geo_status === '1'
                         ? 'Location tracking request is pending acceptance by employee.'
-                        : 'Tracking is turned off by company.'
+                        : 'Tracking is turned off by company 1.'
                 ], 200);
             }
 
@@ -1235,6 +1239,7 @@ class UserEmployeeController extends Controller
             return response()->json([
                 'status' => true,
                 'tracking_active' => true,
+                'geo_status' => (string)$employee->geo_status,
                 'total_new_points' => count($newPoints),
                 'new_points' => $newPoints,
                 'latest_timestamp' => count($newPoints) > 0 ? end($newPoints)['timestamp'] : $lastTimestamp,

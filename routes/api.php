@@ -68,6 +68,7 @@ Route::post('send-otp', 'App\Http\Controllers\Api\ApiLoginController@sendOtp')->
 Route::post('verify-otp', 'App\Http\Controllers\Api\ApiLoginController@loginWithOtp')->name('loginWithOtp');
 
 Route::get('punchReminder', 'App\Http\Controllers\Api\EmployeeController@punchReminder')->name('punchReminder');
+Route::match(['get', 'post'], 'autoPunchOut', 'App\Http\Controllers\Api\EmployeeController@autoPunchOut')->name('autoPunchOut');
 Route::post('change-device', 'App\Http\Controllers\Api\ApiLoginController@changeDevice')->name('changeDevice');
 
 Route::get('package', 'App\Http\Controllers\Api\PackageController@package')->name('package');
@@ -212,6 +213,14 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('attendance-request-status-update/{id}', [AttendanceController::class, 'attendance_request_status_update']);
     // Route for listing attendance
     Route::get('attendance-request-list', [AttendanceController::class, 'attendance_request_list']);
+
+    // Employee Missed Punch-Out / Regularization routes
+    Route::post('employee/missed-punchout-request', [EmployeeController::class, 'missedPunchOutRequest'])->name('employee.missedPunchOutRequest');
+    Route::post('employee/missed-punchout-list', [EmployeeController::class, 'employeeMissedPunchOutList'])->name('employee.missedPunchOutList');
+
+    // Company Missed Punch-Out Review & Approval routes
+    Route::post('company/missed-punchout-list', [EmployeeController::class, 'companyMissedPunchOutList'])->name('company.missedPunchOutList');
+    Route::post('company/missed-punchout-action', [EmployeeController::class, 'companyMissedPunchOutAction'])->name('company.missedPunchOutAction');
 
 
 

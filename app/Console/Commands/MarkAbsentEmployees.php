@@ -26,14 +26,8 @@ class MarkAbsentEmployees extends Command
             // Fetch all employees
             $employees = Employee::all();
 
-            // Loop through all employees and mark as absent if no punch-in today
+            // Loop through all employees and mark as absent if no punch-in yesterday
             foreach ($employees as $employee) {
-                $employeeInfo = Employee::find($employee->id);
-                if($employeeInfo){
-                    $employeeInfo->geo_status = 0;
-                    $employeeInfo->save();
-                }
-                
                 $existingPunch = EmployeePunch::where('employee_id', $employee->id)
                     ->whereDate('punch_in', $yesterday)
                     ->first();

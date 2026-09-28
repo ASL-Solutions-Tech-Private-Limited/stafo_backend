@@ -23,6 +23,40 @@ class CompanyController extends Controller
 {
 
 
+    /**
+     * @OA\Post(
+     *      path="/api/company/update",
+     *      operationId="updateCompany",
+     *      tags={"Company"},
+     *      security={{"sanctum":{}}},
+     *      summary="Update Company Details",
+     *      description="Update profile details and proprietor information of authenticated company",
+     *      @OA\RequestBody(
+     *          required=false,
+     *          @OA\JsonContent(
+     *              @OA\Property(property="company_name", type="string", example="Tech Corp"),
+     *              @OA\Property(property="company_type", type="string", example="Private Limited"),
+     *              @OA\Property(property="mobile_no", type="string", example="9876543210"),
+     *              @OA\Property(property="email", type="string", example="info@techcorp.com"),
+     *              @OA\Property(property="address", type="string", example="123 Corporate Blvd"),
+     *              @OA\Property(property="city_id", type="integer", example=1),
+     *              @OA\Property(property="state_id", type="integer", example=1),
+     *              @OA\Property(property="country_id", type="integer", example=1),
+     *              @OA\Property(property="pin", type="string", example="110001"),
+     *              @OA\Property(property="gst_number", type="string", example="07AAAAA0000A1Z5"),
+     *              @OA\Property(property="pan_number", type="string", example="ABCDE1234F"),
+     *              @OA\Property(property="owner_info", type="object",
+     *                  @OA\Property(property="first_name", type="string", example="John"),
+     *                  @OA\Property(property="last_name", type="string", example="Doe"),
+     *                  @OA\Property(property="mobile", type="string", example="9876543211"),
+     *                  @OA\Property(property="email", type="string", example="john@techcorp.com")
+     *              )
+     *          )
+     *      ),
+     *      @OA\Response(response=200, description="Company details updated successfully"),
+     *      @OA\Response(response=500, description="Server error")
+     * )
+     */
     public function updateCompany(Request $request)
     {
         $id = Auth::id();
@@ -155,6 +189,18 @@ class CompanyController extends Controller
     }
 
 
+    /**
+     * @OA\Get(
+     *      path="/api/company/profile",
+     *      operationId="showCompanyProfile",
+     *      tags={"Company"},
+     *      security={{"sanctum":{}}},
+     *      summary="Get authenticated company profile",
+     *      description="Fetches company information, proprietor details, and company logo",
+     *      @OA\Response(response=200, description="Company profile fetched successfully"),
+     *      @OA\Response(response=401, description="Unauthenticated")
+     * )
+     */
     public function showCompanyProfile()
     {
         try {
@@ -197,6 +243,27 @@ class CompanyController extends Controller
     //protected $verification_url = 'https://sandbox.quickekyc.com';
     //protected $verification_key = '8511b981-c361-4adf-bdbe-55e90d3ab996';
 
+    /**
+     * @OA\Post(
+     *      path="/api/document-verify",
+     *      operationId="documentVerify",
+     *      tags={"Company"},
+     *      summary="Verify document (PAN, Aadhaar, Voter, GSTIN, DL, etc.)",
+     *      @OA\RequestBody(
+     *          required=true,
+     *          @OA\JsonContent(
+     *              @OA\Property(property="type", type="string", enum={"pan", "aadhar", "aadhar-otp", "voter", "registration_number", "gstin", "driving-license"}, example="pan"),
+     *              @OA\Property(property="number", type="string", example="ABCDE1234F"),
+     *              @OA\Property(property="employee_id", type="integer", example=1),
+     *              @OA\Property(property="company_id", type="integer", example=1),
+     *              @OA\Property(property="otp", type="string", description="Only for aadhar-otp"),
+     *              @OA\Property(property="request_id", type="string", description="Only for aadhar-otp"),
+     *              @OA\Property(property="dob", type="string", description="Only for driving-license (YYYY-MM-DD)")
+     *          )
+     *      ),
+     *      @OA\Response(response=200, description="Verification response from QuickEKYC")
+     * )
+     */
     public function documentVerify(Request $request)
     {
         // Prevent re-verification of already verified employee documents
@@ -364,7 +431,23 @@ class CompanyController extends Controller
         return response($result)->header('Content-Type', 'application/json');
     }
 
-    // Generate QR code for company info
+    /**
+     * @OA\Post(
+     *      path="/api/generate-qrcode",
+     *      operationId="generateQrCode",
+     *      tags={"Company"},
+     *      summary="Generate QR code for company/branch/department attendance",
+     *      @OA\RequestBody(
+     *          required=true,
+     *          @OA\JsonContent(
+     *              @OA\Property(property="company_id", type="integer", example=1),
+     *              @OA\Property(property="branch_id", type="integer", example=1),
+     *              @OA\Property(property="department_id", type="integer", example=1)
+     *          )
+     *      ),
+     *      @OA\Response(response=200, description="QR code SVG image")
+     * )
+     */
     public function generateQrCode(Request $request)
     {
         $data = array();
@@ -387,6 +470,23 @@ class CompanyController extends Controller
         return response($qrCode)->header('Content-Type', 'image/svg+xml');
     }
 
+    /**
+     * @OA\Post(
+     *      path="/api/feedback",
+     *      operationId="submitFeedback",
+     *      tags={"Company"},
+     *      summary="Submit feedback",
+     *      @OA\RequestBody(
+     *          required=true,
+     *          @OA\JsonContent(
+     *              @OA\Property(property="message", type="string", example="Great application"),
+     *              @OA\Property(property="company_id", type="integer", example=1),
+     *              @OA\Property(property="employee_id", type="integer", example=1)
+     *          )
+     *      ),
+     *      @OA\Response(response=200, description="Feedback submitted successfully")
+     * )
+     */
     public function feedback(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -432,6 +532,23 @@ class CompanyController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * @OA\Post(
+     *      path="/api/feedback-list",
+     *      operationId="listFeedback",
+     *      tags={"Company"},
+     *      summary="List feedbacks",
+     *      @OA\RequestBody(
+     *          required=false,
+     *          @OA\JsonContent(
+     *              @OA\Property(property="company_id", type="integer", example=1),
+     *              @OA\Property(property="employee_id", type="integer", example=1)
+     *          )
+     *      ),
+     *      @OA\Response(response=200, description="Feedback list fetched successfully")
+     * )
+     */
     public function feedbackList(Request $request)
     {
         // $validator = Validator::make($request->all(), [
@@ -471,6 +588,17 @@ class CompanyController extends Controller
         }
     }
 
+    /**
+     * @OA\Post(
+     *      path="/api/company/delete",
+     *      operationId="deleteCompany",
+     *      tags={"Company"},
+     *      security={{"sanctum":{}}},
+     *      summary="Delete company account and related records",
+     *      @OA\Response(response=200, description="Company deleted successfully"),
+     *      @OA\Response(response=401, description="Unauthenticated")
+     * )
+     */
     public function deleteCompany()
     {
         $id = Auth::id();
@@ -497,6 +625,16 @@ class CompanyController extends Controller
         }
     }
 
+    /**
+     * @OA\Post(
+     *      path="/api/upgradeInterested",
+     *      operationId="upgradeInterested",
+     *      tags={"Company"},
+     *      security={{"sanctum":{}}},
+     *      summary="Express interest in subscription upgrade",
+     *      @OA\Response(response=200, description="Interest recorded successfully")
+     * )
+     */
     public function upgradeInterested()
     {
         $company = CompanyDetail::find(Auth::id());

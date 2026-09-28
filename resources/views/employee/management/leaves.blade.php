@@ -70,35 +70,6 @@
         </div>
     </div>
 
-    <!-- Leave Operations Marquee Ticker -->
-    <div class="stafo-marquee-bar mb-4">
-        <div class="stafo-marquee-pill" style="background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 50%, #4f46e5 100%);">
-            <span class="pulse-dot"></span>
-            <i class="fa-solid fa-calendar-check"></i>
-            <span>LEAVE TICKER</span>
-        </div>
-        <div class="stafo-marquee-container">
-            <marquee behavior="scroll" direction="left" scrollamount="5" onmouseover="this.stop();" onmouseout="this.start();" class="stafo-marquee-content">
-                <span class="marquee-chip chip-policy">
-                    <i class="fa-solid fa-clock-rotate-left"></i>
-                    <span>Advance Notice: Employees must submit planned leave requests at least 3 days in advance.</span>
-                </span>
-                <span class="marquee-divider">•</span>
-
-                <span class="marquee-chip chip-holiday">
-                    <i class="fa-solid fa-file-medical"></i>
-                    <span>Medical Leave Proof: Submitting a valid doctor certificate is mandatory for sick leaves exceeding 2 consecutive days.</span>
-                </span>
-                <span class="marquee-divider">•</span>
-
-                <span class="marquee-chip chip-attendance">
-                    <i class="fa-solid fa-calendar-check"></i>
-                    <span>Leave Balance: Deductions and remaining balance auto-sync with the employee portal upon manager approval.</span>
-                </span>
-            </marquee>
-        </div>
-    </div>
-
     <!-- Filter Form (Matches Company Panel) -->
     <div class="card border-0 shadow-sm rounded-4 mb-4" style="background: var(--bs-card-bg, #ffffff);">
         <div class="card-body p-3 p-md-4">

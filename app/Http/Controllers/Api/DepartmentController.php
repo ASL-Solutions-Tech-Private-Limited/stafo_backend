@@ -11,9 +11,15 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
 class DepartmentController extends Controller
 {
     /**
-     * Get a list of all departments.
-     *
-     * @return \Illuminate\Http\JsonResponse
+     * @OA\Get(
+     *      path="/api/departments",
+     *      operationId="getDepartmentsList",
+     *      tags={"Departments"},
+     *      summary="List Departments",
+     *      security={{"sanctum":{}}},
+     *      @OA\Parameter(name="company_id", in="query", required=true, @OA\Schema(type="integer", example=1)),
+     *      @OA\Response(response=200, description="Departments retrieved successfully")
+     * )
      */
     public function index(Request $request)
     {
@@ -43,10 +49,23 @@ class DepartmentController extends Controller
     }
 
     /**
-     * Create a new department.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\JsonResponse
+     * @OA\Post(
+     *      path="/api/departments",
+     *      operationId="createDepartment",
+     *      tags={"Departments"},
+     *      summary="Create Department",
+     *      security={{"sanctum":{}}},
+     *      @OA\RequestBody(
+     *          required=true,
+     *          @OA\JsonContent(
+     *              required={"name"},
+     *              @OA\Property(property="name", type="string", example="Human Resources"),
+     *              @OA\Property(property="description", type="string", example="HR Department"),
+     *              @OA\Property(property="status", type="integer", example=1)
+     *          )
+     *      ),
+     *      @OA\Response(response=201, description="Department created successfully")
+     * )
      */
     public function store(Request $request)
     {
@@ -82,10 +101,15 @@ class DepartmentController extends Controller
     }
 
     /**
-     * Show a specific department by ID.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\JsonResponse
+     * @OA\Get(
+     *      path="/api/departments/{id}",
+     *      operationId="getDepartmentDetails",
+     *      tags={"Departments"},
+     *      summary="Get Department by ID",
+     *      security={{"sanctum":{}}},
+     *      @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer", example=1)),
+     *      @OA\Response(response=200, description="Department retrieved successfully")
+     * )
      */
     public function show($id)
     {
@@ -113,11 +137,24 @@ class DepartmentController extends Controller
     }
 
     /**
-     * Update a specific department.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id
-     * @return \Illuminate\Http\JsonResponse
+     * @OA\Put(
+     *      path="/api/departments/{id}",
+     *      operationId="updateDepartment",
+     *      tags={"Departments"},
+     *      summary="Update Department",
+     *      security={{"sanctum":{}}},
+     *      @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer", example=1)),
+     *      @OA\RequestBody(
+     *          required=true,
+     *          @OA\JsonContent(
+     *              required={"name","status"},
+     *              @OA\Property(property="name", type="string", example="HR & Admin"),
+     *              @OA\Property(property="description", type="string", example="HR and Administrative team"),
+     *              @OA\Property(property="status", type="boolean", example=true)
+     *          )
+     *      ),
+     *      @OA\Response(response=200, description="Department updated successfully")
+     * )
      */
     public function update(Request $request, $id)
     {
@@ -159,10 +196,15 @@ class DepartmentController extends Controller
     }
 
     /**
-     * Delete a specific department by ID.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\JsonResponse
+     * @OA\Delete(
+     *      path="/api/departments/{id}",
+     *      operationId="deleteDepartment",
+     *      tags={"Departments"},
+     *      summary="Delete Department",
+     *      security={{"sanctum":{}}},
+     *      @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer", example=1)),
+     *      @OA\Response(response=200, description="Department deleted successfully")
+     * )
      */
     public function destroy($id)
     {

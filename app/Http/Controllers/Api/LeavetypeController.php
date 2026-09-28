@@ -18,6 +18,30 @@ class LeavetypeController extends Controller
     // {
     //     $this->middleware('auth:sanctum');
     // }
+    /**
+     * @OA\Get(
+     *     path="/api/leavetype/list",
+     *     summary="Get leave types list",
+     *     tags={"Leave Type"},
+     *     security={{"sanctum":{}}},
+     *     @OA\Parameter(
+     *         name="company_id",
+     *         in="query",
+     *         required=true,
+     *         description="Company ID",
+     *         @OA\Schema(type="integer", example=1)
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Record retrieved successfully."),
+     *             @OA\Property(property="data", type="array", @OA\Items(type="object"))
+     *         )
+     *     )
+     * )
+     */
     public function index(Request $request)
     {
 
@@ -43,7 +67,31 @@ class LeavetypeController extends Controller
 
 
 
-    // Create a new leavetype
+    /**
+     * @OA\Post(
+     *     path="/api/leavetype/create",
+     *     summary="Create a new leave type",
+     *     tags={"Leave Type"},
+     *     security={{"sanctum":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"company_id","name"},
+     *             @OA\Property(property="company_id", type="integer", example=1),
+     *             @OA\Property(property="name", type="string", example="Sick Leave")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=201,
+     *         description="Created successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Record created successfully."),
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="data", type="object")
+     *         )
+     *     )
+     * )
+     */
     public function store(Request $request)
     {
         try {
@@ -76,7 +124,37 @@ class LeavetypeController extends Controller
         }
     }
 
-    // Update an existing leavetype
+    /**
+     * @OA\Post(
+     *     path="/api/leavetype/update/{id}",
+     *     summary="Update a leave type",
+     *     tags={"Leave Type"},
+     *     security={{"sanctum":{}}},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         description="Leave Type ID",
+     *         @OA\Schema(type="integer", example=1)
+     *     ),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"name"},
+     *             @OA\Property(property="name", type="string", example="Casual Leave")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Updated successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Record updated successfully."),
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="data", type="object")
+     *         )
+     *     )
+     * )
+     */
     public function update(Request $request, $id)
     {
         try {
@@ -114,7 +192,29 @@ class LeavetypeController extends Controller
         }
     }
 
-    // Delete a leavetype
+    /**
+     * @OA\Delete(
+     *     path="/api/leavetype/delete/{id}",
+     *     summary="Delete a leave type",
+     *     tags={"Leave Type"},
+     *     security={{"sanctum":{}}},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         description="Leave Type ID",
+     *         @OA\Schema(type="integer", example=1)
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Deleted successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Record deleted successfully."),
+     *             @OA\Property(property="status", type="boolean", example=true)
+     *         )
+     *     )
+     * )
+     */
     public function destroy($id)
     {
         try {

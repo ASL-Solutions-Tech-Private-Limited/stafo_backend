@@ -10,7 +10,21 @@ use Illuminate\Support\Facades\Validator;
 
 class CompanyTypeController extends Controller
 {
-    // Method for listing company types
+    /**
+     * @OA\Get(
+     *     path="/api/company-types",
+     *     summary="Get all company types",
+     *     tags={"Company"},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Company types retrieved successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="data", type="array", @OA\Items(type="object"))
+     *         )
+     *     )
+     * )
+     */
     public function index()
     {
         try {
@@ -31,7 +45,30 @@ class CompanyTypeController extends Controller
         }
     }
 
-    // Method for adding a new company type
+    /**
+     * @OA\Post(
+     *     path="/api/company-types",
+     *     summary="Create a new company type",
+     *     tags={"Company"},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"company_name","status"},
+     *             @OA\Property(property="company_name", type="string", example="Private Limited"),
+     *             @OA\Property(property="status", type="boolean", example=true)
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=201,
+     *         description="Created successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Company type created successfully."),
+     *             @OA\Property(property="data", type="object")
+     *         )
+     *     )
+     * )
+     */
     public function store(Request $request)
     {
         try {

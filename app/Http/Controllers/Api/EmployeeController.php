@@ -28,6 +28,10 @@ use Illuminate\Validation\ValidationException;
 use SapientPro\ImageComparatorLaravel\Facades\Comparator;
 use SapientPro\ImageComparator\Strategy\DifferenceHashStrategy;
 use App\Helpers\Helper;
+use App\Models\Shift;
+use App\Models\AttendanceRequest;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Validator;
 
 
 class EmployeeController extends Controller
@@ -35,6 +39,25 @@ class EmployeeController extends Controller
 
 
 
+    /**
+     * @OA\Post(
+     *      path="/api/employees-list",
+     *      operationId="getEmployeesList",
+     *      tags={"Employees"},
+     *      summary="List Employees",
+     *      description="Returns list of employees for the authenticated company",
+     *      security={{"sanctum":{}}},
+     *      @OA\RequestBody(
+     *          required=false,
+     *          @OA\JsonContent(
+     *              @OA\Property(property="employee_id", type="integer", example=1),
+     *              @OA\Property(property="date", type="string", format="date", example="2026-09-26")
+     *          )
+     *      ),
+     *      @OA\Response(response=200, description="Employees list fetched successfully"),
+     *      @OA\Response(response=401, description="Unauthenticated")
+     * )
+     */
     public function index(Request $request)
     {
         try {
@@ -174,7 +197,18 @@ class EmployeeController extends Controller
 
 
 
-    // employee details
+    /**
+     * @OA\Get(
+     *      path="/api/employee-details/{id}",
+     *      operationId="getEmployeeDetails",
+     *      tags={"Employees"},
+     *      summary="Get Employee Details by ID",
+     *      security={{"sanctum":{}}},
+     *      @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer"), example=1),
+     *      @OA\Response(response=200, description="Employee details fetched successfully"),
+     *      @OA\Response(response=404, description="Employee not found")
+     * )
+     */
     public function show($id)
     {
         try {
@@ -219,6 +253,18 @@ class EmployeeController extends Controller
         }
     }
 
+    /**
+     * @OA\Post(
+     *      path="/api/employee-dashboard",
+     *      operationId="getEmployeeDashboard",
+     *      tags={"Employees"},
+     *      summary="Employee Dashboard Details",
+     *      description="Returns dashboard info for the authenticated employee including active shifts, branch, and punches",
+     *      security={{"sanctum":{}}},
+     *      @OA\Response(response=200, description="Dashboard details fetched successfully"),
+     *      @OA\Response(response=401, description="Unauthenticated")
+     * )
+     */
     public function employeeDashboard(Request $request)
     {
         $emp = Auth::user();
@@ -260,6 +306,23 @@ class EmployeeController extends Controller
         ], 200);
     }
 
+    /**
+     * @OA\Post(
+     *      path="/api/employees-list/by-company-id",
+     *      operationId="getEmployeesByCompanyId",
+     *      tags={"Employees"},
+     *      security={{"sanctum":{}}},
+     *      summary="List Employees by Company ID",
+     *      @OA\RequestBody(
+     *          required=true,
+     *          @OA\JsonContent(
+     *              @OA\Property(property="company_id", type="integer", example=1)
+     *          )
+     *      ),
+     *      @OA\Response(response=200, description="Employees fetched successfully"),
+     *      @OA\Response(response=422, description="Validation Error")
+     * )
+     */
     public function listByCompany(Request $request)
     {
         try {
@@ -304,6 +367,32 @@ class EmployeeController extends Controller
 
 
 
+    /**
+     * @OA\Post(
+     *      path="/api/employees-create",
+     *      operationId="createEmployee",
+     *      tags={"Employees"},
+     *      security={{"sanctum":{}}},
+     *      summary="Register/Create a new employee",
+     *      @OA\RequestBody(
+     *          required=true,
+     *          @OA\JsonContent(
+     *              @OA\Property(property="name", type="string", example="John Doe"),
+     *              @OA\Property(property="email", type="string", example="john@example.com"),
+     *              @OA\Property(property="phone", type="string", example="9876543210"),
+     *              @OA\Property(property="position", type="string", example="Software Engineer"),
+     *              @OA\Property(property="branch_id", type="integer", example=1),
+     *              @OA\Property(property="department_id", type="integer", example=1),
+     *              @OA\Property(property="shift_ids", type="array", @OA\Items(type="integer"), example={1, 2}),
+     *              @OA\Property(property="date_of_joining", type="string", format="date", example="2026-01-01"),
+     *              @OA\Property(property="gender", type="string", example="Male"),
+     *              @OA\Property(property="address", type="string", example="123 Street")
+     *          )
+     *      ),
+     *      @OA\Response(response=200, description="Employee registered successfully"),
+     *      @OA\Response(response=422, description="Validation error")
+     * )
+     */
     public function store(Request $request)
     {
         try {
@@ -431,6 +520,29 @@ class EmployeeController extends Controller
 
 
 
+    /**
+     * @OA\Post(
+     *      path="/api/employees-update/{id}",
+     *      operationId="updateEmployee",
+     *      tags={"Employees"},
+     *      security={{"sanctum":{}}},
+     *      summary="Update employee details",
+     *      @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer"), example=1),
+     *      @OA\RequestBody(
+     *          required=false,
+     *          @OA\JsonContent(
+     *              @OA\Property(property="name", type="string", example="John Doe"),
+     *              @OA\Property(property="email", type="string", example="john@example.com"),
+     *              @OA\Property(property="phone", type="string", example="9876543210"),
+     *              @OA\Property(property="position", type="string", example="Senior Dev"),
+     *              @OA\Property(property="salary", type="number", example=50000),
+     *              @OA\Property(property="branch_id", type="integer", example=1),
+     *              @OA\Property(property="department_id", type="integer", example=1)
+     *          )
+     *      ),
+     *      @OA\Response(response=200, description="Employee updated successfully")
+     * )
+     */
     public function update(Request $request, $id)
     {
 
@@ -537,6 +649,26 @@ class EmployeeController extends Controller
 
 
 
+    /**
+     * @OA\Post(
+     *      path="/api/leave-request",
+     *      operationId="submitLeaveRequest",
+     *      tags={"Leave Management"},
+     *      security={{"sanctum":{}}},
+     *      summary="Submit an employee leave request",
+     *      @OA\RequestBody(
+     *          required=true,
+     *          @OA\JsonContent(
+     *              @OA\Property(property="employee_id", type="integer", example=1),
+     *              @OA\Property(property="from_date", type="string", format="date", example="2026-10-01"),
+     *              @OA\Property(property="to_date", type="string", format="date", example="2026-10-03"),
+     *              @OA\Property(property="leave_type", type="integer", description="1=Casual, 2=Sick, 3=Privileged", example=1),
+     *              @OA\Property(property="reason", type="string", example="Medical emergency")
+     *          )
+     *      ),
+     *      @OA\Response(response=201, description="Leave request submitted successfully")
+     * )
+     */
     public function leaveRequest(Request $request)
     {
         //$id = Auth::id();
@@ -571,15 +703,15 @@ class EmployeeController extends Controller
 
             ]);
 
-            // Create a notification for the employee
-            // Notification::create([
-            //     'employee_id' => $request->employee_id,
-            //     'company_id' => $employeeInfo->company_id,
-            //     'message' => "Your leave request for {$days} days from {$request->from_date} to {$request->to_date} has been submitted successfully.",
-            //     'status' => 'unread',
-            //     'source' => 'compnay',
-
-            // ]);
+            // Create notification for company
+            try {
+                Notification::create([
+                    'employee_id' => $request->employee_id,
+                    'company_id' => $employeeInfo->company_id,
+                    'message' => "{$employeeInfo->name} applied for " . ($days + 1) . " day(s) leave ({$request->from_date} to {$request->to_date}).",
+                    'status' => 'unread',
+                ]);
+            } catch (\Throwable $th) {}
 
             return response()->json([
                 'status' => true,
@@ -602,6 +734,16 @@ class EmployeeController extends Controller
 
 
 
+    /**
+     * @OA\Post(
+     *      path="/api/pending-leave-request",
+     *      operationId="getPendingLeaveRequests",
+     *      tags={"Leave Management"},
+     *      security={{"sanctum":{}}},
+     *      summary="Get pending leave requests for company",
+     *      @OA\Response(response=200, description="Pending leave list fetched")
+     * )
+     */
     public function pendingLeaveRequest()
     {
         $company_id = Auth::user()->id;
@@ -623,6 +765,23 @@ class EmployeeController extends Controller
         }
     }
 
+    /**
+     * @OA\Post(
+     *      path="/api/leave-list",
+     *      operationId="getLeaveList",
+     *      tags={"Leave Management"},
+     *      security={{"sanctum":{}}},
+     *      summary="List all leaves for company or employee",
+     *      @OA\RequestBody(
+     *          required=false,
+     *          @OA\JsonContent(
+     *              @OA\Property(property="company_id", type="integer", example=1),
+     *              @OA\Property(property="employee_id", type="integer", example=1)
+     *          )
+     *      ),
+     *      @OA\Response(response=200, description="Leave list fetched")
+     * )
+     */
     public function leaveList(Request $request)
     {
         try {
@@ -660,6 +819,23 @@ class EmployeeController extends Controller
         }
     }
 
+    /**
+     * @OA\Post(
+     *      path="/api/leave-request-status-change",
+     *      operationId="changeLeaveStatus",
+     *      tags={"Leave Management"},
+     *      security={{"sanctum":{}}},
+     *      summary="Approve or Reject Employee Leave Request",
+     *      @OA\RequestBody(
+     *          required=true,
+     *          @OA\JsonContent(
+     *              @OA\Property(property="id", type="integer", description="Leave Request ID", example=1),
+     *              @OA\Property(property="status", type="string", enum={"approved", "rejected"}, example="approved")
+     *          )
+     *      ),
+     *      @OA\Response(response=200, description="Leave request status updated successfully")
+     * )
+     */
     public function leaveRequestStatusChange(Request $request)
     {
         try {
@@ -701,6 +877,27 @@ class EmployeeController extends Controller
 
 
 
+    /**
+     * @OA\Post(
+     *      path="/api/employee/punch",
+     *      operationId="employeePunch",
+     *      tags={"Attendance"},
+     *      summary="Employee Geo Punch-In / Punch-Out",
+     *      description="Records punch-in or punch-out for the employee with latitude and longitude",
+     *      security={{"sanctum":{}}},
+     *      @OA\RequestBody(
+     *          required=true,
+     *          @OA\JsonContent(
+     *              required={"employee_id","latitude","longitude"},
+     *              @OA\Property(property="employee_id", type="integer", example=1),
+     *              @OA\Property(property="latitude", type="string", example="28.6139"),
+     *              @OA\Property(property="longitude", type="string", example="77.2090")
+     *          )
+     *      ),
+     *      @OA\Response(response=200, description="Punch action recorded successfully"),
+     *      @OA\Response(response=422, description="Validation error")
+     * )
+     */
     public function punch(Request $request)
     {
         // dd("test");
@@ -766,6 +963,15 @@ class EmployeeController extends Controller
                 $company_notification_message = $employee->name." successfully punched out";                
                 Helper::sendPushNotification($company->fcm_token,$company_notification_message);
 
+                try {
+                    Notification::create([
+                        'employee_id' => $employee->id,
+                        'company_id' => $company_id,
+                        'message' => $company_notification_message . " at " . now()->format('h:i A') . ".",
+                        'status' => 'unread',
+                    ]);
+                } catch (\Throwable $th) {}
+
                 return response()->json([
                     'status' => true,
                     'message' => 'Punch-out successful.',
@@ -799,6 +1005,15 @@ class EmployeeController extends Controller
                 Helper::sendPushNotification($fcm,$notification_message);
                 $company_notification_message = $employee->name." successfully punched in";                
                 Helper::sendPushNotification($company->fcm_token,$company_notification_message);
+
+                try {
+                    Notification::create([
+                        'employee_id' => $employee->id,
+                        'company_id' => $company_id,
+                        'message' => $company_notification_message . " at " . now()->format('h:i A') . ".",
+                        'status' => 'unread',
+                    ]);
+                } catch (\Throwable $th) {}
                 
                 return response()->json([
                     'status' => true,
@@ -815,6 +1030,25 @@ class EmployeeController extends Controller
         }
     }
 
+    /**
+     * @OA\Post(
+     *      path="/api/employee/punch-list",
+     *      operationId="getEmployeePunchList",
+     *      tags={"Attendance"},
+     *      summary="Get Employee Punch History for a Date",
+     *      description="Fetches all punch-in and punch-out logs for a given employee and date",
+     *      security={{"sanctum":{}}},
+     *      @OA\RequestBody(
+     *          required=true,
+     *          @OA\JsonContent(
+     *              required={"employee_id","date"},
+     *              @OA\Property(property="employee_id", type="integer", example=1),
+     *              @OA\Property(property="date", type="string", format="date", example="2026-09-26")
+     *          )
+     *      ),
+     *      @OA\Response(response=200, description="Punch list fetched successfully")
+     * )
+     */
     public function punchList(Request $request)
     {
         try {
@@ -847,6 +1081,28 @@ class EmployeeController extends Controller
             ], 500);
         }
     }
+    /**
+     * @OA\Post(
+     *      path="/api/employee/selfie-attendance",
+     *      operationId="selfieAttendance",
+     *      tags={"Attendance"},
+     *      summary="Selfie Punch-In / Punch-Out",
+     *      description="Records punch action with face image comparison",
+     *      security={{"sanctum":{}}},
+     *      @OA\RequestBody(
+     *          required=true,
+     *          @OA\MediaType(
+     *              mediaType="multipart/form-data",
+     *              @OA\Schema(
+     *                  required={"employee_id","image"},
+     *                  @OA\Property(property="employee_id", type="integer", example=1),
+     *                  @OA\Property(property="image", type="string", format="binary", description="Selfie image file")
+     *              )
+     *          )
+     *      ),
+     *      @OA\Response(response=200, description="Selfie punch processed successfully")
+     * )
+     */
     public function selfieAttendance(Request $request)
     {
         try {
@@ -996,6 +1252,27 @@ class EmployeeController extends Controller
         }
     }
 
+    /**
+     * @OA\Post(
+     *      path="/api/employee/selfie-image-upload",
+     *      operationId="uploadSelfieImage",
+     *      tags={"Attendance"},
+     *      security={{"sanctum":{}}},
+     *      summary="Upload reference selfie image for face recognition",
+     *      @OA\RequestBody(
+     *          required=true,
+     *          @OA\MediaType(
+     *              mediaType="multipart/form-data",
+     *              @OA\Schema(
+     *                  required={"employee_id","selfie_image"},
+     *                  @OA\Property(property="employee_id", type="integer", example=1),
+     *                  @OA\Property(property="selfie_image", type="string", format="binary")
+     *              )
+     *          )
+     *      ),
+     *      @OA\Response(response=200, description="Selfie uploaded successfully")
+     * )
+     */
     public function selfieImageUpload(Request $request)
     {
         try {
@@ -1037,6 +1314,22 @@ class EmployeeController extends Controller
         }
     }
 
+    /**
+     * @OA\Post(
+     *      path="/api/employee/selfie-image-remove",
+     *      operationId="removeSelfieImage",
+     *      tags={"Attendance"},
+     *      security={{"sanctum":{}}},
+     *      summary="Remove registered employee selfie reference image",
+     *      @OA\RequestBody(
+     *          required=true,
+     *          @OA\JsonContent(
+     *              @OA\Property(property="employee_id", type="integer", example=1)
+     *          )
+     *      ),
+     *      @OA\Response(response=200, description="Selfie removed successfully")
+     * )
+     */
     public function selfieImageRemove(Request $request)
     {
         try {
@@ -1070,6 +1363,25 @@ class EmployeeController extends Controller
         }
     }
 
+    /**
+     * @OA\Post(
+     *      path="/api/employee/qr-attendance",
+     *      operationId="qrAttendance",
+     *      tags={"Attendance"},
+     *      summary="QR Code Punch-In / Punch-Out",
+     *      description="Records punch action by scanning the company/branch QR code",
+     *      security={{"sanctum":{}}},
+     *      @OA\RequestBody(
+     *          required=true,
+     *          @OA\JsonContent(
+     *              required={"employee_id","qrcode"},
+     *              @OA\Property(property="employee_id", type="integer", example=1),
+     *              @OA\Property(property="qrcode", type="string", description="Base64 encoded QR string")
+     *          )
+     *      ),
+     *      @OA\Response(response=200, description="QR punch processed successfully")
+     * )
+     */
     public function qrAttendance(Request $request)
     {
         try {
@@ -1190,6 +1502,24 @@ class EmployeeController extends Controller
     }
 
 
+    /**
+     * @OA\Post(
+     *      path="/api/update-geo-status",
+     *      operationId="updateGeoStatus",
+     *      tags={"Geo Tracking"},
+     *      security={{"sanctum":{}}},
+     *      summary="Update employee geo tracking status",
+     *      description="Sets geo tracking status: 0 = disabled, 1 = requested by company, 2 = accepted by employee",
+     *      @OA\RequestBody(
+     *          required=true,
+     *          @OA\JsonContent(
+     *              @OA\Property(property="employee_id", type="integer", example=1),
+     *              @OA\Property(property="geo_status", type="string", enum={"0", "1", "2"}, example="1")
+     *          )
+     *      ),
+     *      @OA\Response(response=200, description="Geo status updated successfully")
+     * )
+     */
     public function updateGeoStatus(Request $request)
     {
         try {
@@ -1252,7 +1582,20 @@ class EmployeeController extends Controller
     }
 
     /**
-     * Dedicated API for Employee to Accept Geo Tracking Request (Sets geo_status = 2)
+     * @OA\Post(
+     *      path="/api/accept-geo-tracking",
+     *      operationId="acceptGeoTracking",
+     *      tags={"Geo Tracking"},
+     *      security={{"sanctum":{}}},
+     *      summary="Employee accepts real-time geo tracking request",
+     *      @OA\RequestBody(
+     *          required=false,
+     *          @OA\JsonContent(
+     *              @OA\Property(property="employee_id", type="integer", example=1)
+     *          )
+     *      ),
+     *      @OA\Response(response=200, description="Geo tracking accepted")
+     * )
      */
     public function acceptGeoTracking(Request $request)
     {
@@ -1311,7 +1654,20 @@ class EmployeeController extends Controller
     }
 
     /**
-     * Dedicated API for Employee / Company to Reject or Disable Geo Tracking (Sets geo_status = 0)
+     * @OA\Post(
+     *      path="/api/reject-geo-tracking",
+     *      operationId="rejectGeoTracking",
+     *      tags={"Geo Tracking"},
+     *      security={{"sanctum":{}}},
+     *      summary="Reject or disable real-time geo tracking",
+     *      @OA\RequestBody(
+     *          required=false,
+     *          @OA\JsonContent(
+     *              @OA\Property(property="employee_id", type="integer", example=1)
+     *          )
+     *      ),
+     *      @OA\Response(response=200, description="Geo tracking disabled")
+     * )
      */
     public function rejectGeoTracking(Request $request)
     {
@@ -1370,7 +1726,15 @@ class EmployeeController extends Controller
     }
 
     /**
-     * Get Current Geo Tracking Status and Shift Window for Employee
+     * @OA\Get(
+     *      path="/api/get-geo-tracking-status",
+     *      operationId="getGeoTrackingStatus",
+     *      tags={"Geo Tracking"},
+     *      security={{"sanctum":{}}},
+     *      summary="Get Current Geo Tracking Status and Shift Window for Employee",
+     *      @OA\Parameter(name="employee_id", in="query", required=true, @OA\Schema(type="integer"), example=1),
+     *      @OA\Response(response=200, description="Geo tracking status details")
+     * )
      */
     public function getGeoTrackingStatus(Request $request)
     {
@@ -1429,6 +1793,25 @@ class EmployeeController extends Controller
         }
     }
 
+    /**
+     * @OA\Post(
+     *      path="/api/store-geo-location",
+     *      operationId="storeGeoLocation",
+     *      tags={"Geo Tracking"},
+     *      security={{"sanctum":{}}},
+     *      summary="Store Employee Geo Location waypoint",
+     *      @OA\RequestBody(
+     *          required=true,
+     *          @OA\JsonContent(
+     *              @OA\Property(property="employee_id", type="integer", example=1),
+     *              @OA\Property(property="latitude", type="string", example="28.6139"),
+     *              @OA\Property(property="longitude", type="string", example="77.2090"),
+     *              @OA\Property(property="battery_status", type="string", example="85%")
+     *          )
+     *      ),
+     *      @OA\Response(response=201, description="Geo location recorded")
+     * )
+     */
     public function storeGeoLocation(Request $request)
     {
         try {
@@ -1493,6 +1876,23 @@ class EmployeeController extends Controller
         }
     }
 
+    /**
+     * @OA\Post(
+     *      path="/api/get-geo-location",
+     *      operationId="getGeoLocation",
+     *      tags={"Geo Tracking"},
+     *      security={{"sanctum":{}}},
+     *      summary="Get recorded employee geo location trail for a date",
+     *      @OA\RequestBody(
+     *          required=true,
+     *          @OA\JsonContent(
+     *              @OA\Property(property="employee_id", type="integer", example=1),
+     *              @OA\Property(property="date", type="string", format="date", example="2026-09-26")
+     *          )
+     *      ),
+     *      @OA\Response(response=200, description="Geo location list fetched successfully")
+     * )
+     */
     public function getGeoLocation(Request $request)
     {
         try {
@@ -1558,6 +1958,16 @@ class EmployeeController extends Controller
         return $earthRadius * $c; // Distance in meters
     }
 
+    /**
+     * @OA\Post(
+     *      path="/api/employeetype-list",
+     *      operationId="getEmployeeTypeList",
+     *      tags={"Employees"},
+     *      summary="List all employee types",
+     *      security={{"sanctum":{}}},
+     *      @OA\Response(response=200, description="Employee types fetched successfully")
+     * )
+     */
     public function employeetypeList()
     {
         try {
@@ -1584,6 +1994,16 @@ class EmployeeController extends Controller
         }
     }
 
+    /**
+     * @OA\Post(
+     *      path="/api/jobtitle-list",
+     *      operationId="getJobTitleList",
+     *      tags={"Employees"},
+     *      summary="List all job titles / roles",
+     *      security={{"sanctum":{}}},
+     *      @OA\Response(response=200, description="Job Title fetched successfully")
+     * )
+     */
     public function jobtitleList()
     {
         try {
@@ -1610,6 +2030,24 @@ class EmployeeController extends Controller
         }
     }
 
+    /**
+     * @OA\Post(
+     *      path="/api/set-attendance-type",
+     *      operationId="setAttendanceType",
+     *      tags={"Attendance"},
+     *      summary="Set employee attendance type",
+     *      security={{"sanctum":{}}},
+     *      @OA\RequestBody(
+     *          required=true,
+     *          @OA\JsonContent(
+     *              required={"employee_id","attendance_type"},
+     *              @OA\Property(property="employee_id", type="integer", example=1),
+     *              @OA\Property(property="attendance_type", type="string", example="qr")
+     *          )
+     *      ),
+     *      @OA\Response(response=201, description="Record updated successfully.")
+     * )
+     */
     public function setAttendanceType(Request $request)
     {
         try {
@@ -1636,6 +2074,16 @@ class EmployeeController extends Controller
         }
     }
 
+    /**
+     * @OA\Post(
+     *      path="/api/cron-job/mark-absent",
+     *      operationId="runMarkAbsentJob",
+     *      tags={"Attendance"},
+     *      summary="Run cron job to mark absent employees",
+     *      security={{"sanctum":{}}},
+     *      @OA\Response(response=200, description="Employee absence marking job executed successfully.")
+     * )
+     */
     public function runMarkAbsentJob()
     {
         try {
@@ -1654,6 +2102,24 @@ class EmployeeController extends Controller
         }
     }
 
+    /**
+     * @OA\Post(
+     *      path="/api/employees-status-change",
+     *      operationId="employeeStatusChange",
+     *      tags={"Employees"},
+     *      summary="Change employee status",
+     *      security={{"sanctum":{}}},
+     *      @OA\RequestBody(
+     *          required=true,
+     *          @OA\JsonContent(
+     *              required={"id","status"},
+     *              @OA\Property(property="id", type="integer", example=1),
+     *              @OA\Property(property="status", type="integer", example=1)
+     *          )
+     *      ),
+     *      @OA\Response(response=200, description="Status changed successfully.")
+     * )
+     */
     public function employeeStatusChange(Request $request)
     {
         try {
@@ -1684,6 +2150,23 @@ class EmployeeController extends Controller
         }
     }
 
+    /**
+     * @OA\Post(
+     *      path="/api/employee-branch-info",
+     *      operationId="getEmployeeBranchInfo",
+     *      tags={"Employees"},
+     *      summary="Get employee branch information",
+     *      security={{"sanctum":{}}},
+     *      @OA\RequestBody(
+     *          required=true,
+     *          @OA\JsonContent(
+     *              required={"employee_id"},
+     *              @OA\Property(property="employee_id", type="integer", example=1)
+     *          )
+     *      ),
+     *      @OA\Response(response=200, description="Branch info fetched successfully.")
+     * )
+     */
     public function employeeBranchInfo(Request $request)
     {
         try {
@@ -1714,6 +2197,24 @@ class EmployeeController extends Controller
         }
     }
 
+    /**
+     * @OA\Post(
+     *      path="/api/employee/assign-branch",
+     *      operationId="assignEmployeeBranch",
+     *      tags={"Employees"},
+     *      summary="Assign branch to employee",
+     *      security={{"sanctum":{}}},
+     *      @OA\RequestBody(
+     *          required=true,
+     *          @OA\JsonContent(
+     *              required={"employee_id","branch_id"},
+     *              @OA\Property(property="employee_id", type="integer", example=1),
+     *              @OA\Property(property="branch_id", type="integer", example=1)
+     *          )
+     *      ),
+     *      @OA\Response(response=201, description="Record updated successfully.")
+     * )
+     */
     public function assignBranch(Request $request)
     {
         try {
@@ -1740,6 +2241,24 @@ class EmployeeController extends Controller
         }
     }
 
+    /**
+     * @OA\Post(
+     *      path="/api/employee/assign-department",
+     *      operationId="assignEmployeeDepartment",
+     *      tags={"Employees"},
+     *      summary="Assign department to employee",
+     *      security={{"sanctum":{}}},
+     *      @OA\RequestBody(
+     *          required=true,
+     *          @OA\JsonContent(
+     *              required={"employee_id","department_id"},
+     *              @OA\Property(property="employee_id", type="integer", example=1),
+     *              @OA\Property(property="department_id", type="integer", example=1)
+     *          )
+     *      ),
+     *      @OA\Response(response=201, description="Record updated successfully.")
+     * )
+     */
     public function assignDepartment(Request $request)
     {
         try {
@@ -1766,6 +2285,25 @@ class EmployeeController extends Controller
         }
     }
 
+    /**
+     * @OA\Post(
+     *      path="/api/devicelog-store",
+     *      operationId="storeDeviceLog",
+     *      tags={"Employees"},
+     *      summary="Store employee device log",
+     *      security={{"sanctum":{}}},
+     *      @OA\RequestBody(
+     *          required=true,
+     *          @OA\JsonContent(
+     *              required={"employee_id","company_id","log_data"},
+     *              @OA\Property(property="employee_id", type="integer", example=1),
+     *              @OA\Property(property="company_id", type="integer", example=1),
+     *              @OA\Property(property="log_data", type="string", example="{}")
+     *          )
+     *      ),
+     *      @OA\Response(response=201, description="Record added successfully.")
+     * )
+     */
     public function devicelogStore(Request $request)
     {
         try {
@@ -1806,6 +2344,16 @@ class EmployeeController extends Controller
         }
     }
 
+    /**
+     * @OA\Get(
+     *      path="/api/punchReminder",
+     *      operationId="punchReminder",
+     *      tags={"Attendance"},
+     *      summary="Send punch reminders to employees based on shifts",
+     *      security={{"sanctum":{}}},
+     *      @OA\Response(response=200, description="Punch reminder processed successfully.")
+     * )
+     */
     public function punchReminder(Request $request)
     {
         try {
@@ -1847,6 +2395,10 @@ class EmployeeController extends Controller
             }
             
             
+            return response()->json([
+                'status' => true,
+                'message' => 'Punch reminder processed successfully.',
+            ], 200);
         } catch (ValidationException $e) {
             return response()->json([
                 'status' => false,
@@ -1858,6 +2410,635 @@ class EmployeeController extends Controller
                 'status' => false,
                 'message' => 'An error occurred while fetching the request.',
                 'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * @OA\Post(
+     *      path="/api/autoPunchOut",
+     *      operationId="autoPunchOut",
+     *      tags={"Attendance"},
+     *      summary="Auto Punch-Out Employees",
+     *      description="Automatically punches out employees who punched in today but forgot to punch out. Sets out_time as 00:00:00.",
+     *      @OA\Parameter(
+     *          name="date",
+     *          in="query",
+     *          description="Date for auto punch-out (format: YYYY-MM-DD, defaults to today)",
+     *          required=false,
+     *          @OA\Schema(type="string", format="date", example="2026-09-26")
+     *      ),
+     *      @OA\Response(
+     *          response=200,
+     *          description="Successful operation",
+     *          @OA\JsonContent(
+     *              @OA\Property(property="status", type="boolean", example=true),
+     *              @OA\Property(property="message", type="string", example="Auto punch-out processed successfully with 00:00:00 punchout time."),
+     *              @OA\Property(property="date", type="string", example="2026-09-26"),
+     *              @OA\Property(property="total_punched_out", type="integer", example=2),
+     *              @OA\Property(
+     *                  property="data",
+     *                  type="array",
+     *                  @OA\Items(
+     *                      @OA\Property(property="employee_id", type="integer", example=5),
+     *                      @OA\Property(property="name", type="string", example="John Doe"),
+     *                      @OA\Property(property="punch_in", type="string", example="2026-09-26 09:30:00"),
+     *                      @OA\Property(property="punch_out", type="string", example="2026-09-26 00:00:00"),
+     *                      @OA\Property(property="out_time", type="string", example="00:00:00")
+     *                  )
+     *              )
+     *          )
+     *      ),
+     *      @OA\Response(
+     *          response=500,
+     *          description="Server Error"
+     *      )
+     * )
+     */
+    public function autoPunchOut(Request $request)
+    {
+        try {
+            $targetDate = $request->input('date', date('Y-m-d'));
+            $outTime = '00:00:00';
+            $punchOutDateTime = $targetDate . ' ' . $outTime;
+
+            // Find all punches for targetDate where punch_out is null
+            $openPunches = EmployeePunch::whereDate('punch_in', $targetDate)
+                ->whereNull('punch_out')
+                ->get();
+
+            $updatedEmployees = [];
+
+            foreach ($openPunches as $punch) {
+                $employee = Employee::find($punch->employee_id);
+                if (!$employee) {
+                    continue;
+                }
+
+                // Punchout time set as 00:00:00 format
+                $punch->update([
+                    'punch_out' => $punchOutDateTime,
+                ]);
+
+                // Update Attendance record: set out_time as 00:00:00
+                $attendance = Attendance::where('employee_id', $employee->id)
+                    ->whereDate('date', $targetDate)
+                    ->first();
+
+                if ($attendance) {
+                    $attendance->update([
+                        'out_time' => $outTime,
+                    ]);
+                }
+
+                // Reset geo_status so employee is no longer marked as in-field/active
+                $employee->geo_status = 0;
+                $employee->save();
+
+                // Send push notification to employee if fcm_token available
+                if (!empty($employee->fcm_token)) {
+                    $notification_message = "You forgot to punch-out for " . date('d M Y', strtotime($targetDate)) . ". Your punch-out has been recorded as 00:00:00.";
+                    Helper::sendPushNotification($employee->fcm_token, $notification_message);
+                }
+
+                $updatedEmployees[] = [
+                    'employee_id' => $employee->id,
+                    'name' => $employee->name,
+                    'punch_in' => $punch->punch_in,
+                    'punch_out' => $punchOutDateTime,
+                    'out_time' => $outTime,
+                ];
+
+                Log::info("Employee ID {$employee->id} ({$employee->name}) auto punch-out processed with 00:00:00 out_time for {$targetDate}");
+            }
+
+            // Also check any Attendance records for the date where in_time is not null and out_time is null
+            $openAttendances = Attendance::whereDate('date', $targetDate)
+                ->whereNotNull('in_time')
+                ->whereNull('out_time')
+                ->get();
+
+            foreach ($openAttendances as $att) {
+                $att->update(['out_time' => $outTime]);
+            }
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Auto punch-out processed successfully with 00:00:00 punchout time.',
+                'date' => $targetDate,
+                'total_punched_out' => count($updatedEmployees),
+                'data' => $updatedEmployees,
+            ], 200);
+        } catch (Exception $e) {
+            Log::error('Error in autoPunchOut API: ' . $e->getMessage());
+            return response()->json([
+                'status' => false,
+                'message' => 'An error occurred while processing auto punch-out.',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * @OA\Post(
+     *      path="/api/employee/missed-punchout-request",
+     *      operationId="employeeMissedPunchOutRequest",
+     *      tags={"Employee Attendance"},
+     *      summary="[Employee] Submit Missed Punch-Out / Regularization Request",
+     *      description="Employee submits a request for missed punch-out with date, punch_out_time and reason for company verification and approval.",
+     *      security={{"sanctum":{}}},
+     *      @OA\RequestBody(
+     *          required=true,
+     *          @OA\JsonContent(
+     *              required={"employee_id","date","punch_out_time","reason"},
+     *              @OA\Property(property="employee_id", type="integer", example=1),
+     *              @OA\Property(property="company_id", type="integer", example=1),
+     *              @OA\Property(property="date", type="string", format="date", example="2026-09-26"),
+     *              @OA\Property(property="punch_out_time", type="string", example="18:30:00"),
+     *              @OA\Property(property="reason", type="string", example="Forgot to punch out before leaving office due to client meeting")
+     *          )
+     *      ),
+     *      @OA\Response(
+     *          response=200,
+     *          description="Request submitted successfully",
+     *          @OA\JsonContent(
+     *              @OA\Property(property="status", type="boolean", example=true),
+     *              @OA\Property(property="message", type="string", example="Punch-out request submitted successfully for approval."),
+     *              @OA\Property(property="data", type="object")
+     *          )
+     *      ),
+     *      @OA\Response(response=422, description="Validation Error"),
+     *      @OA\Response(response=500, description="Server Error")
+     * )
+     */
+    public function missedPunchOutRequest(Request $request)
+    {
+        try {
+            $authUser = Auth::user();
+
+            $validator = Validator::make($request->all(), [
+                'employee_id' => 'nullable|integer|exists:employees,id',
+                'date' => 'required|date',
+                'punch_out_time' => 'required|string',
+                'reason' => 'required|string|max:1000',
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Validation error',
+                    'errors' => $validator->errors(),
+                ], 422);
+            }
+
+            // If authenticated as Employee, use auth user; otherwise use requested employee_id
+            if ($authUser instanceof Employee) {
+                $employee = $authUser;
+            } else {
+                $employeeId = $request->employee_id ?? ($authUser ? $authUser->id : null);
+                $employee = Employee::find($employeeId);
+            }
+
+            if (!$employee) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Employee not found',
+                ], 404);
+            }
+
+            $companyId = $employee->company_id;
+            $branchId = $employee->branch_id;
+            $departmentId = $employee->department_id;
+
+            // Find in_time from existing attendance or punch
+            $inTime = '09:00:00';
+            $attendance = Attendance::where('employee_id', $employee->id)
+                ->whereDate('date', $request->date)
+                ->first();
+
+            if ($attendance && !empty($attendance->in_time)) {
+                $inTime = $attendance->in_time;
+            } else {
+                $punch = EmployeePunch::where('employee_id', $employee->id)
+                    ->whereDate('punch_in', $request->date)
+                    ->first();
+                if ($punch && !empty($punch->punch_in)) {
+                    $inTime = date('H:i:s', strtotime($punch->punch_in));
+                }
+            }
+
+            // Format punch out time to H:i:s
+            $formattedOutTime = date('H:i:s', strtotime($request->punch_out_time));
+
+            // Check if there is already an existing request for this employee on this date
+            $attendanceRequest = AttendanceRequest::where('employee_id', $employee->id)
+                ->whereDate('date', $request->date)
+                ->where('status', 'Pending')
+                ->first();
+
+            if ($attendanceRequest) {
+                $attendanceRequest->update([
+                    'company_id' => $companyId,
+                    'branch_id' => $branchId,
+                    'department_id' => $departmentId,
+                    'in_time' => $inTime,
+                    'out_time' => $formattedOutTime,
+                    'reason' => $request->reason,
+                    'reject_reason' => null,
+                    'status' => 'Pending',
+                ]);
+            } else {
+                $attendanceRequest = AttendanceRequest::create([
+                    'company_id' => $companyId,
+                    'branch_id' => $branchId,
+                    'employee_id' => $employee->id,
+                    'department_id' => $departmentId,
+                    'attendance' => 'Present',
+                    'halfday' => 0,
+                    'date' => $request->date,
+                    'in_time' => $inTime,
+                    'out_time' => $formattedOutTime,
+                    'reason' => $request->reason,
+                    'status' => 'Pending',
+                ]);
+            }
+
+            // Send notification to company if available
+            $company = CompanyDetail::find($companyId);
+            if ($company && !empty($company->fcm_token)) {
+                $notifMsg = "Punch-out regularization request received from {$employee->name} for {$request->date}.";
+                Helper::sendPushNotification($company->fcm_token, $notifMsg);
+            }
+
+            try {
+                Notification::create([
+                    'employee_id' => $employee->id,
+                    'company_id' => $companyId,
+                    'message' => "Punch-out regularization request received from {$employee->name} for {$request->date}.",
+                    'status' => 'unread',
+                ]);
+            } catch (\Throwable $th) {}
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Punch-out request submitted successfully for approval.',
+                'data' => $attendanceRequest->load(['employee:id,name,email,phone', 'branch:id,branch_name', 'department:id,name']),
+            ], 200);
+        } catch (Exception $e) {
+            Log::error('Error in missedPunchOutRequest: ' . $e->getMessage());
+            return response()->json([
+                'status' => false,
+                'message' => 'An error occurred while submitting punch-out request.',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * @OA\Post(
+     *      path="/api/employee/missed-punchout-list",
+     *      operationId="employeeMissedPunchOutList",
+     *      tags={"Employee Attendance"},
+     *      summary="[Employee] List My Missed Punch-Out Requests",
+     *      description="Employee fetches their own submitted punch-out requests filtered by date or status.",
+     *      security={{"sanctum":{}}},
+     *      @OA\RequestBody(
+     *          required=false,
+     *          @OA\JsonContent(
+     *              @OA\Property(property="employee_id", type="integer", example=1),
+     *              @OA\Property(property="status", type="string", enum={"Pending","Approved","Rejected"}, example="Pending"),
+     *              @OA\Property(property="date", type="string", format="date", example="2026-09-26")
+     *          )
+     *      ),
+     *      @OA\Response(
+     *          response=200,
+     *          description="List fetched successfully",
+     *          @OA\JsonContent(
+     *              @OA\Property(property="status", type="boolean", example=true),
+     *              @OA\Property(property="message", type="string", example="Employee punch-out requests fetched successfully."),
+     *              @OA\Property(property="data", type="array", @OA\Items(type="object"))
+     *          )
+     *      )
+     * )
+     */
+    public function employeeMissedPunchOutList(Request $request)
+    {
+        try {
+            $authUser = Auth::user();
+            $employeeId = ($authUser instanceof Employee) ? $authUser->id : $request->employee_id;
+
+            if (!$employeeId) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'employee_id is required.',
+                ], 422);
+            }
+
+            $requests = AttendanceRequest::with([
+                'employee:id,name,email,phone,emp_id',
+                'company:id,company_name',
+                'branch:id,branch_name',
+                'department:id,name'
+            ])
+            ->where('employee_id', $employeeId)
+            ->whereNotNull('reason')
+            ->when($request->filled('status'), function ($q) use ($request) {
+                return $q->where('status', $request->status);
+            })
+            ->when($request->filled('date'), function ($q) use ($request) {
+                return $q->whereDate('date', $request->date);
+            })
+            ->orderBy('id', 'desc')
+            ->get();
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Employee punch-out requests fetched successfully.',
+                'total' => $requests->count(),
+                'data' => $requests,
+            ], 200);
+        } catch (Exception $e) {
+            Log::error('Error in employeeMissedPunchOutList: ' . $e->getMessage());
+            return response()->json([
+                'status' => false,
+                'message' => 'An error occurred while fetching employee punch-out requests.',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * @OA\Post(
+     *      path="/api/company/missed-punchout-list",
+     *      operationId="companyMissedPunchOutList",
+     *      tags={"Company Attendance"},
+     *      summary="[Company] List Employee Missed Punch-Out Requests for Review",
+     *      description="Company fetches all employee punch-out regularization requests for verification and review. Strictly restricted to the authenticated company.",
+     *      security={{"sanctum":{}}},
+     *      @OA\RequestBody(
+     *          required=false,
+     *          @OA\JsonContent(
+     *              @OA\Property(property="employee_id", type="integer", example=1, description="Filter by employee (optional)"),
+     *              @OA\Property(property="status", type="string", enum={"Pending","Approved","Rejected"}, example="Pending", description="Filter by status (optional)"),
+     *              @OA\Property(property="date", type="string", format="date", example="2026-09-26", description="Filter by date (optional)")
+     *          )
+     *      ),
+     *      @OA\Response(
+     *          response=200,
+     *          description="List fetched successfully",
+     *          @OA\JsonContent(
+     *              @OA\Property(property="status", type="boolean", example=true),
+     *              @OA\Property(property="message", type="string", example="Company punch-out requests fetched successfully."),
+     *              @OA\Property(property="data", type="array", @OA\Items(type="object"))
+     *          )
+     *      ),
+     *      @OA\Response(response=403, description="Unauthorized - Only company login allowed")
+     * )
+     */
+    public function companyMissedPunchOutList(Request $request)
+    {
+        try {
+            $authUser = Auth::user();
+
+            // Strict company-only authorization check (Reject Employees)
+            if (!$authUser || $authUser instanceof Employee) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Unauthorized. Only company login can access this API.',
+                ], 403);
+            }
+
+            // Always strictly use authenticated company's ID
+            $companyId = $authUser->id;
+
+            $requests = AttendanceRequest::with([
+                'employee:id,name,email,phone,emp_id',
+                'company:id,company_name',
+                'branch:id,branch_name',
+                'department:id,name'
+            ])
+            ->where('company_id', $companyId)
+            ->whereNotNull('reason')
+            ->when($request->filled('employee_id'), function ($q) use ($request) {
+                return $q->where('employee_id', $request->employee_id);
+            })
+            ->when($request->filled('status'), function ($q) use ($request) {
+                return $q->where('status', $request->status);
+            })
+            ->when($request->filled('date'), function ($q) use ($request) {
+                return $q->whereDate('date', $request->date);
+            })
+            ->orderBy('id', 'desc')
+            ->get();
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Company punch-out requests fetched successfully.',
+                'total' => $requests->count(),
+                'data' => $requests,
+            ], 200);
+        } catch (Exception $e) {
+            Log::error('Error in companyMissedPunchOutList: ' . $e->getMessage());
+            return response()->json([
+                'status' => false,
+                'message' => 'An error occurred while fetching company punch-out requests.',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * @OA\Post(
+     *      path="/api/company/missed-punchout-action",
+     *      operationId="companyMissedPunchOutAction",
+     *      tags={"Company Attendance"},
+     *      summary="[Company] Approve or Reject Employee Missed Punch-Out Request",
+     *      description="Company verifies and approves or rejects employee missed punch-out request. Only company admin can access. If approved, actual punch-out time is saved. If rejected, reason is mandatory and company can select reject_attendance_type as 'Halfday' or 'Absent' which updates employee attendance accordingly.",
+     *      security={{"sanctum":{}}},
+     *      @OA\RequestBody(
+     *          required=true,
+     *          @OA\JsonContent(
+     *              required={"request_id","status"},
+     *              @OA\Property(property="request_id", type="integer", example=1),
+     *              @OA\Property(property="status", type="string", enum={"Approved","Rejected"}, example="Approved"),
+     *              @OA\Property(property="reject_reason", type="string", example="Punchout time does not match security entry register"),
+     *              @OA\Property(property="reject_attendance_type", type="string", enum={"Halfday","Absent"}, example="Halfday", description="Mandatory/Used if rejected: Mark as 'Halfday' or 'Absent'")
+     *          )
+     *      ),
+     *      @OA\Response(
+     *          response=200,
+     *          description="Action processed successfully",
+     *          @OA\JsonContent(
+     *              @OA\Property(property="status", type="boolean", example=true),
+     *              @OA\Property(property="message", type="string", example="Punch-out request Approved successfully."),
+     *              @OA\Property(property="data", type="object")
+     *          )
+     *      ),
+     *      @OA\Response(response=403, description="Unauthorized - Only company login allowed"),
+     *      @OA\Response(response=422, description="Validation Error"),
+     *      @OA\Response(response=404, description="Request Not Found")
+     * )
+     */
+    public function companyMissedPunchOutAction(Request $request)
+    {
+        try {
+            $authUser = Auth::user();
+
+            // Strict company-only authorization check (Reject Employees)
+            if (!$authUser || $authUser instanceof Employee) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Unauthorized. Only company login can approve or reject punch-out requests.',
+                ], 403);
+            }
+
+            $validator = Validator::make($request->all(), [
+                'request_id' => 'required|integer|exists:attendance_requests,id',
+                'status' => 'required|in:Approved,Rejected',
+                'reject_reason' => 'required_if:status,Rejected|nullable|string|max:1000',
+                'reject_attendance_type' => 'nullable|in:Halfday,Absent,Half Day,halfday,absent,half_day',
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Validation error',
+                    'errors' => $validator->errors(),
+                ], 422);
+            }
+
+            // Always strictly use authenticated company's ID
+            $companyId = $authUser->id;
+
+            $attendanceRequest = AttendanceRequest::with('employee')
+                ->where('id', $request->request_id)
+                ->where('company_id', $companyId)
+                ->first();
+
+            if (!$attendanceRequest) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Attendance request not found or does not belong to your company.',
+                ], 404);
+            }
+
+            $employee = $attendanceRequest->employee;
+            $targetDate = $attendanceRequest->date;
+
+            if ($request->status === 'Approved') {
+                $attendanceRequest->status = 'Approved';
+                $attendanceRequest->reject_reason = null;
+                $attendanceRequest->halfday = 0;
+                $attendanceRequest->attendance = 'Present';
+                $attendanceRequest->save();
+
+                $outTime = $attendanceRequest->out_time;
+                $punchOutDateTime = $targetDate . ' ' . $outTime;
+
+                // 1. Update Attendance record
+                $attendance = Attendance::where('employee_id', $attendanceRequest->employee_id)
+                    ->whereDate('date', $targetDate)
+                    ->first();
+
+                if (!$attendance) {
+                    $attendance = new Attendance();
+                    $attendance->company_id = $attendanceRequest->company_id;
+                    $attendance->branch_id = $attendanceRequest->branch_id;
+                    $attendance->employee_id = $attendanceRequest->employee_id;
+                    $attendance->department_id = $attendanceRequest->department_id;
+                    $attendance->date = $targetDate;
+                    $attendance->in_time = $attendanceRequest->in_time ?? '';
+                }
+
+                $attendance->attendance = 'Present';
+                $attendance->halfday = 0;
+                $attendance->out_time = $outTime;
+                $attendance->save();
+
+                // 2. Update EmployeePunch record
+                $punch = EmployeePunch::where('employee_id', $attendanceRequest->employee_id)
+                    ->whereDate('punch_in', $targetDate)
+                    ->latest('id')
+                    ->first();
+
+                if ($punch) {
+                    $punch->update([
+                        'punch_out' => $punchOutDateTime,
+                    ]);
+                } else {
+                    EmployeePunch::create([
+                        'employee_id' => $attendanceRequest->employee_id,
+                        'punch_in' => $targetDate . ' ' . ($attendanceRequest->in_time ?? ''),
+                        'punch_out' => $punchOutDateTime,
+                    ]);
+                }
+
+                // Send push notification to employee
+                if ($employee && !empty($employee->fcm_token)) {
+                    $notifMsg = "Your punch-out regularisation request for " . date('d M Y', strtotime($targetDate)) . " has been Approved.";
+                    Helper::sendPushNotification($employee->fcm_token, $notifMsg);
+                }
+
+                return response()->json([
+                    'status' => true,
+                    'message' => 'Punch-out request Approved successfully and attendance updated.',
+                    'data' => $attendanceRequest->fresh(['employee:id,name,email,phone', 'branch:id,branch_name', 'department:id,name']),
+                ], 200);
+            } else {
+                // Rejected Flow: Company selects 'Halfday' or 'Absent'
+                $rejectType = strtolower($request->input('reject_attendance_type', 'absent'));
+                $isHalfDay = in_array($rejectType, ['halfday', 'half day', 'half_day']) ? 1 : 0;
+                $attendanceStatus = $isHalfDay ? 'Present' : 'Absent';
+                $statusLabel = $isHalfDay ? 'Half Day' : 'Absent';
+
+                // Update AttendanceRequest
+                $attendanceRequest->status = 'Rejected';
+                $attendanceRequest->reject_reason = $request->reject_reason;
+                $attendanceRequest->halfday = $isHalfDay;
+                $attendanceRequest->attendance = $attendanceStatus;
+                $attendanceRequest->save();
+
+                // Update Attendance record
+                $attendance = Attendance::where('employee_id', $attendanceRequest->employee_id)
+                    ->whereDate('date', $targetDate)
+                    ->first();
+
+                if (!$attendance) {
+                    $attendance = new Attendance();
+                    $attendance->company_id = $attendanceRequest->company_id;
+                    $attendance->branch_id = $attendanceRequest->branch_id;
+                    $attendance->employee_id = $attendanceRequest->employee_id;
+                    $attendance->department_id = $attendanceRequest->department_id;
+                    $attendance->date = $targetDate;
+                    $attendance->in_time = $attendanceRequest->in_time ?? '';
+                }
+
+                $attendance->attendance = $attendanceStatus;
+                $attendance->halfday = $isHalfDay;
+                if (!$isHalfDay) {
+                    $attendance->out_time = '00:00:00';
+                }
+                $attendance->save();
+
+                // Send push notification to employee
+                if ($employee && !empty($employee->fcm_token)) {
+                    $notifMsg = "Your punch-out regularisation request for " . date('d M Y', strtotime($targetDate)) . " was Rejected and marked as {$statusLabel}. Reason: " . $request->reject_reason;
+                    Helper::sendPushNotification($employee->fcm_token, $notifMsg);
+                }
+
+                return response()->json([
+                    'status' => true,
+                    'message' => "Punch-out request Rejected successfully and marked as {$statusLabel}.",
+                    'attendance_marked_as' => $statusLabel,
+                    'data' => $attendanceRequest->fresh(['employee:id,name,email,phone', 'branch:id,branch_name', 'department:id,name']),
+                ], 200);
+            }
+        } catch (Exception $e) {
+            Log::error('Error in companyMissedPunchOutAction: ' . $e->getMessage());
+            return response()->json([
+                'status' => false,
+                'message' => 'An error occurred while processing punch-out request action.',
+                'error' => $e->getMessage(),
             ], 500);
         }
     }

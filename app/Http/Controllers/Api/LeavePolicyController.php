@@ -12,6 +12,16 @@ use Illuminate\Database\QueryException;
 
 class LeavePolicyController extends Controller
 {
+    /**
+     * @OA\Get(
+     *      path="/api/leave-policy",
+     *      operationId="getLeavePolicies",
+     *      tags={"Company Policies"},
+     *      security={{"sanctum":{}}},
+     *      summary="List company leave policies",
+     *      @OA\Response(response=200, description="Leave policies fetched successfully")
+     * )
+     */
     public function index()
     {
         try {
@@ -40,6 +50,29 @@ class LeavePolicyController extends Controller
 
 
 
+    /**
+     * @OA\Post(
+     *      path="/api/leavepolicy-create",
+     *      operationId="createLeavePolicies",
+     *      tags={"Company Policies"},
+     *      security={{"sanctum":{}}},
+     *      summary="Create leave policies in bulk",
+     *      @OA\RequestBody(
+     *          required=true,
+     *          @OA\JsonContent(
+     *              @OA\Property(
+     *                  property="leavepolicies",
+     *                  type="array",
+     *                  @OA\Items(
+     *                      @OA\Property(property="title", type="string", example="Casual Leave Rule"),
+     *                      @OA\Property(property="description", type="string", example="12 days allowed per year")
+     *                  )
+     *              )
+     *          )
+     *      ),
+     *      @OA\Response(response=201, description="Leave policies created successfully")
+     * )
+     */
     public function store(Request $request)
     {
         try {
@@ -87,8 +120,24 @@ class LeavePolicyController extends Controller
         }
     }
 
-    // Edit a leavepolicy
-
+    /**
+     * @OA\Put(
+     *      path="/api/leavepolicy-update/{id}",
+     *      operationId="updateLeavePolicy",
+     *      tags={"Company Policies"},
+     *      security={{"sanctum":{}}},
+     *      summary="Update a leave policy by ID",
+     *      @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer"), example=1),
+     *      @OA\RequestBody(
+     *          required=false,
+     *          @OA\JsonContent(
+     *              @OA\Property(property="title", type="string", example="Updated Title"),
+     *              @OA\Property(property="description", type="string", example="Updated Description")
+     *          )
+     *      ),
+     *      @OA\Response(response=200, description="Leave policy updated successfully")
+     * )
+     */
     public function update(Request $request, $id)
     {
         try {
@@ -132,7 +181,17 @@ class LeavePolicyController extends Controller
     }
 
 
-    // Delete a leavepolicy
+    /**
+     * @OA\Delete(
+     *      path="/api/leavepolicy-delete/{id}",
+     *      operationId="deleteLeavePolicy",
+     *      tags={"Company Policies"},
+     *      security={{"sanctum":{}}},
+     *      summary="Delete a leave policy by ID",
+     *      @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer"), example=1),
+     *      @OA\Response(response=200, description="Leave policy deleted successfully")
+     * )
+     */
     public function destroy($id)
     {
         try {

@@ -22,6 +22,23 @@ class TripAPiController extends Controller
 
 
 
+    /**
+     * @OA\Get(
+     *     path="/api/trips/list",
+     *     summary="Get trips list",
+     *     tags={"Trips"},
+     *     security={{"sanctum":{}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="status", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Trip list fetched successfully"),
+     *             @OA\Property(property="trips", type="array", @OA\Items(type="object"))
+     *         )
+     *     )
+     * )
+     */
     public function index()
     {
         try {
@@ -87,6 +104,45 @@ class TripAPiController extends Controller
 
 
 
+    /**
+     * @OA\Post(
+     *     path="/api/trips/create",
+     *     summary="Create a new trip",
+     *     tags={"Trips"},
+     *     security={{"sanctum":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"customer_name","customer_phone","title","start_time","status","start_latitude","start_longitude","end_latitude","end_longitude","from_address","to_address"},
+     *             @OA\Property(property="customer_name", type="string", example="Acme Corp"),
+     *             @OA\Property(property="customer_phone", type="string", example="9876543210"),
+     *             @OA\Property(property="customer_address", type="string", example="Delhi"),
+     *             @OA\Property(property="title", type="string", example="Delivery Trip #1"),
+     *             @OA\Property(property="start_time", type="string", format="date-time", example="2026-09-26 10:00:00"),
+     *             @OA\Property(property="end_time", type="string", format="date-time", example="2026-09-26 18:00:00"),
+     *             @OA\Property(property="notes", type="string", example="Fragile cargo"),
+     *             @OA\Property(property="status", type="string", enum={"pending","completed","cancelled"}, example="pending"),
+     *             @OA\Property(property="start_latitude", type="number", example=28.6139),
+     *             @OA\Property(property="start_longitude", type="number", example=77.2090),
+     *             @OA\Property(property="end_latitude", type="number", example=28.7041),
+     *             @OA\Property(property="end_longitude", type="number", example=77.1025),
+     *             @OA\Property(property="from_address", type="string", example="New Delhi"),
+     *             @OA\Property(property="to_address", type="string", example="Gurgaon"),
+     *             @OA\Property(property="driver_id", type="integer", example=5),
+     *             @OA\Property(property="vehicle_id", type="integer", example=1)
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="status", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Trip created successfully"),
+     *             @OA\Property(property="trip", type="object")
+     *         )
+     *     )
+     * )
+     */
     public function store(Request $request)
     {
         try {
@@ -233,6 +289,85 @@ class TripAPiController extends Controller
         }
     }
 
+    /**
+     * @OA\Get(
+     *     path="/api/trips/edit/{id}",
+     *     summary="Get Trip Details for Editing",
+     *     tags={"Trips"},
+     *     security={{"sanctum":{}}},
+     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer", example=1)),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Trip retrieved successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="status", type="boolean", example=true),
+     *             @OA\Property(property="data", type="object")
+     *         )
+     *     )
+     * )
+     */
+    public function edit($id)
+    {
+        try {
+            $company_id = Auth::id();
+            $trip = Trip::with(['customerInfo', 'vehicle', 'driver'])
+                ->where('company_id', $company_id)
+                ->where('id', $id)
+                ->first();
+
+            if (!$trip) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Trip not found'
+                ], 404);
+            }
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Trip retrieved successfully',
+                'data' => $trip
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Failed to retrieve trip: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * @OA\Post(
+     *     path="/api/trips/update/{id}",
+     *     summary="Update a trip",
+     *     tags={"Trips"},
+     *     security={{"sanctum":{}}},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         description="Trip ID",
+     *         @OA\Schema(type="integer", example=1)
+     *     ),
+     *     @OA\RequestBody(
+     *         required=false,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="title", type="string", example="Delivery Trip Updated"),
+     *             @OA\Property(property="status", type="string", example="completed"),
+     *             @OA\Property(property="driver_id", type="integer", example=5),
+     *             @OA\Property(property="vehicle_id", type="integer", example=1)
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Updated successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="status", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Trip updated successfully"),
+     *             @OA\Property(property="trip", type="object")
+     *         )
+     *     )
+     * )
+     */
     public function update(Request $request, $id)
     {
         try {
@@ -497,6 +632,30 @@ class TripAPiController extends Controller
     // }
 
 
+    /**
+     * @OA\Post(
+     *     path="/api/trips/details",
+     *     summary="Get trip details",
+     *     tags={"Trips"},
+     *     security={{"sanctum":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"trip_id"},
+     *             @OA\Property(property="trip_id", type="integer", example=1)
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="status", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Trip details fetched successfully"),
+     *             @OA\Property(property="trip", type="object")
+     *         )
+     *     )
+     * )
+     */
     public function show(Request $request)
     {
         try {
@@ -647,6 +806,29 @@ class TripAPiController extends Controller
 
 
 
+    /**
+     * @OA\Post(
+     *     path="/api/trips/delete",
+     *     summary="Delete a trip",
+     *     tags={"Trips"},
+     *     security={{"sanctum":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"trip_id"},
+     *             @OA\Property(property="trip_id", type="integer", example=1)
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Deleted successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="status", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Trip deleted successfully")
+     *         )
+     *     )
+     * )
+     */
     public function destroy(Request $request)
     {
         try {
@@ -702,6 +884,23 @@ class TripAPiController extends Controller
     }
 
 
+    /**
+     * @OA\Post(
+     *     path="/api/trips/drivers/list",
+     *     summary="Get driver list for trips",
+     *     tags={"Trips"},
+     *     security={{"sanctum":{}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="status", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Driver list fetched successfully"),
+     *             @OA\Property(property="drivers", type="array", @OA\Items(type="object"))
+     *         )
+     *     )
+     * )
+     */
     public function driverList(Request $request)
     {
         try {
@@ -851,6 +1050,23 @@ class TripAPiController extends Controller
 
 
 
+    /**
+     * @OA\Post(
+     *     path="/api/trips/dashboard",
+     *     summary="Get trips dashboard stats",
+     *     tags={"Trips"},
+     *     security={{"sanctum":{}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="status", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Dashboard stats fetched successfully"),
+     *             @OA\Property(property="data", type="object")
+     *         )
+     *     )
+     * )
+     */
     public function dashboard(Request $request)
     {
         try {
@@ -978,6 +1194,30 @@ class TripAPiController extends Controller
 
 
 
+    /**
+     * @OA\Post(
+     *     path="/api/trips/assign-driver",
+     *     summary="Assign driver to trip",
+     *     tags={"Trips"},
+     *     security={{"sanctum":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"trip_id","driver_id"},
+     *             @OA\Property(property="trip_id", type="integer", example=1),
+     *             @OA\Property(property="driver_id", type="integer", example=5)
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Assigned successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="status", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Driver assigned successfully")
+     *         )
+     *     )
+     * )
+     */
     public function assignDriver(Request $request)
     {
         $company_id = Auth::id();
@@ -1014,6 +1254,30 @@ class TripAPiController extends Controller
         ], 200);
     }
 
+    /**
+     * @OA\Post(
+     *     path="/api/trips/assign-vehicle",
+     *     summary="Assign vehicle to trip",
+     *     tags={"Trips"},
+     *     security={{"sanctum":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"trip_id","vehicle_id"},
+     *             @OA\Property(property="trip_id", type="integer", example=1),
+     *             @OA\Property(property="vehicle_id", type="integer", example=1)
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Assigned successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="status", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Vehicle assigned successfully")
+     *         )
+     *     )
+     * )
+     */
     public function assignVehicle(Request $request)
     {
         $company_id = Auth::id();
@@ -1052,6 +1316,31 @@ class TripAPiController extends Controller
 
 
 
+    /**
+     * @OA\Post(
+     *     path="/api/trips/check-vehicle-availability",
+     *     summary="Check vehicle availability for trip dates",
+     *     tags={"Trips"},
+     *     security={{"sanctum":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"vehicle_id","start_time"},
+     *             @OA\Property(property="vehicle_id", type="integer", example=1),
+     *             @OA\Property(property="start_time", type="string", format="date-time", example="2026-09-26 10:00:00"),
+     *             @OA\Property(property="end_time", type="string", format="date-time", example="2026-09-26 18:00:00")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="status", type="boolean", example=true),
+     *             @OA\Property(property="available", type="boolean", example=true)
+     *         )
+     *     )
+     * )
+     */
     public function checkVehicleAvailability(Request $request)
     {
         $company_id = Auth::id();
@@ -1082,6 +1371,31 @@ class TripAPiController extends Controller
 
 
 
+    /**
+     * @OA\Post(
+     *     path="/api/trips/check-driver-availability",
+     *     summary="Check driver availability for trip dates",
+     *     tags={"Trips"},
+     *     security={{"sanctum":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"driver_id","start_time"},
+     *             @OA\Property(property="driver_id", type="integer", example=5),
+     *             @OA\Property(property="start_time", type="string", format="date-time", example="2026-09-26 10:00:00"),
+     *             @OA\Property(property="end_time", type="string", format="date-time", example="2026-09-26 18:00:00")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="status", type="boolean", example=true),
+     *             @OA\Property(property="available", type="boolean", example=true)
+     *         )
+     *     )
+     * )
+     */
     public function checkDriverAvailability(Request $request)
     {
         $company_id = Auth::id();
@@ -1163,6 +1477,38 @@ class TripAPiController extends Controller
 
 
 
+    /**
+     * @OA\Post(
+     *     path="/api/trips/trip-start-end",
+     *     summary="Perform trip start, pause, resume or end action",
+     *     tags={"Trips"},
+     *     security={{"sanctum":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\MediaType(
+     *             mediaType="multipart/form-data",
+     *             @OA\Schema(
+     *                 required={"company_id","trip_id","type","lat","long","image"},
+     *                 @OA\Property(property="company_id", type="integer", example=1),
+     *                 @OA\Property(property="trip_id", type="integer", example=1),
+     *                 @OA\Property(property="type", type="string", enum={"start","pause","resume","end"}, example="start"),
+     *                 @OA\Property(property="lat", type="number", example=28.6139),
+     *                 @OA\Property(property="long", type="number", example=77.2090),
+     *                 @OA\Property(property="odometer", type="number", example=12345),
+     *                 @OA\Property(property="image", type="string", format="binary")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Action processed successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="status", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Trip action updated successfully")
+     *         )
+     *     )
+     * )
+     */
     public function tripAction(Request $request)
     {
         $validator = Validator::make($request->all(), [

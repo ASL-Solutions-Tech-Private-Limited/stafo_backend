@@ -10,7 +10,24 @@ use Illuminate\Support\Facades\Auth;
 
 class HelpAndSupportController extends Controller
 {
-    // Store Help and Support request
+    /**
+     * @OA\Post(
+     *      path="/api/help-and-support/create",
+     *      operationId="createHelpAndSupport",
+     *      tags={"Help & Support"},
+     *      security={{"sanctum":{}}},
+     *      summary="Submit a help and support ticket",
+     *      @OA\RequestBody(
+     *          required=false,
+     *          @OA\JsonContent(
+     *              @OA\Property(property="title", type="string", example="Need help with attendance device setup"),
+     *              @OA\Property(property="description", type="string", example="Facing issue during QR check"),
+     *              @OA\Property(property="contact_number", type="string", example="9876543210")
+     *          )
+     *      ),
+     *      @OA\Response(response=201, description="Ticket created successfully")
+     * )
+     */
     public function store(Request $request)
     {
 
@@ -46,7 +63,16 @@ class HelpAndSupportController extends Controller
         ], 201);
     }
 
-    // Get all Help and Support requests for the authenticated company
+    /**
+     * @OA\Get(
+     *      path="/api/help-and-support/list",
+     *      operationId="listHelpAndSupport",
+     *      tags={"Help & Support"},
+     *      security={{"sanctum":{}}},
+     *      summary="List all help & support tickets for authenticated company",
+     *      @OA\Response(response=200, description="Support tickets fetched successfully")
+     * )
+     */
     public function index()
     {
         $company_id = Auth::id();
@@ -60,7 +86,18 @@ class HelpAndSupportController extends Controller
         ], 200);
     }
 
-    // Get a specific Help and Support request by ID
+    /**
+     * @OA\Get(
+     *      path="/api/help-and-support/details/{id}",
+     *      operationId="showHelpAndSupport",
+     *      tags={"Help & Support"},
+     *      security={{"sanctum":{}}},
+     *      summary="Get details of a specific help & support ticket",
+     *      @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer"), example=1),
+     *      @OA\Response(response=200, description="Ticket details fetched successfully"),
+     *      @OA\Response(response=404, description="Ticket not found")
+     * )
+     */
     public function show($id)
     {
         $company_id = Auth::id();
@@ -80,7 +117,25 @@ class HelpAndSupportController extends Controller
         ], 200);
     }
 
-    // Update Help and Support request
+    /**
+     * @OA\Put(
+     *      path="/api/help-and-support/update/{id}",
+     *      operationId="updateHelpAndSupport",
+     *      tags={"Help & Support"},
+     *      security={{"sanctum":{}}},
+     *      summary="Update a help & support ticket",
+     *      @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer"), example=1),
+     *      @OA\RequestBody(
+     *          required=false,
+     *          @OA\JsonContent(
+     *              @OA\Property(property="title", type="string", example="Updated ticket subject"),
+     *              @OA\Property(property="description", type="string", example="Updated issue details"),
+     *              @OA\Property(property="contact_number", type="string", example="9876543210")
+     *          )
+     *      ),
+     *      @OA\Response(response=200, description="Ticket updated successfully")
+     * )
+     */
     public function update(Request $request, $id)
     {
         // Validation rules
@@ -124,7 +179,17 @@ class HelpAndSupportController extends Controller
         ], 200);
     }
 
-    // Delete Help and Support request
+    /**
+     * @OA\Delete(
+     *      path="/api/help-and-support/delete/{id}",
+     *      operationId="deleteHelpAndSupport",
+     *      tags={"Help & Support"},
+     *      security={{"sanctum":{}}},
+     *      summary="Delete a help & support ticket",
+     *      @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer"), example=1),
+     *      @OA\Response(response=200, description="Ticket deleted successfully")
+     * )
+     */
     public function destroy($id)
     {
         $company_id = Auth::id();

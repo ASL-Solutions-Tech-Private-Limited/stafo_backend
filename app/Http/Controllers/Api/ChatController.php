@@ -9,6 +9,30 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class ChatController extends Controller
 {
+    /**
+     * @OA\Post(
+     *     path="/api/chat/send",
+     *     summary="Send a chat message",
+     *     tags={"Chat"},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"company_id","message"},
+     *             @OA\Property(property="company_id", type="integer", example=1),
+     *             @OA\Property(property="message", type="string", example="Hello support, need assistance.")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Chat sent successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Chat send successfully."),
+     *             @OA\Property(property="data", type="object")
+     *         )
+     *     )
+     * )
+     */
     public function sendchat(Request $request)
     {
         try {
@@ -38,6 +62,29 @@ class ChatController extends Controller
         }
     }
 
+    /**
+     * @OA\Post(
+     *     path="/api/chat/get",
+     *     summary="Get chat history for company",
+     *     tags={"Chat"},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"company_id"},
+     *             @OA\Property(property="company_id", type="integer", example=1)
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Chats retrieved successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Chats retrieved successfully."),
+     *             @OA\Property(property="data", type="array", @OA\Items(type="object"))
+     *         )
+     *     )
+     * )
+     */
     public function getChat(Request $request)
     {
         try {

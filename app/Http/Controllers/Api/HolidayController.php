@@ -39,6 +39,17 @@ class HolidayController extends Controller
     //     }
     // }
 
+    /**
+     * @OA\Get(
+     *      path="/api/holidays",
+     *      operationId="getHolidaysList",
+     *      tags={"Holidays"},
+     *      summary="List Holidays",
+     *      security={{"sanctum":{}}},
+     *      @OA\Parameter(name="company_id", in="query", required=false, @OA\Schema(type="integer", example=1)),
+     *      @OA\Response(response=200, description="Holidays fetched successfully")
+     * )
+     */
     public function index(Request $request)
     {
         try {
@@ -72,6 +83,32 @@ class HolidayController extends Controller
 
 
 
+    /**
+     * @OA\Post(
+     *      path="/api/holidays-create",
+     *      operationId="createHolidays",
+     *      tags={"Holidays"},
+     *      summary="Create Holidays",
+     *      security={{"sanctum":{}}},
+     *      @OA\RequestBody(
+     *          required=true,
+     *          @OA\JsonContent(
+     *              required={"holidays"},
+     *              @OA\Property(
+     *                  property="holidays",
+     *                  type="array",
+     *                  @OA\Items(
+     *                      @OA\Property(property="title", type="string", example="Diwali"),
+     *                      @OA\Property(property="description", type="string", example="Festival of Lights"),
+     *                      @OA\Property(property="start_date", type="string", format="date", example="2026-11-01"),
+     *                      @OA\Property(property="end_date", type="string", format="date", example="2026-11-02")
+     *                  )
+     *              )
+     *          )
+     *      ),
+     *      @OA\Response(response=201, description="Holidays created successfully")
+     * )
+     */
     public function store(Request $request)
     {
         try {
@@ -127,8 +164,25 @@ class HolidayController extends Controller
 
 
 
-    // Edit a holiday
-
+    /**
+     * @OA\Put(
+     *      path="/api/holidays-update/{id}",
+     *      operationId="updateHoliday",
+     *      tags={"Holidays"},
+     *      summary="Update Holiday",
+     *      security={{"sanctum":{}}},
+     *      @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer", example=1)),
+     *      @OA\RequestBody(
+     *          required=true,
+     *          @OA\JsonContent(
+     *              @OA\Property(property="title", type="string", example="Diwali Holiday"),
+     *              @OA\Property(property="start_date", type="string", format="date", example="2026-11-01"),
+     *              @OA\Property(property="end_date", type="string", format="date", example="2026-11-03")
+     *          )
+     *      ),
+     *      @OA\Response(response=200, description="Holiday updated successfully")
+     * )
+     */
     public function update(Request $request, $id)
     {
         try {
@@ -177,7 +231,16 @@ class HolidayController extends Controller
 
 
 
-    // Get all holidays for a specific company
+    /**
+     * @OA\Get(
+     *      path="/api/holidays/by-company",
+     *      operationId="getHolidaysByCompany",
+     *      tags={"Holidays"},
+     *      summary="Get Holidays by Company",
+     *      security={{"sanctum":{}}},
+     *      @OA\Response(response=200, description="Holidays fetched successfully")
+     * )
+     */
     public function holidayGetById(Request $request)
     {
         try {
@@ -217,7 +280,17 @@ class HolidayController extends Controller
 
 
 
-    // Delete a holiday
+    /**
+     * @OA\Delete(
+     *      path="/api/holidays-delete/{id}",
+     *      operationId="deleteHoliday",
+     *      tags={"Holidays"},
+     *      summary="Delete Holiday",
+     *      security={{"sanctum":{}}},
+     *      @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer", example=1)),
+     *      @OA\Response(response=200, description="Holiday deleted successfully")
+     * )
+     */
     public function destroy($id)
     {
         try {

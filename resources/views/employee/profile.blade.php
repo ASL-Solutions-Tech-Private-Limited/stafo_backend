@@ -33,6 +33,7 @@
         border-radius: 50%;
         border: 3px solid #ffffff;
         box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+        transition: all 0.2s ease;
     }
 
     .profile-avatar-btn {
@@ -149,6 +150,167 @@
         .profile-page-title {
             font-size: 1.25rem !important;
         }
+    }
+
+    /* ========================================================
+       Dark Mode Engine for Profile Page (Matches Dashboard)
+       ======================================================== */
+    [data-theme="dark"] .profile-hero-card {
+        background: #111c30 !important;
+        border-color: rgba(255, 255, 255, 0.08) !important;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35) !important;
+        color: #f8fafc !important;
+    }
+    [data-theme="dark"] .profile-hero-card:hover {
+        border-color: rgba(255, 255, 255, 0.15) !important;
+    }
+
+    [data-theme="dark"] .profile-avatar-img {
+        border-color: #111c30 !important;
+        box-shadow: 0 4px 18px rgba(0, 0, 0, 0.6) !important;
+    }
+    [data-theme="dark"] .profile-avatar-btn {
+        background: #059669 !important;
+        border-color: #111c30 !important;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5) !important;
+    }
+    [data-theme="dark"] #profileAvatarFallbackMain {
+        background: rgba(16, 185, 129, 0.18) !important;
+        color: #34d399 !important;
+    }
+
+    [data-theme="dark"] .profile-info-tile {
+        background-color: #0d1527 !important;
+        border-color: rgba(255, 255, 255, 0.07) !important;
+    }
+    [data-theme="dark"] .profile-info-tile:hover {
+        background-color: #16243f !important;
+        border-color: rgba(52, 211, 153, 0.35) !important;
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3) !important;
+    }
+    [data-theme="dark"] .profile-info-label {
+        color: #94a3b8 !important;
+    }
+    [data-theme="dark"] .profile-info-val {
+        color: #f8fafc !important;
+    }
+
+    [data-theme="dark"] .list-group-item {
+        background-color: transparent !important;
+        border-color: rgba(255, 255, 255, 0.08) !important;
+        color: #f8fafc !important;
+    }
+    [data-theme="dark"] .border-top,
+    [data-theme="dark"] .border-bottom {
+        border-color: rgba(255, 255, 255, 0.08) !important;
+    }
+
+    [data-theme="dark"] .bg-light {
+        background-color: #0d1527 !important;
+        color: #cbd5e1 !important;
+        border-color: rgba(255, 255, 255, 0.08) !important;
+    }
+
+    [data-theme="dark"] .btn-light {
+        background-color: rgba(255, 255, 255, 0.06) !important;
+        color: #e2e8f0 !important;
+        border-color: rgba(255, 255, 255, 0.12) !important;
+    }
+    [data-theme="dark"] .btn-light:hover {
+        background-color: rgba(255, 255, 255, 0.15) !important;
+        color: #34d399 !important;
+        border-color: rgba(52, 211, 153, 0.4) !important;
+    }
+
+    [data-theme="dark"] .btn-outline-info {
+        color: #38bdf8 !important;
+        border-color: rgba(56, 189, 248, 0.4) !important;
+        background-color: rgba(56, 189, 248, 0.08) !important;
+    }
+    [data-theme="dark"] .btn-outline-info:hover {
+        color: #ffffff !important;
+        background-color: #0284c7 !important;
+        border-color: #0284c7 !important;
+    }
+
+    [data-theme="dark"] .btn-outline-success {
+        color: #34d399 !important;
+        border-color: rgba(16, 185, 129, 0.4) !important;
+        background-color: rgba(16, 185, 129, 0.08) !important;
+    }
+    [data-theme="dark"] .btn-outline-success:hover {
+        color: #ffffff !important;
+        background-color: #059669 !important;
+        border-color: #059669 !important;
+    }
+
+    /* Modal Dark Theme */
+    [data-theme="dark"] #editProfileModal .modal-content {
+        background-color: #111c30 !important;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        color: #f8fafc !important;
+        box-shadow: 0 24px 50px -12px rgba(0, 0, 0, 0.8) !important;
+    }
+    [data-theme="dark"] #editProfileModal .modal-header {
+        background: linear-gradient(135deg, #022c22 0%, #064e3b 45%, #0c4a6e 100%) !important;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+    }
+    [data-theme="dark"] #editProfileModal .modal-body {
+        background-color: #111c30 !important;
+        color: #f8fafc !important;
+    }
+    [data-theme="dark"] #editProfileModal .modal-footer {
+        background-color: #0d1527 !important;
+        border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+    }
+    [data-theme="dark"] #editProfileModal .nav-pills .nav-link {
+        color: #94a3b8 !important;
+        background: transparent;
+    }
+    [data-theme="dark"] #editProfileModal .nav-pills .nav-link:hover {
+        color: #f8fafc !important;
+        background-color: rgba(255, 255, 255, 0.06) !important;
+    }
+    [data-theme="dark"] #editProfileModal .nav-pills .nav-link.active {
+        background: var(--stafo-brand-gradient) !important;
+        color: #ffffff !important;
+        box-shadow: 0 4px 14px rgba(16, 185, 129, 0.4) !important;
+    }
+    [data-theme="dark"] #editProfileModal .form-control,
+    [data-theme="dark"] #editProfileModal .form-select {
+        background-color: #0b1324 !important;
+        border: 1px solid rgba(255, 255, 255, 0.12) !important;
+        color: #f8fafc !important;
+    }
+    [data-theme="dark"] #editProfileModal .form-control:focus,
+    [data-theme="dark"] #editProfileModal .form-select:focus {
+        background-color: #0e172a !important;
+        border-color: #10b981 !important;
+        color: #ffffff !important;
+        box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.25) !important;
+    }
+    [data-theme="dark"] #editProfileModal .form-control:disabled,
+    [data-theme="dark"] #editProfileModal .form-control[readonly] {
+        background-color: #070c18 !important;
+        border-color: rgba(255, 255, 255, 0.06) !important;
+        color: #64748b !important;
+    }
+    [data-theme="dark"] #editProfileModal .form-label {
+        color: #cbd5e1 !important;
+    }
+    [data-theme="dark"] #editProfileModal .alert-info {
+        background-color: rgba(2, 132, 199, 0.15) !important;
+        border: 1px solid rgba(56, 189, 248, 0.25) !important;
+        color: #7dd3fc !important;
+    }
+    [data-theme="dark"] #editProfileModal .alert-light {
+        background-color: rgba(255, 255, 255, 0.05) !important;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        color: #cbd5e1 !important;
+    }
+    [data-theme="dark"] #editProfileModal #modalAvatarFallback {
+        background-color: rgba(16, 185, 129, 0.18) !important;
+        color: #34d399 !important;
     }
 </style>
 

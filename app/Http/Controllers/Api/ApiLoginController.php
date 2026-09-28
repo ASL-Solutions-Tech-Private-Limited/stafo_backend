@@ -25,6 +25,37 @@ use App\Models\GraceSetting;
 class ApiLoginController extends Controller
 {
 
+    /**
+     * @OA\Post(
+     *      path="/api/register",
+     *      operationId="registerCompany",
+     *      tags={"Authentication"},
+     *      summary="Register a new Company",
+     *      description="Registers a company along with owner details",
+     *      @OA\RequestBody(
+     *          required=true,
+     *          @OA\JsonContent(
+     *              @OA\Property(property="company_info", type="object",
+     *                  @OA\Property(property="company_name", type="string", example="Tech Solutions"),
+     *                  @OA\Property(property="email", type="string", example="info@techsolutions.com"),
+     *                  @OA\Property(property="mobile_no", type="string", example="9876543210"),
+     *                  @OA\Property(property="address", type="string", example="123 Street"),
+     *                  @OA\Property(property="city", type="string", example="Mumbai"),
+     *                  @OA\Property(property="state", type="string", example="Maharashtra"),
+     *                  @OA\Property(property="pin", type="string", example="400001")
+     *              ),
+     *              @OA\Property(property="owner_info", type="object",
+     *                  @OA\Property(property="name", type="string", example="John Doe"),
+     *                  @OA\Property(property="email", type="string", example="john@techsolutions.com"),
+     *                  @OA\Property(property="mobile", type="string", example="9876543211")
+     *              ),
+     *              @OA\Property(property="referral_code", type="string", example="REF12345")
+     *          )
+     *      ),
+     *      @OA\Response(response=200, description="Successful registration"),
+     *      @OA\Response(response=422, description="Validation Error")
+     * )
+     */
     public function register(Request $request)
     {
 
@@ -173,6 +204,25 @@ class ApiLoginController extends Controller
 
 
 
+    /**
+     * @OA\Post(
+     *      path="/api/login",
+     *      operationId="loginCompany",
+     *      tags={"Authentication"},
+     *      summary="Company Email/Password Login",
+     *      description="Login using company email and password to receive Bearer Token",
+     *      @OA\RequestBody(
+     *          required=true,
+     *          @OA\JsonContent(
+     *              required={"email","password"},
+     *              @OA\Property(property="email", type="string", format="email", example="admin@stafo.in"),
+     *              @OA\Property(property="password", type="string", format="password", example="password123")
+     *          )
+     *      ),
+     *      @OA\Response(response=200, description="Login successful with Sanctum Token"),
+     *      @OA\Response(response=401, description="Invalid Credentials")
+     * )
+     */
     public function login(Request $request)
     {
         // dd("test");
@@ -224,6 +274,24 @@ class ApiLoginController extends Controller
     }
 
 
+    /**
+     * @OA\Post(
+     *      path="/api/send-otp",
+     *      operationId="sendOtp",
+     *      tags={"Authentication"},
+     *      summary="Send OTP for Login",
+     *      description="Sends a 6-digit OTP to the registered mobile number or email for Employee or Company login",
+     *      @OA\RequestBody(
+     *          required=true,
+     *          @OA\JsonContent(
+     *              required={"mobile_number"},
+     *              @OA\Property(property="mobile_number", type="string", example="9876543210")
+     *          )
+     *      ),
+     *      @OA\Response(response=200, description="OTP sent successfully"),
+     *      @OA\Response(response=404, description="User not found")
+     * )
+     */
     public function sendOtp(Request $request)
     {
         try {
@@ -396,6 +464,27 @@ class ApiLoginController extends Controller
 
 
 
+    /**
+     * @OA\Post(
+     *      path="/api/verify-otp",
+     *      operationId="loginWithOtp",
+     *      tags={"Authentication"},
+     *      summary="Verify OTP & Login",
+     *      description="Verifies the 6-digit OTP and authenticates the user, returning a Sanctum Bearer Token and user details",
+     *      @OA\RequestBody(
+     *          required=true,
+     *          @OA\JsonContent(
+     *              required={"mobile_number","otp"},
+     *              @OA\Property(property="mobile_number", type="string", example="9876543210"),
+     *              @OA\Property(property="otp", type="string", example="123456"),
+     *              @OA\Property(property="device_id", type="string", example="device_unique_id_123"),
+     *              @OA\Property(property="fcm_token", type="string", example="fcm_device_token_xyz")
+     *          )
+     *      ),
+     *      @OA\Response(response=200, description="Login successful with Sanctum Token"),
+     *      @OA\Response(response=400, description="Invalid OTP")
+     * )
+     */
     public function loginWithOtp(Request $request)
     {
         try {
@@ -429,6 +518,7 @@ class ApiLoginController extends Controller
             $user_type = 'company';
             if (!$user) {
                 $user = Employee::where('phone', $request->mobile_number)->where('status', '1')->first();
+                // dd($user);
                 $user_type = 'employee';
             }
 
@@ -442,7 +532,9 @@ class ApiLoginController extends Controller
                     // Update the device_id if it's blank
                     $user->device_id = $request->device_id;
                     $user->save();
-                } else {
+                } 
+                
+                else {
                     if ($request->device_id != $user->device_id) {
                         $device = new DeviceSession;
 
@@ -503,6 +595,27 @@ class ApiLoginController extends Controller
         }
     }
 
+    /**
+     * @OA\Post(
+     *      path="/api/change-device",
+     *      operationId="changeDevice",
+     *      tags={"Authentication"},
+     *      summary="Request or process device change",
+     *      description="Submits a device change request or approves it for an employee or company",
+     *      @OA\RequestBody(
+     *          required=true,
+     *          @OA\JsonContent(
+     *              @OA\Property(property="employee_id", type="integer", example=1),
+     *              @OA\Property(property="company_id", type="integer", example=1),
+     *              @OA\Property(property="device_id", type="string", example="abc123deviceid"),
+     *              @OA\Property(property="device_name", type="string", example="Samsung Galaxy S22"),
+     *              @OA\Property(property="status", type="string", enum={"pending", "approve"}, example="pending")
+     *          )
+     *      ),
+     *      @OA\Response(response=200, description="Device change processed"),
+     *      @OA\Response(response=500, description="Server Error")
+     * )
+     */
     public function changeDevice(Request $request)
     {
         try {
@@ -614,6 +727,26 @@ class ApiLoginController extends Controller
         }
     }
 
+    /**
+     * @OA\Post(
+     *      path="/api/company/approve-device",
+     *      operationId="approveDeviceRequest",
+     *      tags={"Authentication"},
+     *      security={{"sanctum":{}}},
+     *      summary="Approve or Reject Employee Device Request",
+     *      description="Allows company admin to approve or reject employee device change request",
+     *      @OA\RequestBody(
+     *          required=true,
+     *          @OA\JsonContent(
+     *              @OA\Property(property="employee_id", type="integer", example=1),
+     *              @OA\Property(property="status", type="string", enum={"approve", "reject"}, example="approve"),
+     *              @OA\Property(property="device_id", type="string", example="abc123deviceid")
+     *          )
+     *      ),
+     *      @OA\Response(response=200, description="Device status updated"),
+     *      @OA\Response(response=500, description="Server Error")
+     * )
+     */
     public function approveDeviceRequest(Request $request)
     {
         try {
@@ -681,6 +814,25 @@ class ApiLoginController extends Controller
         }
     }
 
+    /**
+     * @OA\Post(
+     *      path="/api/device-requests-list",
+     *      operationId="listDeviceRequests",
+     *      tags={"Authentication"},
+     *      security={{"sanctum":{}}},
+     *      summary="List Device Change Requests",
+     *      description="Returns list of pending/approved/rejected employee device requests",
+     *      @OA\RequestBody(
+     *          required=false,
+     *          @OA\JsonContent(
+     *              @OA\Property(property="company_id", type="integer", example=1),
+     *              @OA\Property(property="status", type="string", enum={"pending", "approved", "rejected"}, example="pending")
+     *          )
+     *      ),
+     *      @OA\Response(response=200, description="Device requests retrieved"),
+     *      @OA\Response(response=500, description="Server Error")
+     * )
+     */
     public function listDeviceRequests(Request $request)
     {
         try {

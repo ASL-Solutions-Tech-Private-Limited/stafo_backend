@@ -11,6 +11,22 @@ use Illuminate\Support\Str;
 
 class BbpsSubCategoryController extends Controller
 {
+    /**
+     * @OA\Get(
+     *     path="/api/bbps-sub-category/list",
+     *     summary="Get BBPS sub categories list",
+     *     tags={"BBPS"},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Sub category list fetched successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Sub category list fetched successfully."),
+     *             @OA\Property(property="data", type="array", @OA\Items(type="object"))
+     *         )
+     *     )
+     * )
+     */
     public function index()
     {
         $subCategories = DcCcBbpsSubCategory::all()->map(function ($item) {
@@ -25,6 +41,33 @@ class BbpsSubCategoryController extends Controller
         ]);
     }
 
+    /**
+     * @OA\Post(
+     *     path="/api/bbps-sub-category/create",
+     *     summary="Create a BBPS sub category",
+     *     tags={"BBPS"},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\MediaType(
+     *             mediaType="multipart/form-data",
+     *             @OA\Schema(
+     *                 required={"category","name"},
+     *                 @OA\Property(property="category", type="string", example="Electricity"),
+     *                 @OA\Property(property="name", type="string", example="North Bihar Power"),
+     *                 @OA\Property(property="img", type="string", format="binary")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Created successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="data", type="object")
+     *         )
+     *     )
+     * )
+     */
     public function store(Request $request)
     {
         try {
@@ -69,6 +112,40 @@ class BbpsSubCategoryController extends Controller
         }
     }
 
+    /**
+     * @OA\Post(
+     *     path="/api/bbps-sub-category/update/{id}",
+     *     summary="Update a BBPS sub category",
+     *     tags={"BBPS"},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         description="Sub Category ID",
+     *         @OA\Schema(type="integer", example=1)
+     *     ),
+     *     @OA\RequestBody(
+     *         required=false,
+     *         @OA\MediaType(
+     *             mediaType="multipart/form-data",
+     *             @OA\Schema(
+     *                 @OA\Property(property="category", type="string", example="Electricity"),
+     *                 @OA\Property(property="name", type="string", example="South Bihar Power"),
+     *                 @OA\Property(property="img", type="string", format="binary")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Updated successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Sub-category updated successfully."),
+     *             @OA\Property(property="data", type="object")
+     *         )
+     *     )
+     * )
+     */
     public function update(Request $request, $id)
     {
         $subCategory = DcCcBbpsSubCategory::find($id);
@@ -129,6 +206,28 @@ class BbpsSubCategoryController extends Controller
 
 
 
+    /**
+     * @OA\Delete(
+     *     path="/api/bbps-sub-category/delete/{id}",
+     *     summary="Delete a BBPS sub category",
+     *     tags={"BBPS"},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         description="Sub Category ID",
+     *         @OA\Schema(type="integer", example=1)
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Deleted successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="sub Category deleted successfully")
+     *         )
+     *     )
+     * )
+     */
     public function destroy($id)
     {
         $subCategory = DcCcBbpsSubCategory::find($id);

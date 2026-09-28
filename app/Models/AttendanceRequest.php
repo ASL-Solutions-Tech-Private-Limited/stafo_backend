@@ -13,11 +13,14 @@ class AttendanceRequest extends Model
         'company_id',
         'branch_id',
         'employee_id',
+        'department_id',
         'attendance',
         'halfday',
         'date',
         'in_time',
         'out_time',
+        'reason',
+        'reject_reason',
         'status',
     ];
 

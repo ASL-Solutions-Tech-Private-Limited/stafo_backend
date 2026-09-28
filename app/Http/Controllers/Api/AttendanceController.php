@@ -23,6 +23,18 @@ class AttendanceController extends Controller
 
   
 
+    /**
+     * @OA\Get(
+     *      path="/api/attendance-list",
+     *      operationId="getAttendanceList",
+     *      tags={"Attendance"},
+     *      summary="List Employee Attendances",
+     *      security={{"sanctum":{}}},
+     *      @OA\Parameter(name="employee_id", in="query", required=false, @OA\Schema(type="integer", example=1)),
+     *      @OA\Parameter(name="month", in="query", required=false, @OA\Schema(type="string", example="2026-09")),
+     *      @OA\Response(response=200, description="Attendances retrieved successfully")
+     * )
+     */
     public function index(Request $request)
     {
          
@@ -153,7 +165,29 @@ class AttendanceController extends Controller
 
 
 
-    //
+    /**
+     * @OA\Post(
+     *      path="/api/attendance",
+     *      operationId="addAttendanceManual",
+     *      tags={"Attendance"},
+     *      summary="Manual Attendance Entry",
+     *      security={{"sanctum":{}}},
+     *      @OA\RequestBody(
+     *          required=true,
+     *          @OA\JsonContent(
+     *              required={"branch_id","employee_id","department_id","attendance","date","in_time"},
+     *              @OA\Property(property="branch_id", type="integer", example=1),
+     *              @OA\Property(property="employee_id", type="integer", example=1),
+     *              @OA\Property(property="department_id", type="integer", example=1),
+     *              @OA\Property(property="attendance", type="string", enum={"Present","Absent","Leave"}, example="Present"),
+     *              @OA\Property(property="date", type="string", format="date", example="2026-09-26"),
+     *              @OA\Property(property="in_time", type="string", example="09:30"),
+     *              @OA\Property(property="out_time", type="string", example="18:30")
+     *          )
+     *      ),
+     *      @OA\Response(response=201, description="Attendance created successfully")
+     * )
+     */
     public function store(Request $request)
     {
         try {
@@ -204,6 +238,38 @@ class AttendanceController extends Controller
         }
     }
 
+    /**
+     * @OA\Post(
+     *     path="/api/attendance/update/{id}",
+     *     summary="Update attendance record",
+     *     tags={"Attendance"},
+     *     security={{"sanctum":{}}},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         description="Attendance ID",
+     *         @OA\Schema(type="integer", example=1)
+     *     ),
+     *     @OA\RequestBody(
+     *         required=false,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="attendance", type="string", enum={"Present","Absent","Leave"}, example="Present"),
+     *             @OA\Property(property="in_time", type="string", example="09:30:00"),
+     *             @OA\Property(property="out_time", type="string", example="18:30:00"),
+     *             @OA\Property(property="halfday", type="integer", example=0)
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Attendance updated successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="status", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Attendance updated successfully")
+     *         )
+     *     )
+     * )
+     */
     public function update(Request $request,$id)
     {
         try {
@@ -271,6 +337,29 @@ class AttendanceController extends Controller
     }
 
     //
+    /**
+     * @OA\Post(
+     *      path="/api/attendance-request",
+     *      operationId="createAttendanceRequest",
+     *      tags={"Attendance"},
+     *      summary="Submit Attendance Regularization Request",
+     *      security={{"sanctum":{}}},
+     *      @OA\RequestBody(
+     *          required=true,
+     *          @OA\JsonContent(
+     *              required={"branch_id","employee_id","department_id","attendance","date","in_time"},
+     *              @OA\Property(property="branch_id", type="integer", example=1),
+     *              @OA\Property(property="employee_id", type="integer", example=1),
+     *              @OA\Property(property="department_id", type="integer", example=1),
+     *              @OA\Property(property="attendance", type="string", enum={"Present","Absent","Leave"}, example="Present"),
+     *              @OA\Property(property="date", type="string", format="date", example="2026-09-26"),
+     *              @OA\Property(property="in_time", type="string", example="09:30"),
+     *              @OA\Property(property="out_time", type="string", example="18:30")
+     *          )
+     *      ),
+     *      @OA\Response(response=201, description="Attendance request created successfully")
+     * )
+     */
     public function attendance_request_store(Request $request)
     {
         try {
@@ -320,6 +409,17 @@ class AttendanceController extends Controller
         }
     }
 
+    /**
+     * @OA\Get(
+     *      path="/api/attendance-request-list",
+     *      operationId="getAttendanceRequestList",
+     *      tags={"Attendance"},
+     *      summary="List Attendance Requests",
+     *      security={{"sanctum":{}}},
+     *      @OA\Parameter(name="employee_id", in="query", required=false, @OA\Schema(type="integer", example=1)),
+     *      @OA\Response(response=200, description="Attendance requests retrieved successfully")
+     * )
+     */
     public function attendance_request_list(Request $request)
     {
         try {
@@ -352,6 +452,36 @@ class AttendanceController extends Controller
         }
     }
 
+    /**
+     * @OA\Post(
+     *     path="/api/attendance-request-status-update/{id}",
+     *     summary="Approve or reject attendance request",
+     *     tags={"Attendance"},
+     *     security={{"sanctum":{}}},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         description="Attendance Request ID",
+     *         @OA\Schema(type="integer", example=1)
+     *     ),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"status"},
+     *             @OA\Property(property="status", type="string", enum={"Approved","Rejected"}, example="Approved")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Status updated successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="status", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Attendance request updated successfully")
+     *         )
+     *     )
+     * )
+     */
     public function attendance_request_status_update(Request $request, $id)
     {
         try {

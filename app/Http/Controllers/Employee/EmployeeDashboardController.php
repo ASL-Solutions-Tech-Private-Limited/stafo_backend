@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Employee;
 
 use App\Http\Controllers\Controller;
+use App\Models\AttendanceRequest;
 use App\Models\Employee;
 use App\Models\Attendance;
 use App\Models\EmployeeLeave;
@@ -582,6 +583,15 @@ class EmployeeDashboardController extends Controller
             'status' => 'pending',
         ]);
 
+        try {
+            Notification::create([
+                'employee_id' => $employee_info->id,
+                'company_id' => $employee_info->company_id,
+                'message' => "{$employee_info->name} applied for {$days} day(s) leave ({$request->from_date} to {$request->to_date}).",
+                'status' => 'unread',
+            ]);
+        } catch (\Throwable $th) {}
+
         return redirect()->route('employee.leaves')->with('success', 'Leave application submitted successfully!');
     }
 
@@ -862,6 +872,15 @@ class EmployeeDashboardController extends Controller
                     Helper::sendPushNotification($employee_info->company->fcm_token, $employee_info->name . " successfully punched out on Web");
                 }
 
+                try {
+                    Notification::create([
+                        'employee_id' => $employee_info->id,
+                        'company_id' => $employee_info->company_id,
+                        'message' => "{$employee_info->name} punched out on Web at " . $nowTime->format('h:i A') . ".",
+                        'status' => 'unread',
+                    ]);
+                } catch (\Throwable $th) {}
+
                 return response()->json([
                     'status' => true,
                     'type' => 'punch_out',
@@ -900,6 +919,15 @@ class EmployeeDashboardController extends Controller
                 if ($employee_info->company && !empty($employee_info->company->fcm_token)) {
                     Helper::sendPushNotification($employee_info->company->fcm_token, $employee_info->name . " successfully punched in on Web");
                 }
+
+                try {
+                    Notification::create([
+                        'employee_id' => $employee_info->id,
+                        'company_id' => $employee_info->company_id,
+                        'message' => "{$employee_info->name} punched in on Web at " . $nowTime->format('h:i A') . ".",
+                        'status' => 'unread',
+                    ]);
+                } catch (\Throwable $th) {}
 
                 return response()->json([
                     'status' => true,
@@ -1314,5 +1342,115 @@ class EmployeeDashboardController extends Controller
                 'message' => 'An error occurred: ' . $e->getMessage()
             ], 500);
         }
+    }
+
+    /**
+     * Display Employee's Missed Punch-Out / Regularization Requests
+     */
+    public function missedPunchouts(Request $request)
+    {
+        $employee = $this->getAuthEmployee();
+        if (!$employee) {
+            return redirect()->route('login');
+        }
+
+        $query = AttendanceRequest::where('employee_id', $employee->id)
+            ->whereNotNull('reason')
+            ->orderBy('id', 'desc');
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        if ($request->filled('date')) {
+            $query->whereDate('date', $request->date);
+        }
+
+        $requests = $query->paginate(15)->withQueryString();
+
+        // Summary counts
+        $totalCount = AttendanceRequest::where('employee_id', $employee->id)->whereNotNull('reason')->count();
+        $pendingCount = AttendanceRequest::where('employee_id', $employee->id)->whereNotNull('reason')->where('status', 'Pending')->count();
+        $approvedCount = AttendanceRequest::where('employee_id', $employee->id)->whereNotNull('reason')->where('status', 'Approved')->count();
+        $rejectedCount = AttendanceRequest::where('employee_id', $employee->id)->whereNotNull('reason')->where('status', 'Rejected')->count();
+
+        return view('employee.missed_punchouts', compact('requests', 'employee', 'totalCount', 'pendingCount', 'approvedCount', 'rejectedCount'));
+    }
+
+    /**
+     * Submit a new Missed Punch-Out / Regularization Request
+     */
+    public function applyMissedPunchout(Request $request)
+    {
+        $employee = $this->getAuthEmployee();
+        if (!$employee) {
+            return redirect()->route('login');
+        }
+
+        $request->validate([
+            'date' => 'required|date|before_or_equal:today',
+            'out_time' => 'required',
+            'reason' => 'required|string|min:5|max:500',
+        ]);
+
+        $empModel = Employee::find($employee->id);
+        if (!$empModel) {
+            return back()->with('error', 'Employee record not found.');
+        }
+
+        // Check if there is already a pending request for this date
+        $alreadyPending = AttendanceRequest::where('employee_id', $empModel->id)
+            ->whereDate('date', $request->date)
+            ->where('status', 'Pending')
+            ->exists();
+
+        if ($alreadyPending) {
+            return back()->with('error', 'You already have a pending regularisation request for ' . date('d M Y', strtotime($request->date)) . '.');
+        }
+
+        // Get in_time from existing Attendance or EmployeePunch record
+        $existingAttendance = Attendance::where('employee_id', $empModel->id)
+            ->whereDate('date', $request->date)
+            ->first();
+
+        $existingPunch = EmployeePunch::where('employee_id', $empModel->id)
+            ->whereDate('punch_in', $request->date)
+            ->first();
+
+        $inTime = null;
+        if ($existingAttendance && !empty($existingAttendance->in_time)) {
+            $inTime = $existingAttendance->in_time;
+        } elseif ($existingPunch && !empty($existingPunch->punch_in)) {
+            $inTime = Carbon::parse($existingPunch->punch_in)->format('H:i:s');
+        }
+
+        // Format out_time
+        $outTimeFormatted = Carbon::parse($request->out_time)->format('H:i:s');
+
+        AttendanceRequest::create([
+            'company_id' => $empModel->company_id,
+            'employee_id' => $empModel->id,
+            'branch_id' => $empModel->branch_id,
+            'department_id' => $empModel->department_id,
+            'attendance' => 'Present',
+            'halfday' => 0,
+            'date' => $request->date,
+            'in_time' => $inTime ?? '09:00:00',
+            'out_time' => $outTimeFormatted,
+            'reason' => $request->reason,
+            'status' => 'Pending',
+        ]);
+
+        // Create in-app notification for company
+        try {
+            Notification::create([
+                'employee_id' => $empModel->id,
+                'company_id' => $empModel->company_id,
+                'message' => $empModel->name . ' submitted a punch-out regularisation request for ' . date('d M Y', strtotime($request->date)) . '.',
+                'status' => 'unread',
+            ]);
+        } catch (\Throwable $th) {}
+
+        return back()->with('success', 'Punch-out regularisation request submitted successfully! Your company manager will review it.');
     }
 }

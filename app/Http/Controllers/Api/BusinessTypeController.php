@@ -10,7 +10,21 @@ use Illuminate\Support\Facades\Validator;
 
 class BusinessTypeController extends Controller
 {
-    // Method for listing all business types
+    /**
+     * @OA\Get(
+     *     path="/api/business-types",
+     *     summary="Get all business types",
+     *     tags={"Company"},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Business types retrieved successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="data", type="array", @OA\Items(type="object"))
+     *         )
+     *     )
+     * )
+     */
     public function index()
     {
         try {
@@ -32,7 +46,30 @@ class BusinessTypeController extends Controller
         }
     }
 
-    // Method for adding a new business type
+    /**
+     * @OA\Post(
+     *     path="/api/business-types",
+     *     summary="Create a new business type",
+     *     tags={"Company"},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"business_name","status"},
+     *             @OA\Property(property="business_name", type="string", example="IT & Software"),
+     *             @OA\Property(property="status", type="boolean", example=true)
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=201,
+     *         description="Created successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Business type created successfully."),
+     *             @OA\Property(property="data", type="object")
+     *         )
+     *     )
+     * )
+     */
     public function store(Request $request)
     {
         try {

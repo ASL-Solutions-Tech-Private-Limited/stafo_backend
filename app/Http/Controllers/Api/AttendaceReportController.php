@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\api;
+namespace App\Http\Controllers\Api;
 
 use Carbon\Carbon;
 use League\Csv\Writer;
@@ -16,6 +16,34 @@ use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 class AttendaceReportController extends Controller
 {
+    /**
+     * @OA\Post(
+     *     path="/api/report/export-attendace",
+     *     summary="Export attendance report",
+     *     tags={"Reports"},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"company_id","start_date","end_date","format"},
+     *             @OA\Property(property="company_id", type="integer", example=1),
+     *             @OA\Property(property="start_date", type="string", format="date", example="2026-09-01"),
+     *             @OA\Property(property="end_date", type="string", format="date", example="2026-09-30"),
+     *             @OA\Property(property="format", type="string", enum={"excel","pdf","csv"}, example="excel"),
+     *             @OA\Property(property="department", type="integer", example=1),
+     *             @OA\Property(property="branch", type="integer", example=1)
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Report generated successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Attendance Excel file has been generated."),
+     *             @OA\Property(property="download_url", type="string", example="https://stafo.in/uploads/excel/attendance_report_20260901_to_20260930.xlsx")
+     *         )
+     *     )
+     * )
+     */
     public function exportAttendance(Request $request)
     {
         $startDate = $request->start_date;
@@ -207,6 +235,29 @@ class AttendaceReportController extends Controller
     }
 
 
+    /**
+     * @OA\Get(
+     *     path="/api/attendace/reports/list",
+     *     summary="Get all generated attendance reports list",
+     *     tags={"Reports"},
+     *     @OA\Parameter(
+     *         name="company_id",
+     *         in="query",
+     *         required=true,
+     *         description="Company ID",
+     *         @OA\Schema(type="integer", example=1)
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Reports listed successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Attendance reports generated for this company."),
+     *             @OA\Property(property="data", type="array", @OA\Items(type="object"))
+     *         )
+     *     )
+     * )
+     */
     public function getAllAttendanceReports(Request $request)
     {
         $companyId = $request->company_id;

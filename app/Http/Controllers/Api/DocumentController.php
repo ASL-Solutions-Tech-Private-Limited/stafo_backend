@@ -12,7 +12,26 @@ use Illuminate\Support\Facades\Validator; // Correct import for Validator
 class DocumentController extends Controller
 {
 
-
+    /**
+     * @OA\Post(
+     *      path="/api/upload-document",
+     *      operationId="uploadCompanyDocument",
+     *      tags={"Documents"},
+     *      security={{"sanctum":{}}},
+     *      summary="Upload company document(s)",
+     *      @OA\RequestBody(
+     *          required=true,
+     *          @OA\MediaType(
+     *              mediaType="multipart/form-data",
+     *              @OA\Schema(
+     *                  @OA\Property(property="document[]", type="array", @OA\Items(type="string", format="binary")),
+     *                  @OA\Property(property="document_type_id[]", type="array", @OA\Items(type="integer"), example={1})
+     *              )
+     *          )
+     *      ),
+     *      @OA\Response(response=200, description="Document uploaded successfully")
+     * )
+     */
     public function uploadDocument(Request $request)
     {
 
@@ -58,6 +77,27 @@ class DocumentController extends Controller
         }
     }
 
+    /**
+     * @OA\Post(
+     *      path="/api/update-document/{document_id}",
+     *      operationId="updateCompanyDocument",
+     *      tags={"Documents"},
+     *      security={{"sanctum":{}}},
+     *      summary="Update company document",
+     *      @OA\Parameter(name="document_id", in="path", required=true, @OA\Schema(type="integer"), example=1),
+     *      @OA\RequestBody(
+     *          required=false,
+     *          @OA\MediaType(
+     *              mediaType="multipart/form-data",
+     *              @OA\Schema(
+     *                  @OA\Property(property="document_type_id", type="integer", example=1),
+     *                  @OA\Property(property="document", type="string", format="binary")
+     *              )
+     *          )
+     *      ),
+     *      @OA\Response(response=200, description="Document updated successfully")
+     * )
+     */
     public function updateDocument(Request $request, $document_id)
     {
         // Validate request parameters
@@ -135,6 +175,17 @@ class DocumentController extends Controller
     }
 
 
+    /**
+     * @OA\Get(
+     *      path="/api/company/{company_id}/documents",
+     *      operationId="getDocumentsByCompany",
+     *      tags={"Documents"},
+     *      security={{"sanctum":{}}},
+     *      summary="Get all documents of a company",
+     *      @OA\Parameter(name="company_id", in="path", required=true, @OA\Schema(type="integer"), example=1),
+     *      @OA\Response(response=200, description="Documents fetched successfully")
+     * )
+     */
     public function getDocumentsByCompany($company_id)
     {
         try {

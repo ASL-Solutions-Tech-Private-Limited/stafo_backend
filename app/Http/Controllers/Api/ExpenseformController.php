@@ -15,10 +15,17 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class ExpenseformController extends Controller
 {
-    // public function __construct()
-    // {
-    //     $this->middleware('auth:sanctum');
-    // }
+    /**
+     * @OA\Get(
+     *      path="/api/expenseform/list",
+     *      operationId="getExpenseFormList",
+     *      tags={"Expenses"},
+     *      security={{"sanctum":{}}},
+     *      summary="List expense custom forms by company",
+     *      @OA\Parameter(name="company_id", in="query", required=true, @OA\Schema(type="integer"), example=1),
+     *      @OA\Response(response=200, description="Expense forms fetched successfully")
+     * )
+     */
     public function index(Request $request)
     {
 
@@ -44,7 +51,34 @@ class ExpenseformController extends Controller
 
 
 
-    // Create a new expenseform
+    /**
+     * @OA\Post(
+     *      path="/api/expenseform/create",
+     *      operationId="createExpenseForm",
+     *      tags={"Expenses"},
+     *      security={{"sanctum":{}}},
+     *      summary="Create a new dynamic expense type form with custom fields",
+     *      @OA\RequestBody(
+     *          required=true,
+     *          @OA\JsonContent(
+     *              @OA\Property(property="company_id", type="integer", example=1),
+     *              @OA\Property(property="type_name", type="string", example="Hotel Stay"),
+     *              @OA\Property(property="description", type="string", example="Hotel accommodation expenses"),
+     *              @OA\Property(property="isDocumentReq", type="integer", example=1),
+     *              @OA\Property(
+     *                  property="fields",
+     *                  type="array",
+     *                  @OA\Items(
+     *                      @OA\Property(property="fieldName", type="string", example="Hotel Name"),
+     *                      @OA\Property(property="fieldType", type="string", example="text"),
+     *                      @OA\Property(property="description", type="string", example="Name of hotel")
+     *                  )
+     *              )
+     *          )
+     *      ),
+     *      @OA\Response(response=201, description="Expense form created")
+     * )
+     */
     public function store(Request $request)
     {
         try {
@@ -93,7 +127,26 @@ class ExpenseformController extends Controller
         }
     }
 
-    // Update an existing expenseform
+    /**
+     * @OA\Post(
+     *      path="/api/expenseform/update/{id}",
+     *      operationId="updateExpenseForm",
+     *      tags={"Expenses"},
+     *      security={{"sanctum":{}}},
+     *      summary="Update dynamic expense form and its fields",
+     *      @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer"), example=1),
+     *      @OA\RequestBody(
+     *          required=false,
+     *          @OA\JsonContent(
+     *              @OA\Property(property="company_id", type="integer", example=1),
+     *              @OA\Property(property="type_name", type="string", example="Hotel Stay Updated"),
+     *              @OA\Property(property="description", type="string", example="Updated description"),
+     *              @OA\Property(property="isDocumentReq", type="integer", example=1)
+     *          )
+     *      ),
+     *      @OA\Response(response=200, description="Expense form updated")
+     * )
+     */
     public function update(Request $request, $type_id)
     {
         try {
@@ -142,7 +195,17 @@ class ExpenseformController extends Controller
         }
     }
 
-    // Delete a expenseform
+    /**
+     * @OA\Delete(
+     *      path="/api/expenseform/delete/{id}",
+     *      operationId="deleteExpenseForm",
+     *      tags={"Expenses"},
+     *      security={{"sanctum":{}}},
+     *      summary="Delete expense custom form",
+     *      @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer"), example=1),
+     *      @OA\Response(response=200, description="Expense form deleted")
+     * )
+     */
     public function destroy($id)
     {
         try {

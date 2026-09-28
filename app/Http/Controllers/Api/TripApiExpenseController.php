@@ -28,6 +28,29 @@ class TripApiExpenseController extends Controller
 
       
 
+    /**
+     * @OA\Post(
+     *     path="/api/trips-expense/list",
+     *     summary="Get list of trip expenses",
+     *     tags={"Trips"},
+     *     security={{"sanctum":{}}},
+     *     @OA\RequestBody(
+     *         required=false,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="trip_id", type="integer", example=1)
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Expenses fetched successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Expenses fetched successfully."),
+     *             @OA\Property(property="data", type="array", @OA\Items(type="object"))
+     *         )
+     *     )
+     * )
+     */
 public function index(Request $request)
 {
     $user = Auth::user();
@@ -120,11 +143,37 @@ public function index(Request $request)
 }
 
 
-
-
-          
-
-
+    /**
+     * @OA\Post(
+     *     path="/api/trips-expense/create",
+     *     summary="Create a new trip expense",
+     *     tags={"Trips"},
+     *     security={{"sanctum":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\MediaType(
+     *             mediaType="multipart/form-data",
+     *             @OA\Schema(
+     *                 required={"trip_id","expense_type","amount"},
+     *                 @OA\Property(property="trip_id", type="integer", example=1),
+     *                 @OA\Property(property="expense_type", type="string", example="Fuel"),
+     *                 @OA\Property(property="amount", type="number", example=1500),
+     *                 @OA\Property(property="note", type="string", example="Diesel refill"),
+     *                 @OA\Property(property="bill_receipt", type="string", format="binary")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Expense created successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Expense created successfully."),
+     *             @OA\Property(property="data", type="object")
+     *         )
+     *     )
+     * )
+     */
  public function store(Request $request)
 {
             $validator = Validator::make($request->all(), [
@@ -204,14 +253,38 @@ public function index(Request $request)
  }
 
 
-
-
-
-
     /**
-     * Update a single trip expense
+     * @OA\Post(
+     *     path="/api/trips-expense/update",
+     *     summary="Update a trip expense",
+     *     tags={"Trips"},
+     *     security={{"sanctum":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\MediaType(
+     *             mediaType="multipart/form-data",
+     *             @OA\Schema(
+     *                 required={"expense_id"},
+     *                 @OA\Property(property="expense_id", type="integer", example=1),
+     *                 @OA\Property(property="trip_id", type="integer", example=1),
+     *                 @OA\Property(property="expense_type", type="string", example="Toll"),
+     *                 @OA\Property(property="amount", type="number", example=200),
+     *                 @OA\Property(property="note", type="string", example="Highway toll"),
+     *                 @OA\Property(property="bill_receipt", type="string", format="binary")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Updated successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Expense updated successfully."),
+     *             @OA\Property(property="data", type="object")
+     *         )
+     *     )
+     * )
      */
-   
 public function update(Request $request)
 {
     $validator = Validator::make($request->all(), [
@@ -275,6 +348,7 @@ public function update(Request $request)
             return response()->json([
                 'success' => false,
                 'message' => 'Expense not found or unauthorized access.',
+                'errors' => $validator->errors(),
             ], 200);
         }
 
@@ -333,60 +407,29 @@ public function update(Request $request)
 }
 
 
-
-
-
     /**
-     * Delete a trip expense
+     * @OA\Post(
+     *     path="/api/trips-expense/delete",
+     *     summary="Delete a trip expense",
+     *     tags={"Trips"},
+     *     security={{"sanctum":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"expense_id"},
+     *             @OA\Property(property="expense_id", type="integer", example=1)
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Deleted successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Expense deleted successfully.")
+     *         )
+     *     )
+     * )
      */
-  
-
-    // public function destroy(Request $request)
-    // {
-    //     $validator = Validator::make($request->all(), [
-    //         'expense_id' => 'required|integer|exists:trip_expenses,id',
-    //     ]);
-
-    //     if ($validator->fails()) {
-    //         return response()->json([
-    //             'success' => false,
-    //             'message' => 'Validation failed.',
-    //             'errors' => $validator->errors(),
-    //         ], 200);
-    //     }
-
-    //     $companyId = Auth::id();
-
-    //     $expense = TripExpense::where('id', $request->expense_id)
-    //         ->where('company_id', $companyId)
-    //         ->first();
-
-    //     if (!$expense) {
-    //         return response()->json([
-    //             'success' => false,
-    //             'message' => 'Expense not found for your company.',
-    //         ], 200);
-    //     }
-
-    //     if ($expense->bill_receipt) {
-    //         $filePath = public_path('uploads/bill_receipt/'.$expense->bill_receipt);
-    //         // dd($filePath);
-    //         if (File::exists($filePath)) {
-    //             File::delete($filePath);
-    //         }
-    //     }
-
-    //     // Delete expense record
-    //     $expense->delete();
-
-    //     return response()->json([
-    //         'success' => true,
-    //         'message' => 'Expense deleted successfully.',
-    //     ]);
-    // }
-
-
- 
 public function destroy(Request $request)
 {
     $validator = Validator::make($request->all(), [

@@ -13,6 +13,22 @@ use Illuminate\Support\Facades\Validator;
 class EmployeeDocumentController extends Controller
 {
 
+    /**
+     * @OA\Post(
+     *      path="/api/employee-documents/list",
+     *      operationId="listEmployeeDocuments",
+     *      tags={"Employee Documents"},
+     *      security={{"sanctum":{}}},
+     *      summary="List all documents of an employee",
+     *      @OA\RequestBody(
+     *          required=true,
+     *          @OA\JsonContent(
+     *              @OA\Property(property="employee_id", type="integer", example=1)
+     *          )
+     *      ),
+     *      @OA\Response(response=200, description="Documents fetched successfully")
+     * )
+     */
     public function index(Request $request)
     {
         $employeeId = $request->input('employee_id');
@@ -34,6 +50,34 @@ class EmployeeDocumentController extends Controller
 
 
 
+    /**
+     * @OA\Post(
+     *      path="/api/employee-documents/create",
+     *      operationId="createEmployeeDocument",
+     *      tags={"Employee Documents"},
+     *      security={{"sanctum":{}}},
+     *      summary="Upload employee documents in batch",
+     *      @OA\RequestBody(
+     *          required=true,
+     *          @OA\MediaType(
+     *              mediaType="multipart/form-data",
+     *              @OA\Schema(
+     *                  @OA\Property(property="employee_id", type="integer", example=1),
+     *                  @OA\Property(
+     *                      property="documents",
+     *                      type="array",
+     *                      @OA\Items(
+     *                          @OA\Property(property="document_type_id", type="integer", example=1),
+     *                          @OA\Property(property="document_name", type="string", example="Aadhaar Card"),
+     *                          @OA\Property(property="file", type="string", format="binary")
+     *                      )
+     *                  )
+     *              )
+     *          )
+     *      ),
+     *      @OA\Response(response=201, description="Documents uploaded successfully")
+     * )
+     */
     public function store(Request $request)
     {
         try {
@@ -132,7 +176,18 @@ class EmployeeDocumentController extends Controller
 
 
 
-    // Show an individual employee document
+    /**
+     * @OA\Get(
+     *      path="/api/employee-documents/show/{id}",
+     *      operationId="showEmployeeDocument",
+     *      tags={"Employee Documents"},
+     *      security={{"sanctum":{}}},
+     *      summary="Get individual employee document",
+     *      @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer"), example=1),
+     *      @OA\Response(response=200, description="Document details"),
+     *      @OA\Response(response=404, description="Document not found")
+     * )
+     */
     public function show($id)
     {
         $document = EmployeeDocument::with('documentType')->find($id);
@@ -144,8 +199,28 @@ class EmployeeDocumentController extends Controller
         return response()->json($document, 200);
     }
 
-    // Update an existing employee document
-
+    /**
+     * @OA\Put(
+     *      path="/api/employee-documents/update/{id}",
+     *      operationId="updateEmployeeDocument",
+     *      tags={"Employee Documents"},
+     *      security={{"sanctum":{}}},
+     *      summary="Update employee document",
+     *      @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer"), example=1),
+     *      @OA\RequestBody(
+     *          required=false,
+     *          @OA\MediaType(
+     *              mediaType="multipart/form-data",
+     *              @OA\Schema(
+     *                  @OA\Property(property="document_type_id", type="integer", example=1),
+     *                  @OA\Property(property="document_name", type="string", example="Updated Aadhaar"),
+     *                  @OA\Property(property="file", type="string", format="binary")
+     *              )
+     *          )
+     *      ),
+     *      @OA\Response(response=200, description="Document updated successfully")
+     * )
+     */
     public function update(Request $request, $id)
     {
         $document = EmployeeDocument::find($id);
@@ -205,7 +280,17 @@ class EmployeeDocumentController extends Controller
     }
 
 
-    // Delete an employee document
+    /**
+     * @OA\Delete(
+     *      path="/api/employee-documents/delete/{id}",
+     *      operationId="deleteEmployeeDocument",
+     *      tags={"Employee Documents"},
+     *      security={{"sanctum":{}}},
+     *      summary="Delete an employee document",
+     *      @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer"), example=1),
+     *      @OA\Response(response=200, description="Document deleted successfully")
+     * )
+     */
     public function destroy($id)
     {
         // Find the document by ID

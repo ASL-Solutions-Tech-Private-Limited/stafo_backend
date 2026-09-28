@@ -11,7 +11,29 @@ use App\Library\CommonFunction;
 
 class BbpsOperatorMasterController extends Controller
 {
-    // List all operators
+    /**
+     * @OA\Post(
+     *     path="/api/bbps-operators/list",
+     *     summary="List BBPS operators by category",
+     *     tags={"BBPS"},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"category"},
+     *             @OA\Property(property="category", type="string", example="Electricity")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Operator list fetched successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Operator list fetched successfully."),
+     *             @OA\Property(property="data", type="array", @OA\Items(type="object"))
+     *         )
+     *     )
+     * )
+     */
     public function index(Request $request)
     {
         try {
@@ -37,7 +59,32 @@ class BbpsOperatorMasterController extends Controller
         }
     }
 
-    // Create new operator
+    /**
+     * @OA\Post(
+     *     path="/api/bbps-operators/create",
+     *     summary="Create a new BBPS operator",
+     *     tags={"BBPS"},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"name","operator_code","category"},
+     *             @OA\Property(property="name", type="string", example="BSPHCL"),
+     *             @OA\Property(property="operator_code", type="string", example="BSPH001"),
+     *             @OA\Property(property="category", type="string", example="Electricity"),
+     *             @OA\Property(property="status", type="integer", example=1)
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=201,
+     *         description="Created successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Operator created successfully."),
+     *             @OA\Property(property="data", type="object")
+     *         )
+     *     )
+     * )
+     */
     public function store(Request $request)
     {
         try {
@@ -78,6 +125,30 @@ class BbpsOperatorMasterController extends Controller
     //     }
     // }
 
+    /**
+     * @OA\Get(
+     *     path="/api/bbps-operators/details/{operator_code}",
+     *     summary="Get BBPS operator details and parameters",
+     *     tags={"BBPS"},
+     *     @OA\Parameter(
+     *         name="operator_code",
+     *         in="path",
+     *         required=true,
+     *         description="BBPS Operator Code",
+     *         @OA\Schema(type="string", example="BSPH001")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Operator details fetched",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="status", type="integer", example=1),
+     *             @OA\Property(property="refid", type="string", example="ABC12345"),
+     *             @OA\Property(property="message", type="string", example="Success"),
+     *             @OA\Property(property="mdmRequestNew", type="object")
+     *         )
+     *     )
+     * )
+     */
     public function show($operator_code)
     {
         // dd($operator_code);
@@ -139,7 +210,36 @@ class BbpsOperatorMasterController extends Controller
 
 
 
-    // Update operator
+    /**
+     * @OA\Post(
+     *     path="/api/bbps-operators/update/{id}",
+     *     summary="Update a BBPS operator",
+     *     tags={"BBPS"},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         description="Operator ID",
+     *         @OA\Schema(type="integer", example=1)
+     *     ),
+     *     @OA\RequestBody(
+     *         required=false,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="name", type="string", example="BSPHCL Updated"),
+     *             @OA\Property(property="status", type="integer", example=1)
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Updated successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Operator updated successfully."),
+     *             @OA\Property(property="data", type="object")
+     *         )
+     *     )
+     * )
+     */
     public function update(Request $request, $id)
     {
 
@@ -167,7 +267,28 @@ class BbpsOperatorMasterController extends Controller
         }
     }
 
-    // Delete operator
+    /**
+     * @OA\Delete(
+     *     path="/api/bbps-operators/delete/{id}",
+     *     summary="Delete a BBPS operator",
+     *     tags={"BBPS"},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         description="Operator ID",
+     *         @OA\Schema(type="integer", example=1)
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Deleted successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Operator deleted successfully.")
+     *         )
+     *     )
+     * )
+     */
     public function destroy($id)
     {
         try {

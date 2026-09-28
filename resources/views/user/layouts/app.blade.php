@@ -98,6 +98,115 @@
             border: 1px solid #334155 !important;
             background-color: #1e293b !important;
         }
+
+        /* Notification Dropdown & Toast */
+        .notification-btn {
+            position: relative;
+            background: rgba(255, 255, 255, 0.08) !important;
+            border-radius: 8px;
+            height: 34px;
+            width: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #ffffff;
+            transition: all 0.2s ease;
+        }
+        .notification-btn:hover {
+            background: rgba(255, 255, 255, 0.16) !important;
+            color: #ffffff;
+            transform: scale(1.05);
+        }
+        .notification-badge {
+            position: absolute;
+            top: -4px;
+            right: -4px;
+            font-size: 0.65rem;
+            padding: 2px 5px;
+            border-radius: 9999px;
+            box-shadow: 0 0 0 2px #0f172a;
+            animation: pulseNotif 2s infinite;
+        }
+        @keyframes pulseNotif {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.18); }
+            100% { transform: scale(1); }
+        }
+        .topbar-notification-menu {
+            width: 340px;
+            max-width: 90vw;
+            border-radius: 14px;
+            border: 1px solid #e2e8f0;
+            padding: 0;
+            overflow: hidden;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+        }
+        [data-theme="dark"] .topbar-notification-menu {
+            border: 1px solid #334155 !important;
+            background-color: #1e293b !important;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+        }
+        .notif-item {
+            padding: 10px 14px;
+            border-bottom: 1px solid #f1f5f9;
+            transition: background 0.2s ease;
+            text-decoration: none !important;
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+        }
+        [data-theme="dark"] .notif-item {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        }
+        .notif-item:hover {
+            background-color: #f8fafc;
+        }
+        [data-theme="dark"] .notif-item:hover {
+            background-color: #0f172a;
+        }
+        .notif-item.unread {
+            background-color: #f0f9ff;
+        }
+        [data-theme="dark"] .notif-item.unread {
+            background-color: rgba(56, 189, 248, 0.08);
+        }
+
+        /* Floating Push Toast Alert */
+        #stafoNotificationToastContainer {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            z-index: 99999;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-width: 380px;
+            pointer-events: none;
+        }
+        .stafo-toast {
+            pointer-events: auto;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: #ffffff;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-left: 4px solid #10b981 !important;
+            border-radius: 12px;
+            padding: 12px 16px;
+            box-shadow: 0 12px 28px rgba(0, 0, 0, 0.35);
+            animation: slideInToast 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            cursor: pointer;
+            transition: all 0.25s ease;
+        }
+        .stafo-toast:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 16px 32px rgba(0, 0, 0, 0.45);
+        }
+        @keyframes slideInToast {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
     </style>
     @yield('css')
 </head>
@@ -140,6 +249,100 @@
                             <i class="fa-solid fa-comment-dots text-warning"></i>
                             <span class="d-none d-lg-inline ms-1 text-light" style="font-size: 0.8rem;">Chat</span>
                         </a>
+                    </div>
+
+                    <!-- Real-Time Push Notifications Dropdown -->
+                    @php
+                        $stafoCompanyId = Auth::id();
+                        $stafoUnreadNotifCount = \App\Models\Notification::where('company_id', $stafoCompanyId)->where('status', 'unread')->count();
+                        $stafoInitialNotifications = \App\Models\Notification::with('employee:id,name,emp_id')
+                            ->where('company_id', $stafoCompanyId)
+                            ->orderBy('id', 'desc')
+                            ->take(12)
+                            ->get();
+                        $stafoLatestId = $stafoInitialNotifications->first() ? $stafoInitialNotifications->first()->id : 0;
+                    @endphp
+                    <div class="dropdown" id="companyNotificationDropdownWrap">
+                        <button class="btn btn-sm btn-outline-light border-0 notification-btn" 
+                                type="button" id="companyNotifDropdownBtn" data-bs-toggle="dropdown" aria-expanded="false"
+                                title="Live Employee Notifications" onclick="requestPushPermission(); fetchCompanyNotifications();">
+                            <i class="fa-solid fa-bell text-warning" style="font-size: 0.95rem;"></i>
+                            <span class="badge bg-danger notification-badge" id="companyNotifBadge" style="{{ $stafoUnreadNotifCount > 0 ? '' : 'display: none;' }}">
+                                {{ $stafoUnreadNotifCount > 99 ? '99+' : $stafoUnreadNotifCount }}
+                            </span>
+                        </button>
+                        <div class="dropdown-menu dropdown-menu-end shadow-lg mt-2 topbar-notification-menu" aria-labelledby="companyNotifDropdownBtn">
+                            <div class="p-3 border-bottom d-flex align-items-center justify-content-between bg-light bg-opacity-50">
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="fa-solid fa-bell text-warning"></i>
+                                    <span class="fw-bold text-dark" style="font-size: 0.88rem;">Live Notifications</span>
+                                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-2 py-0.5 rounded-pill" id="companyNotifHeaderCount" style="{{ $stafoUnreadNotifCount > 0 ? '' : 'display: none;' }}">
+                                        {{ $stafoUnreadNotifCount }} new
+                                    </span>
+                                </div>
+                                <button type="button" class="btn btn-link btn-sm p-0 text-decoration-none text-muted" style="font-size: 0.72rem;" onclick="markAllNotificationsReadDropdown(event)">
+                                    <i class="fa-solid fa-check-double me-1"></i>Mark all read
+                                </button>
+                            </div>
+                            <div id="companyNotifListContainer" style="max-height: 360px; overflow-y: auto;">
+                                @forelse ($stafoInitialNotifications as $notif)
+                                    @php
+                                        $msg = strtolower($notif->message ?? '');
+                                        $url = route('user.dashboard');
+                                        $icon = 'fa-solid fa-bell text-primary';
+                                        if (str_contains($msg, 'punch-out') || str_contains($msg, 'regularisation') || str_contains($msg, 'regularization')) {
+                                            $url = route('user.attendanceRequests.index');
+                                            $icon = 'fa-solid fa-business-time text-warning';
+                                        } elseif (str_contains($msg, 'punch in') || str_contains($msg, 'punched in')) {
+                                            $url = route('attendance.index');
+                                            $icon = 'fa-solid fa-arrow-right-to-bracket text-success';
+                                        } elseif (str_contains($msg, 'punch out') || str_contains($msg, 'punched out')) {
+                                            $url = route('attendance.index');
+                                            $icon = 'fa-solid fa-arrow-right-from-bracket text-danger';
+                                        } elseif (str_contains($msg, 'leave')) {
+                                            $url = route('leaveList');
+                                            $icon = 'fa-solid fa-calendar-minus text-warning';
+                                        } elseif (str_contains($msg, 'location') || str_contains($msg, 'tracking') || str_contains($msg, 'geo')) {
+                                            $url = route('employee.location');
+                                            $icon = 'fa-solid fa-location-dot text-info';
+                                        } elseif (str_contains($msg, 'expense') || str_contains($msg, 'claim')) {
+                                            $url = route('expenseList');
+                                            $icon = 'fa-solid fa-receipt text-success';
+                                        } elseif (str_contains($msg, 'device')) {
+                                            $url = route('deviceList');
+                                            $icon = 'fa-solid fa-fingerprint text-primary';
+                                        }
+                                        $isUnread = $notif->status === 'unread';
+                                    @endphp
+                                    <a href="{{ $url }}" class="notif-item {{ $isUnread ? 'unread' : '' }}" onclick="markSingleReadDropdown({{ $notif->id }})">
+                                        <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0 bg-light" style="width: 34px; height: 34px; font-size: 0.9rem;">
+                                            <i class="{{ $icon }}"></i>
+                                        </div>
+                                        <div class="flex-grow-1 min-w-0">
+                                            <div class="small fw-semibold text-dark {{ $isUnread ? 'fw-bold' : '' }}" style="line-height: 1.35; font-size: 0.82rem;">
+                                                {{ $notif->message }}
+                                            </div>
+                                            <div class="text-muted small d-flex align-items-center justify-content-between mt-1" style="font-size: 0.72rem;">
+                                                <span>{{ $notif->created_at ? $notif->created_at->diffForHumans() : 'Just now' }}</span>
+                                                @if ($isUnread)
+                                                    <span class="badge bg-danger px-1.5 py-0.5 rounded-pill" style="font-size: 0.6rem;">NEW</span>
+                                                @endif
+                                            </div>
+                                        </div>
+                                    </a>
+                                @empty
+                                    <div class="text-center py-4 text-muted small">
+                                        <i class="fa-solid fa-bell-slash fs-4 d-block mb-1 opacity-50"></i>
+                                        No notifications yet
+                                    </div>
+                                @endforelse
+                            </div>
+                            <div class="p-2 border-top bg-light bg-opacity-50 text-center">
+                                <a href="{{ route('user.notifications.index') }}" class="btn btn-link btn-sm p-0 text-decoration-none text-primary fw-semibold" style="font-size: 0.78rem;">
+                                    View All Notifications <i class="fa-solid fa-arrow-right ms-1"></i>
+                                </a>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- Dark / Night Mode Toggle Button -->
@@ -352,8 +555,224 @@
                 document.body.setAttribute('data-bs-theme', currentTheme);
             }
             updateThemeUI(currentTheme);
+
+            // Start Company Real-Time Notification Engine
+            initCompanyNotificationEngine();
         });
+
+        // ========================================================
+        // Company Real-Time Push Notification Engine
+        // ========================================================
+        let lastSeenNotifId = {{ $stafoLatestId ?? 0 }};
+        let isFirstNotifLoad = true;
+
+        function requestPushPermission() {
+            if ('Notification' in window && Notification.permission !== 'granted' && Notification.permission !== 'denied') {
+                Notification.requestPermission();
+            }
+        }
+
+        function playNotificationChime() {
+            try {
+                const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                if (!AudioCtx) return;
+                const audioCtx = new AudioCtx();
+                if (audioCtx.state === 'suspended') {
+                    audioCtx.resume();
+                }
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(587.33, audioCtx.currentTime); // D5
+                osc.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.12); // A5
+                gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.35);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.35);
+            } catch (e) {}
+        }
+
+        function showBrowserPush(title, message, targetUrl) {
+            if ('Notification' in window && Notification.permission === 'granted') {
+                try {
+                    const notif = new Notification(title, {
+                        body: message,
+                        icon: "{{ asset('main/images/logo.png') }}",
+                        badge: "{{ asset('main/images/favicon_io (1)/favicon-32x32.png') }}"
+                    });
+                    notif.onclick = function() {
+                        window.focus();
+                        if (targetUrl) window.location.href = targetUrl;
+                        this.close();
+                    };
+                } catch (e) {}
+            }
+        }
+
+        function showFloatingToast(message, timeAgo, targetUrl, iconClass) {
+            const container = document.getElementById('stafoNotificationToastContainer');
+            if (!container) return;
+
+            const toast = document.createElement('div');
+            toast.className = 'stafo-toast';
+            toast.innerHTML = `
+                <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0 bg-primary bg-opacity-20 text-success" style="width: 38px; height: 38px; font-size: 1rem;">
+                    <i class="${iconClass || 'fa-solid fa-bell'}"></i>
+                </div>
+                <div class="flex-grow-1 min-w-0">
+                    <div class="fw-bold mb-0.5 text-white" style="font-size: 0.85rem;">Employee Activity</div>
+                    <div class="text-light-50 small text-truncate" style="font-size: 0.78rem;">${message}</div>
+                    <small class="text-secondary opacity-75" style="font-size: 0.7rem;">${timeAgo}</small>
+                </div>
+                <button type="button" class="btn-close btn-close-white ms-2" style="font-size: 0.65rem;" onclick="event.stopPropagation(); this.parentElement.remove();"></button>
+            `;
+
+            toast.onclick = function() {
+                if (targetUrl) window.location.href = targetUrl;
+            };
+
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateX(100%)';
+                toast.style.transition = 'all 0.35s ease';
+                setTimeout(() => toast.remove(), 400);
+            }, 6000);
+        }
+
+        function fetchCompanyNotifications() {
+            fetch("{{ route('user.notifications.feed') }}", {
+                headers: {
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status) {
+                    const count = data.unread_count || 0;
+                    const badge = document.getElementById('companyNotifBadge');
+                    const headerCount = document.getElementById('companyNotifHeaderCount');
+                    const listContainer = document.getElementById('companyNotifListContainer');
+
+                    // Update badge
+                    if (badge) {
+                        if (count > 0) {
+                            badge.textContent = count > 99 ? '99+' : count;
+                            badge.style.display = 'inline-block';
+                        } else {
+                            badge.style.display = 'none';
+                        }
+                    }
+
+                    if (headerCount) {
+                        if (count > 0) {
+                            headerCount.textContent = count + ' new';
+                            headerCount.style.display = 'inline-block';
+                        } else {
+                            headerCount.style.display = 'none';
+                        }
+                    }
+
+                    // Check for brand-new notification arrived in real-time
+                    if (data.notifications && data.notifications.length > 0) {
+                        const newest = data.notifications[0];
+                        if (!isFirstNotifLoad && lastSeenNotifId && newest.id > lastSeenNotifId && newest.status === 'unread') {
+                            playNotificationChime();
+                            showFloatingToast(newest.message, newest.time_ago, newest.url, newest.icon);
+                            showBrowserPush("STAFO HRMS Alert", newest.message, newest.url);
+                        }
+                        lastSeenNotifId = newest.id;
+                    }
+
+                    isFirstNotifLoad = false;
+
+                    // Render list inside dropdown
+                    if (listContainer) {
+                        if (!data.notifications || data.notifications.length === 0) {
+                            listContainer.innerHTML = `
+                                <div class="text-center py-4 text-muted small">
+                                    <i class="fa-solid fa-bell-slash fs-4 d-block mb-1 opacity-50"></i>
+                                    No notifications yet
+                                </div>
+                            `;
+                        } else {
+                            let html = '';
+                            data.notifications.forEach(item => {
+                                const isUnread = item.status === 'unread';
+                                html += `
+                                    <a href="${item.url}" class="notif-item ${isUnread ? 'unread' : ''}" onclick="markSingleReadDropdown(${item.id})">
+                                        <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0 bg-light" style="width: 34px; height: 34px; font-size: 0.9rem;">
+                                            <i class="${item.icon}"></i>
+                                        </div>
+                                        <div class="flex-grow-1 min-w-0">
+                                            <div class="small fw-semibold text-dark ${isUnread ? 'fw-bold' : ''}" style="line-height: 1.35; font-size: 0.82rem;">
+                                                ${item.message}
+                                            </div>
+                                            <div class="text-muted small d-flex align-items-center justify-content-between mt-1" style="font-size: 0.72rem;">
+                                                <span>${item.time_ago}</span>
+                                                ${isUnread ? '<span class="badge bg-danger px-1.5 py-0.5 rounded-pill" style="font-size: 0.6rem;">NEW</span>' : ''}
+                                            </div>
+                                        </div>
+                                    </a>
+                                `;
+                            });
+                            listContainer.innerHTML = html;
+                        }
+                    }
+                }
+            })
+            .catch(err => {});
+        }
+
+        function markAllNotificationsReadDropdown(e) {
+            if (e) e.stopPropagation();
+            fetch("{{ route('user.notifications.markRead', 'all') }}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                }
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status) {
+                    fetchCompanyNotifications();
+                }
+            });
+        }
+
+        function markSingleReadDropdown(id) {
+            fetch("{{ url('company/notifications/mark-read') }}/" + id, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                }
+            }).catch(e => {});
+        }
+
+        function initCompanyNotificationEngine() {
+            fetchCompanyNotifications();
+            // Poll every 12 seconds for real-time live employee activity updates
+            if (!window._companyNotifInterval) {
+                window._companyNotifInterval = setInterval(fetchCompanyNotifications, 12000);
+            }
+        }
+
+        // Auto-start notification engine immediately on page load
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initCompanyNotificationEngine);
+        } else {
+            initCompanyNotificationEngine();
+        }
     </script>
+
+    <!-- Floating Toast Notification Container -->
+    <div id="stafoNotificationToastContainer"></div>
 
     @yield('js')
 </body>

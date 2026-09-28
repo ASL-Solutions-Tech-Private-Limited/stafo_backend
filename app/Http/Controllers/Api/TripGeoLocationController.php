@@ -15,6 +15,31 @@ class TripGeoLocationController extends Controller
 {
 
 
+    /**
+     * @OA\Post(
+     *     path="/api/trips-geolocation/create",
+     *     summary="Store trip geo location coordinates",
+     *     tags={"Trips"},
+     *     security={{"sanctum":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"trip_id","latitude","longitude"},
+     *             @OA\Property(property="trip_id", type="integer", example=1),
+     *             @OA\Property(property="latitude", type="number", example=28.6139),
+     *             @OA\Property(property="longitude", type="number", example=77.2090)
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=201,
+     *         description="Location stored successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="status", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Trip geo location submitted successfully.")
+     *         )
+     *     )
+     * )
+     */
 public function storeTripGeoLocation(Request $request)
 {
     try {
@@ -78,6 +103,31 @@ public function storeTripGeoLocation(Request $request)
     }
 }
 
+    /**
+     * @OA\Post(
+     *     path="/api/trips-geolocation/get",
+     *     summary="Get trip geo location track",
+     *     tags={"Trips"},
+     *     security={{"sanctum":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"trip_id"},
+     *             @OA\Property(property="trip_id", type="integer", example=1),
+     *             @OA\Property(property="date", type="string", format="date", example="2026-09-26")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Locations fetched successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="status", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Trip geo location fetched successfully."),
+     *             @OA\Property(property="data", type="array", @OA\Items(type="object"))
+     *         )
+     *     )
+     * )
+     */
 public function getTripGeoLocation(Request $request)
 {
     try {

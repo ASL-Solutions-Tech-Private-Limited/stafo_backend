@@ -13,6 +13,31 @@ class PolicyController extends Controller
 {
 
 
+    /**
+     * @OA\Get(
+     *     path="/api/policy",
+     *     summary="Get company policies",
+     *     tags={"Policy"},
+     *     security={{"sanctum":{}}},
+     *     @OA\Parameter(
+     *         name="company_id",
+     *         in="query",
+     *         required=true,
+     *         description="Company ID",
+     *         @OA\Schema(type="integer", example=1)
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Policies retrieved successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Policies retrieved successfully."),
+     *             @OA\Property(property="file_path", type="string", example="https://stafo.in/uploads/policies"),
+     *             @OA\Property(property="data", type="array", @OA\Items(type="object"))
+     *         )
+     *     )
+     * )
+     */
     public function index(Request $request)
     {
         try {
@@ -32,6 +57,33 @@ class PolicyController extends Controller
         }
     }
 
+    /**
+     * @OA\Post(
+     *     path="/api/policy-create",
+     *     summary="Create / upload a policy",
+     *     tags={"Policy"},
+     *     security={{"sanctum":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\MediaType(
+     *             mediaType="multipart/form-data",
+     *             @OA\Schema(
+     *                 @OA\Property(property="title", type="string", example="Leave Policy 2026"),
+     *                 @OA\Property(property="description", type="string", example="Guidelines for leaves"),
+     *                 @OA\Property(property="file", type="string", format="binary")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Uploaded successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="status", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Policy uploaded successfully")
+     *         )
+     *     )
+     * )
+     */
     public function store(Request $request)
     {
         $request->validate([

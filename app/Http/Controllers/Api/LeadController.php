@@ -19,6 +19,37 @@ class LeadController extends Controller
     // {
     //     $this->middleware('auth:sanctum');
     // }
+    /**
+     * @OA\Get(
+     *     path="/api/lead/list",
+     *     summary="Get lead list",
+     *     tags={"Leads"},
+     *     security={{"sanctum":{}}},
+     *     @OA\Parameter(
+     *         name="company_id",
+     *         in="query",
+     *         required=false,
+     *         description="Company ID",
+     *         @OA\Schema(type="integer", example=1)
+     *     ),
+     *     @OA\Parameter(
+     *         name="employee_id",
+     *         in="query",
+     *         required=false,
+     *         description="Employee ID",
+     *         @OA\Schema(type="integer", example=5)
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Record fetched successfully."),
+     *             @OA\Property(property="data", type="array", @OA\Items(type="object"))
+     *         )
+     *     )
+     * )
+     */
     public function index(Request $request)
     {
 
@@ -46,7 +77,36 @@ class LeadController extends Controller
 
 
 
-    // Create a new branch
+    /**
+     * @OA\Post(
+     *     path="/api/lead/create",
+     *     summary="Create a new lead",
+     *     tags={"Leads"},
+     *     security={{"sanctum":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"company_id","name"},
+     *             @OA\Property(property="company_id", type="integer", example=1),
+     *             @OA\Property(property="employee_id", type="integer", example=5),
+     *             @OA\Property(property="name", type="string", example="John Doe"),
+     *             @OA\Property(property="email", type="string", example="john@example.com"),
+     *             @OA\Property(property="phone", type="string", example="9876543210"),
+     *             @OA\Property(property="status", type="string", example="New"),
+     *             @OA\Property(property="next_date", type="string", format="date", example="2026-09-30")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=201,
+     *         description="Created successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Record added successfully."),
+     *             @OA\Property(property="data", type="object")
+     *         )
+     *     )
+     * )
+     */
     public function store(Request $request)
     {
         try {
@@ -74,7 +134,40 @@ class LeadController extends Controller
         }
     }
 
-    // Update an existing branch
+    /**
+     * @OA\Post(
+     *     path="/api/lead/update/{id}",
+     *     summary="Update a lead",
+     *     tags={"Leads"},
+     *     security={{"sanctum":{}}},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         description="Lead ID",
+     *         @OA\Schema(type="integer", example=1)
+     *     ),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="name", type="string", example="John Doe"),
+     *             @OA\Property(property="email", type="string", example="john@example.com"),
+     *             @OA\Property(property="phone", type="string", example="9876543210"),
+     *             @OA\Property(property="status", type="string", example="In Progress"),
+     *             @OA\Property(property="next_date", type="string", format="date", example="2026-10-05")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Updated successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Record updated successfully."),
+     *             @OA\Property(property="data", type="object")
+     *         )
+     *     )
+     * )
+     */
     public function update(Request $request, $id)
     {
         try {
@@ -111,7 +204,29 @@ class LeadController extends Controller
         }
     }
 
-    // Delete a branch
+    /**
+     * @OA\Delete(
+     *     path="/api/lead/delete/{id}",
+     *     summary="Delete a lead",
+     *     tags={"Leads"},
+     *     security={{"sanctum":{}}},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         description="Lead ID",
+     *         @OA\Schema(type="integer", example=1)
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Deleted successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Record deleted successfully."),
+     *             @OA\Property(property="status", type="boolean", example=true)
+     *         )
+     *     )
+     * )
+     */
     public function destroy($id)
     {
         try {
@@ -140,6 +255,33 @@ class LeadController extends Controller
         }
     }
 
+    /**
+     * @OA\Post(
+     *     path="/api/lead/followup-create",
+     *     summary="Create a lead follow-up",
+     *     tags={"Leads"},
+     *     security={{"sanctum":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"lead_id","next_date"},
+     *             @OA\Property(property="lead_id", type="integer", example=1),
+     *             @OA\Property(property="company_id", type="integer", example=1),
+     *             @OA\Property(property="employee_id", type="integer", example=5),
+     *             @OA\Property(property="next_date", type="string", format="date", example="2026-10-01"),
+     *             @OA\Property(property="remarks", type="string", example="Client asked to call back next week")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=201,
+     *         description="Created successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Record added successfully."),
+     *             @OA\Property(property="data", type="object")
+     *         )
+     *     )
+     * )
+     */
     public function followupStore(Request $request)
     {
         try {
@@ -166,6 +308,30 @@ class LeadController extends Controller
         }
     }
 
+    /**
+     * @OA\Get(
+     *     path="/api/lead/followup-list",
+     *     summary="Get lead follow-ups list",
+     *     tags={"Leads"},
+     *     security={{"sanctum":{}}},
+     *     @OA\Parameter(
+     *         name="lead_id",
+     *         in="query",
+     *         required=true,
+     *         description="Lead ID",
+     *         @OA\Schema(type="integer", example=1)
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Record fetched successfully."),
+     *             @OA\Property(property="data", type="array", @OA\Items(type="object"))
+     *         )
+     *     )
+     * )
+     */
     public function followupList(Request $request)
     {
 
@@ -188,6 +354,42 @@ class LeadController extends Controller
         }
     }
 
+    /**
+     * @OA\Get(
+     *     path="/api/lead/dashboard",
+     *     summary="Get lead dashboard statistics",
+     *     tags={"Leads"},
+     *     security={{"sanctum":{}}},
+     *     @OA\Parameter(
+     *         name="company_id",
+     *         in="query",
+     *         required=false,
+     *         description="Company ID",
+     *         @OA\Schema(type="integer", example=1)
+     *     ),
+     *     @OA\Parameter(
+     *         name="employee_id",
+     *         in="query",
+     *         required=false,
+     *         description="Employee ID",
+     *         @OA\Schema(type="integer", example=5)
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Record fetched successfully."),
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="total_leads", type="integer", example=15),
+     *                 @OA\Property(property="total_followups", type="integer", example=42),
+     *                 @OA\Property(property="total_followups_today", type="integer", example=3),
+     *                 @OA\Property(property="total_followups_today_list", type="array", @OA\Items(type="object"))
+     *             )
+     *         )
+     *     )
+     * )
+     */
     public function dashboard(Request $request)
     {
         try {

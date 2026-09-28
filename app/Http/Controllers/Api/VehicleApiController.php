@@ -56,6 +56,23 @@ class VehicleApiController extends Controller
 //  }
 
 
+    /**
+     * @OA\Get(
+     *     path="/api/vehicles/list",
+     *     summary="Get vehicles list",
+     *     tags={"Vehicles"},
+     *     security={{"sanctum":{}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="status", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Vehicle list fetched successfully"),
+     *             @OA\Property(property="vehicles", type="array", @OA\Items(type="object"))
+     *         )
+     *     )
+     * )
+     */
 public function index()
 {
     try {
@@ -120,9 +137,40 @@ public function index()
 
 
     /**
-     * Store a newly created resource in storage.
+     * @OA\Post(
+     *     path="/api/vehicles/create",
+     *     summary="Create a new vehicle",
+     *     tags={"Vehicles"},
+     *     security={{"sanctum":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\MediaType(
+     *             mediaType="multipart/form-data",
+     *             @OA\Schema(
+     *                 required={"vehicle_no","vehicle_type","fuel","status"},
+     *                 @OA\Property(property="vehicle_no", type="string", example="DL01AB1234"),
+     *                 @OA\Property(property="vehicle_type", type="string", example="Truck"),
+     *                 @OA\Property(property="fuel", type="string", example="Diesel"),
+     *                 @OA\Property(property="load_capacity", type="number", example=5000),
+     *                 @OA\Property(property="speedometer", type="integer", example=12000),
+     *                 @OA\Property(property="rc_number", type="string", example="RC12345678"),
+     *                 @OA\Property(property="status", type="string", enum={"active","inactive","maintenance"}, example="active"),
+     *                 @OA\Property(property="km_travelled", type="integer", example=15000),
+     *                 @OA\Property(property="rc_upload_path", type="string", format="binary")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=201,
+     *         description="Created successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="status", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Vehicle added successfully"),
+     *             @OA\Property(property="vehicle", type="object")
+     *         )
+     *     )
+     * )
      */
-      
      public function store(Request $request)
      { 
     try {
@@ -196,9 +244,29 @@ public function index()
 }
 
     /**
-     * Display the specified resource.
+     * @OA\Post(
+     *     path="/api/vehicles/details",
+     *     summary="Get vehicle details",
+     *     tags={"Vehicles"},
+     *     security={{"sanctum":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"id"},
+     *             @OA\Property(property="id", type="integer", example=1)
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="status", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Vehicle details fetched successfully"),
+     *             @OA\Property(property="vehicle", type="object")
+     *         )
+     *     )
+     * )
      */
-   
         public function show(Request $request)
         {
             try {
@@ -256,9 +324,46 @@ public function index()
 
 
     /**
-     * Update the specified resource in storage.
+     * @OA\Post(
+     *     path="/api/vehicles/update/{id}",
+     *     summary="Update a vehicle",
+     *     tags={"Vehicles"},
+     *     security={{"sanctum":{}}},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         description="Vehicle ID",
+     *         @OA\Schema(type="integer", example=1)
+     *     ),
+     *     @OA\RequestBody(
+     *         required=false,
+     *         @OA\MediaType(
+     *             mediaType="multipart/form-data",
+     *             @OA\Schema(
+     *                 @OA\Property(property="vehicle_no", type="string", example="DL01AB1234"),
+     *                 @OA\Property(property="vehicle_type", type="string", example="Truck"),
+     *                 @OA\Property(property="fuel", type="string", example="Diesel"),
+     *                 @OA\Property(property="load_capacity", type="number", example=6000),
+     *                 @OA\Property(property="speedometer", type="integer", example=13000),
+     *                 @OA\Property(property="rc_number", type="string", example="RC12345678"),
+     *                 @OA\Property(property="status", type="string", enum={"active","inactive","maintenance"}, example="active"),
+     *                 @OA\Property(property="km_travelled", type="integer", example=16000),
+     *                 @OA\Property(property="rc_upload_path", type="string", format="binary")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Updated successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="status", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Vehicle updated successfully"),
+     *             @OA\Property(property="vehicle", type="object")
+     *         )
+     *     )
+     * )
      */
-  
         public function update(Request $request, $id)
         {
             try {
@@ -360,9 +465,28 @@ public function index()
 
 
     /**
-     * Remove the specified resource from storage.
+     * @OA\Post(
+     *     path="/api/vehicles/delete",
+     *     summary="Delete a vehicle",
+     *     tags={"Vehicles"},
+     *     security={{"sanctum":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"vehicle_id"},
+     *             @OA\Property(property="vehicle_id", type="integer", example=1)
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Deleted successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="status", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Vehicle deleted successfully")
+     *         )
+     *     )
+     * )
      */
-  
      public function destroy(Request $request)
     {
         try {
@@ -417,6 +541,30 @@ public function index()
         }
     }
 
+    /**
+     * @OA\Post(
+     *     path="/api/vehicles/status-change",
+     *     summary="Change vehicle status",
+     *     tags={"Vehicles"},
+     *     security={{"sanctum":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"id","status"},
+     *             @OA\Property(property="id", type="integer", example=1),
+     *             @OA\Property(property="status", type="string", enum={"active","inactive","maintenance"}, example="active")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Updated successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="status", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Status changed successfully.")
+     *         )
+     *     )
+     * )
+     */
 public function statusChange(Request $request)
     {
         try {

@@ -24,6 +24,34 @@ use Carbon\CarbonPeriod;
 class SalaryController extends Controller
 {
 
+    /**
+     * @OA\Post(
+     *     path="/api/salarytype/store",
+     *     summary="Create a new salary type",
+     *     tags={"Salary"},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"company_id","amount"},
+     *             @OA\Property(property="company_id", type="integer", example=1),
+     *             @OA\Property(property="payment_type", type="string", example="Monthly"),
+     *             @OA\Property(property="salary_type", type="string", example="Basic"),
+     *             @OA\Property(property="salary_type_description", type="string", example="Basic Salary"),
+     *             @OA\Property(property="amount", type="number", example=25000),
+     *             @OA\Property(property="amount_type", type="string", example="Fixed")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Created successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Salary type created successfully."),
+     *             @OA\Property(property="data", type="object")
+     *         )
+     *     )
+     * )
+     */
     public function storeSalaryType(Request $request)
     {
         // Optional: Manual validation
@@ -61,6 +89,29 @@ class SalaryController extends Controller
         ], 200);
     }
 
+    /**
+     * @OA\Post(
+     *     path="/api/salarytype/list",
+     *     summary="List salary types for a company",
+     *     tags={"Salary"},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"company_id"},
+     *             @OA\Property(property="company_id", type="integer", example=1)
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Salary types retrieved successfully."),
+     *             @OA\Property(property="data", type="array", @OA\Items(type="object"))
+     *         )
+     *     )
+     * )
+     */
     public function listSalaryType(Request $request)
     {
         // Ensure company_id is provided
@@ -92,6 +143,29 @@ class SalaryController extends Controller
         ], 200);
     }
 
+    /**
+     * @OA\Post(
+     *     path="/api/salarytype/delete",
+     *     summary="Delete a salary type",
+     *     tags={"Salary"},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"salary_type_id","company_id"},
+     *             @OA\Property(property="salary_type_id", type="integer", example=1),
+     *             @OA\Property(property="company_id", type="integer", example=1)
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Deleted successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Salary type deleted successfully.")
+     *         )
+     *     )
+     * )
+     */
     public function deleteSalaryType(Request $request)
     {
         $request->validate([
@@ -119,6 +193,33 @@ class SalaryController extends Controller
     }
 
 
+    /**
+     * @OA\Post(
+     *     path="/api/salary/preview",
+     *     summary="Preview employee generated salary calculation",
+     *     tags={"Salary"},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"company_id","employee_id"},
+     *             @OA\Property(property="company_id", type="integer", example=1),
+     *             @OA\Property(property="employee_id", type="integer", example=5),
+     *             @OA\Property(property="month", type="integer", example=9),
+     *             @OA\Property(property="year", type="integer", example=2026),
+     *             @OA\Property(property="basic_salary", type="number", example=30000)
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Calculation preview fetched",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Calculation completed successfully."),
+     *             @OA\Property(property="data", type="object")
+     *         )
+     *     )
+     * )
+     */
     public function generateEmployeeSalaryPreview(Request $request)
     {
         $request->validate([
@@ -187,6 +288,33 @@ class SalaryController extends Controller
         ], 200);
     }
 
+    /**
+     * @OA\Post(
+     *     path="/api/salary/save",
+     *     summary="Save generated employee salary",
+     *     tags={"Salary"},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"company_id","employee_id","month","basic_salary"},
+     *             @OA\Property(property="company_id", type="integer", example=1),
+     *             @OA\Property(property="employee_id", type="integer", example=5),
+     *             @OA\Property(property="month", type="integer", example=9),
+     *             @OA\Property(property="year", type="integer", example=2026),
+     *             @OA\Property(property="basic_salary", type="number", example=30000)
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Saved successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Salary saved successfully."),
+     *             @OA\Property(property="data", type="object")
+     *         )
+     *     )
+     * )
+     */
     public function saveGeneratedEmployeeSalary(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -238,6 +366,31 @@ class SalaryController extends Controller
     }
 
 
+    /**
+     * @OA\Post(
+     *     path="/api/employee/salary-slip/download",
+     *     summary="Download employee salary slip PDF",
+     *     tags={"Salary"},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"company_id","employee_id","salary_id"},
+     *             @OA\Property(property="company_id", type="integer", example=1),
+     *             @OA\Property(property="employee_id", type="integer", example=5),
+     *             @OA\Property(property="salary_id", type="integer", example=1)
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="PDF generated successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="PDF generated successfully."),
+     *             @OA\Property(property="url", type="string", example="https://stafo.in/uploads/salary_slips/salary_slip_5_1_202609.pdf")
+     *         )
+     *     )
+     * )
+     */
     public function salaryPDF(Request $request)
     {
         $company = CompanyDetail::find($request->company_id);
@@ -346,6 +499,29 @@ class SalaryController extends Controller
         }
     }
 
+    /**
+     * @OA\Get(
+     *     path="/api/gracesetting-list",
+     *     summary="Get grace settings list",
+     *     tags={"Salary"},
+     *     @OA\Parameter(
+     *         name="company_id",
+     *         in="query",
+     *         required=true,
+     *         description="Company ID",
+     *         @OA\Schema(type="integer", example=1)
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Record retrieved successfully."),
+     *             @OA\Property(property="data", type="array", @OA\Items(type="object"))
+     *         )
+     *     )
+     * )
+     */
     public function gracesettingList(Request $request)
     {
 
@@ -368,6 +544,35 @@ class SalaryController extends Controller
     }
 
      // Update an existing leavetype
+    /**
+     * @OA\Post(
+     *     path="/api/gracesetting-update/{id}",
+     *     summary="Update grace setting",
+     *     tags={"Salary"},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         description="Grace Setting ID",
+     *         @OA\Schema(type="integer", example=1)
+     *     ),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"name"},
+     *             @OA\Property(property="name", type="string", example="Standard Grace")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Updated successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Record updated successfully.")
+     *         )
+     *     )
+     * )
+     */
     public function gracesettingUpdate(Request $request, $id)
     {
         try {
@@ -405,6 +610,30 @@ class SalaryController extends Controller
         }
     }
 
+    /**
+     * @OA\Post(
+     *     path="/api/generate-all-salary",
+     *     summary="Generate salary for all active employees of a company",
+     *     tags={"Salary"},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"company_id"},
+     *             @OA\Property(property="company_id", type="integer", example=1),
+     *             @OA\Property(property="month", type="integer", example=9),
+     *             @OA\Property(property="year", type="integer", example=2026)
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Generated successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="All employee salaries processed successfully.")
+     *         )
+     *     )
+     * )
+     */
     public function generateAllSalary(Request $request)
     {
         try {

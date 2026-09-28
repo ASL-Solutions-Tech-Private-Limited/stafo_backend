@@ -441,41 +441,6 @@
         })->sortBy('start_date');
     @endphp
 
-    @if($futureHolidays->count() > 0)
-        <div class="stafo-marquee-bar mb-4">
-            <div class="stafo-marquee-pill" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 50%, #b45309 100%);">
-                <span class="pulse-dot"></span>
-                <i class="fa-solid fa-gift"></i>
-                <span>Holiday Ticker</span>
-            </div>
-            <div class="stafo-marquee-container">
-                <marquee behavior="scroll" direction="left" scrollamount="5" onmouseover="this.stop();" onmouseout="this.start();" class="stafo-marquee-content">
-                    @foreach($futureHolidays as $fHol)
-                        @php
-                            $fDiff = now()->startOfDay()->diffInDays(\Carbon\Carbon::parse($fHol->start_date), false);
-                        @endphp
-                        <span class="marquee-chip chip-holiday">
-                            <i class="fa-solid fa-umbrella-beach text-warning"></i>
-                            <strong>{{ $fHol->title }}</strong>:
-                            {{ \Carbon\Carbon::parse($fHol->start_date)->format('d M, Y (l)') }}
-                            @if($fDiff == 0)
-                                <span class="badge bg-danger text-white ms-1">Today! 🎉</span>
-                            @elseif($fDiff == 1)
-                                <span class="badge bg-warning text-dark ms-1">Tomorrow!</span>
-                            @else
-                                <span class="badge bg-light text-dark ms-1">in {{ $fDiff }} days</span>
-                            @endif
-                        </span>
-                        <span class="marquee-divider">•</span>
-                    @endforeach
-                </marquee>
-            </div>
-            <div class="d-none d-md-flex align-items-center text-muted small ps-2 border-start" style="font-size: 0.72rem; white-space: nowrap;">
-                <i class="fa-solid fa-hand-pointer text-warning me-1"></i> Hover to pause
-            </div>
-        </div>
-    @endif
-
     <!-- Main Card with Toolbar & View Controls -->
     <div class="card border-0 shadow-sm rounded-4 mb-4 emp-card">
         <div class="card-header bg-white border-bottom p-3 p-md-4 d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3 emp-card-header">

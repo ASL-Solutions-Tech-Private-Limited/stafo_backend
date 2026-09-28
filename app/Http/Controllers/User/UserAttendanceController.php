@@ -19,6 +19,9 @@ use RealRashid\SweetAlert\Facades\Alert;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use App\Exports\AttendanceExport;
+use App\Models\AttendanceRequest;
+use App\Models\EmployeePunch;
+use App\Helpers\Helper;
 
 
 class UserAttendanceController extends Controller
@@ -328,5 +331,159 @@ class UserAttendanceController extends Controller
         $attendance->delete();
 
         return redirect()->route('attendance.index')->with('success', 'Attendance deleted successfully.');
+    }
+
+    /**
+     * Display Company Missed Punch-Out / Regularization Requests List
+     */
+    public function missedPunchouts(Request $request)
+    {
+        $companyId = Auth::id();
+
+        $employees = Employee::where('company_id', $companyId)->get();
+
+        $requests = AttendanceRequest::with([
+            'employee:id,name,email,phone,emp_id',
+            'branch:id,branch_name',
+            'department:id,name'
+        ])
+        ->where('company_id', $companyId)
+        ->whereNotNull('reason')
+        ->when($request->filled('employee_id'), function ($q) use ($request) {
+            return $q->where('employee_id', $request->employee_id);
+        })
+        ->when($request->filled('status'), function ($q) use ($request) {
+            return $q->where('status', $request->status);
+        })
+        ->when($request->filled('date'), function ($q) use ($request) {
+            return $q->whereDate('date', $request->date);
+        })
+        ->orderBy('id', 'desc')
+        ->paginate(15);
+
+        return view('user.attendance.requests', compact('requests', 'employees'));
+    }
+
+    /**
+     * Approve or Reject Missed Punch-Out Request (Company Action)
+     */
+    public function actionMissedPunchout(Request $request)
+    {
+        $request->validate([
+            'request_id' => 'required|integer|exists:attendance_requests,id',
+            'status' => 'required|in:Approved,Rejected',
+            'reject_reason' => 'required_if:status,Rejected|nullable|string|max:1000',
+            'reject_attendance_type' => 'nullable|in:Halfday,Absent,Half Day,halfday,absent,half_day',
+        ]);
+
+        $companyId = Auth::id();
+        $attendanceRequest = AttendanceRequest::with('employee')
+            ->where('id', $request->request_id)
+            ->where('company_id', $companyId)
+            ->first();
+
+        if (!$attendanceRequest) {
+            return back()->with('error', 'Attendance request not found or unauthorized.');
+        }
+
+        $employee = $attendanceRequest->employee;
+        $targetDate = $attendanceRequest->date;
+
+        if ($request->status === 'Approved') {
+            $attendanceRequest->status = 'Approved';
+            $attendanceRequest->reject_reason = null;
+            $attendanceRequest->halfday = 0;
+            $attendanceRequest->attendance = 'Present';
+            $attendanceRequest->save();
+
+            $outTime = $attendanceRequest->out_time;
+            $punchOutDateTime = $targetDate . ' ' . $outTime;
+
+            // 1. Update Attendance record
+            $attendance = Attendance::where('employee_id', $attendanceRequest->employee_id)
+                ->whereDate('date', $targetDate)
+                ->first();
+
+            if (!$attendance) {
+                $attendance = new Attendance();
+                $attendance->company_id = $attendanceRequest->company_id;
+                $attendance->branch_id = $attendanceRequest->branch_id;
+                $attendance->employee_id = $attendanceRequest->employee_id;
+                $attendance->department_id = $attendanceRequest->department_id;
+                $attendance->date = $targetDate;
+                $attendance->in_time = $attendanceRequest->in_time ?? '';
+            }
+
+            $attendance->attendance = 'Present';
+            $attendance->halfday = 0;
+            $attendance->out_time = $outTime;
+            $attendance->save();
+
+            // 2. Update EmployeePunch record
+            $punch = EmployeePunch::where('employee_id', $attendanceRequest->employee_id)
+                ->whereDate('punch_in', $targetDate)
+                ->latest('id')
+                ->first();
+
+            if ($punch) {
+                $punch->update([
+                    'punch_out' => $punchOutDateTime,
+                ]);
+            } else {
+                EmployeePunch::create([
+                    'employee_id' => $attendanceRequest->employee_id,
+                    'punch_in' => $targetDate . ' ' . ($attendanceRequest->in_time ?? ''),
+                    'punch_out' => $punchOutDateTime,
+                ]);
+            }
+
+            // Push notification
+            if ($employee && !empty($employee->fcm_token)) {
+                $notifMsg = "Your punch-out regularisation request for " . date('d M Y', strtotime($targetDate)) . " has been Approved.";
+                Helper::sendPushNotification($employee->fcm_token, $notifMsg);
+            }
+
+            return back()->with('success', 'Punch-out request Approved successfully and attendance updated.');
+        } else {
+            // Rejected
+            $rejectType = strtolower($request->input('reject_attendance_type', 'absent'));
+            $isHalfDay = in_array($rejectType, ['halfday', 'half day', 'half_day']) ? 1 : 0;
+            $attendanceStatus = $isHalfDay ? 'Present' : 'Absent';
+            $statusLabel = $isHalfDay ? 'Half Day' : 'Absent';
+
+            $attendanceRequest->status = 'Rejected';
+            $attendanceRequest->reject_reason = $request->reject_reason;
+            $attendanceRequest->halfday = $isHalfDay;
+            $attendanceRequest->attendance = $attendanceStatus;
+            $attendanceRequest->save();
+
+            $attendance = Attendance::where('employee_id', $attendanceRequest->employee_id)
+                ->whereDate('date', $targetDate)
+                ->first();
+
+            if (!$attendance) {
+                $attendance = new Attendance();
+                $attendance->company_id = $attendanceRequest->company_id;
+                $attendance->branch_id = $attendanceRequest->branch_id;
+                $attendance->employee_id = $attendanceRequest->employee_id;
+                $attendance->department_id = $attendanceRequest->department_id;
+                $attendance->date = $targetDate;
+                $attendance->in_time = $attendanceRequest->in_time ?? '';
+            }
+
+            $attendance->attendance = $attendanceStatus;
+            $attendance->halfday = $isHalfDay;
+            if (!$isHalfDay) {
+                $attendance->out_time = '00:00:00';
+            }
+            $attendance->save();
+
+            if ($employee && !empty($employee->fcm_token)) {
+                $notifMsg = "Your punch-out regularisation request for " . date('d M Y', strtotime($targetDate)) . " was Rejected and marked as {$statusLabel}. Reason: " . $request->reject_reason;
+                Helper::sendPushNotification($employee->fcm_token, $notifMsg);
+            }
+
+            return back()->with('success', "Punch-out request Rejected and attendance marked as {$statusLabel}.");
+        }
     }
 }

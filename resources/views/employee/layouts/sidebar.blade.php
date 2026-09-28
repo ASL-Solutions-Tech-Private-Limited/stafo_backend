@@ -29,6 +29,10 @@
             <span class="nav-icon text-success"><i class="fa-solid fa-clipboard-user"></i></span>
             <span>Attendance</span>
         </a>
+        <a href="{{ route('employee.missedPunchouts') }}" class="employee-nav-item {{ request()->routeIs('employee.missedPunchouts*') ? 'active' : '' }}">
+            <span class="nav-icon text-primary"><i class="fa-solid fa-business-time"></i></span>
+            <span>Missed Punch-Out</span>
+        </a>
         @endif
 
         @if(!$navEmp || $navEmp->hasPermission('leaves.view') || $navEmp->hasPermission('leaves.apply'))

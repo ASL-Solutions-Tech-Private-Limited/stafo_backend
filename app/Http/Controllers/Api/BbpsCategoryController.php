@@ -13,6 +13,21 @@ class BbpsCategoryController extends Controller
 {
 
 
+    /**
+     * @OA\Get(
+     *     path="/api/bbps/categories",
+     *     summary="Get all BBPS categories",
+     *     tags={"BBPS"},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Categories retrieved successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="data", type="array", @OA\Items(type="object"))
+     *         )
+     *     )
+     * )
+     */
     public function index()
     {
         // dd("test");
@@ -35,6 +50,32 @@ class BbpsCategoryController extends Controller
 
 
 
+    /**
+     * @OA\Post(
+     *     path="/api/bbps/categories",
+     *     summary="Create a BBPS category",
+     *     tags={"BBPS"},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\MediaType(
+     *             mediaType="multipart/form-data",
+     *             @OA\Schema(
+     *                 required={"name"},
+     *                 @OA\Property(property="name", type="string", example="Electricity"),
+     *                 @OA\Property(property="img", type="string", format="binary")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Created successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="data", type="object")
+     *         )
+     *     )
+     * )
+     */
     public function store(Request $request)
     {
         try {
@@ -79,6 +120,39 @@ class BbpsCategoryController extends Controller
 
 
 
+    /**
+     * @OA\Post(
+     *     path="/api/bbps/categories-update/{id}",
+     *     summary="Update a BBPS category",
+     *     tags={"BBPS"},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         description="Category ID",
+     *         @OA\Schema(type="integer", example=1)
+     *     ),
+     *     @OA\RequestBody(
+     *         required=false,
+     *         @OA\MediaType(
+     *             mediaType="multipart/form-data",
+     *             @OA\Schema(
+     *                 @OA\Property(property="name", type="string", example="Water"),
+     *                 @OA\Property(property="img", type="string", format="binary")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Updated successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Category updated successfully."),
+     *             @OA\Property(property="data", type="object")
+     *         )
+     *     )
+     * )
+     */
     public function update(Request $request, $id)
     {
         $category = DcCcBbpsCategory::find($id);
@@ -136,6 +210,28 @@ class BbpsCategoryController extends Controller
     }
 
 
+    /**
+     * @OA\Delete(
+     *     path="/api/bbps/categories-delete/{id}",
+     *     summary="Delete a BBPS category",
+     *     tags={"BBPS"},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         description="Category ID",
+     *         @OA\Schema(type="integer", example=1)
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Deleted successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Category deleted successfully")
+     *         )
+     *     )
+     * )
+     */
     public function destroy($id)
     {
         $category = DcCcBbpsCategory::find($id);

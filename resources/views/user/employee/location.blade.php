@@ -370,19 +370,25 @@
         </div>
     @elseif($employee && (string)$employee->geo_status === '1' && $date === date('Y-m-d'))
         <!-- Request Sent / Pending Employee Acceptance Notice -->
-        <div class="card p-5 shadow-sm border-0 rounded-4 text-center my-4 bg-light">
+        <div class="card p-5 shadow-sm border-0 rounded-4 text-center my-4 bg-light" id="pendingAcceptanceCard">
             <div class="mb-3">
-                <div class="d-inline-flex align-items-center justify-content-center rounded-circle bg-warning bg-opacity-10 text-warning" style="width: 76px; height: 76px;">
+                <div class="d-inline-flex align-items-center justify-content-center rounded-circle bg-warning bg-opacity-10 text-warning" style="width: 76px; height: 76px;" id="pendingIconWrapper">
                     <i class="fa-solid fa-clock fs-2"></i>
                 </div>
             </div>
-            <h4 class="fw-bold text-dark mb-2">Tracking Request Sent (Pending Employee Acceptance)</h4>
-            <p class="text-muted mx-auto mb-4" style="max-width: 580px;">
+            <h4 class="fw-bold text-dark mb-2" id="pendingTitle">Tracking Request Sent (Pending Employee Acceptance)</h4>
+            <p class="text-muted mx-auto mb-3" style="max-width: 580px;" id="pendingDescription">
                 Company has sent a real-time location tracking request to <strong>{{ $employee->name }}</strong>. 
                 <br>
                 <span class="text-secondary fw-semibold">Jab tak employee mobile app ya employee portal se request accept nahi karega (<code>Accept & Start Tracking</code>), tab tak location movement aur map yaha visible nahi hoga.</span>
             </p>
-            <div class="d-flex align-items-center justify-content-center gap-2 flex-wrap">
+            <div class="mb-4">
+                <div class="d-inline-flex align-items-center gap-2 px-3 py-1.5 rounded-pill bg-white border shadow-sm text-secondary small" id="pendingListeningBadge">
+                    <span class="spinner-grow spinner-grow-sm text-warning" role="status" style="width: 0.75rem; height: 0.75rem;"></span>
+                    <span>Waiting for employee acceptance... Map will open automatically once accepted.</span>
+                </div>
+            </div>
+            <div class="d-flex align-items-center justify-content-center gap-2 flex-wrap" id="pendingActionButtons">
                 <button type="button" class="btn btn-outline-danger px-4 py-2 fw-semibold rounded-pill shadow-sm" 
                         onclick="toggleMapGeoStatus({{ $employee->id }}, false, '{{ addslashes($employee->name) }}')">
                     <i class="fa-solid fa-location-slash me-2"></i> Cancel / Turn OFF Request
@@ -2215,5 +2221,85 @@
             alert('An error occurred while updating tracking status.');
         });
     }
+
+    @if($employee && $date === date('Y-m-d') && (string)$employee->geo_status === '1')
+    // Automatically detect when employee accepts the request and open map without manual page reload
+    (function() {
+        const checkEmpId = {{ $employee->id }};
+        const checkDate = "{{ $date }}";
+        let checkTimer = null;
+        let isChecking = false;
+
+        function checkAcceptanceStatus() {
+            if (isChecking) return;
+            isChecking = true;
+
+            const statusUrl = `{{ url('company/employee/location-live') }}/${checkEmpId}?date=${checkDate}`;
+            fetch(statusUrl, {
+                headers: {
+                    'Accept': 'application/json'
+                }
+            })
+            .then(res => res.json())
+            .then(data => {
+                isChecking = false;
+                const geoStatus = String(data.geo_status || '');
+                if (data.status === true || geoStatus === '2') {
+                    if (checkTimer) clearInterval(checkTimer);
+
+                    // Update Top Controls Badge
+                    const topBadge = document.getElementById('mapGeoBadge');
+                    const topText = document.getElementById('mapGeoText');
+                    const topIcon = document.getElementById('mapGeoIcon');
+                    const topSwitch = document.getElementById('mapGeoSwitch');
+                    if (topSwitch) topSwitch.checked = true;
+                    if (topBadge) topBadge.className = 'badge bg-success text-white rounded-pill px-2 py-0.5';
+                    if (topText) topText.innerText = 'Active / Tracking ON';
+                    if (topIcon) topIcon.className = 'fa-solid fa-circle-dot me-1';
+
+                    // Update Pending Card UI
+                    const iconWrapper = document.getElementById('pendingIconWrapper');
+                    if (iconWrapper) {
+                        iconWrapper.className = 'd-inline-flex align-items-center justify-content-center rounded-circle bg-success bg-opacity-10 text-success';
+                        iconWrapper.innerHTML = '<i class="fa-solid fa-circle-check fs-2 fa-beat"></i>';
+                    }
+
+                    const titleEl = document.getElementById('pendingTitle');
+                    if (titleEl) {
+                        titleEl.className = 'fw-bold text-success mb-2';
+                        titleEl.innerText = 'Location Tracking Accepted!';
+                    }
+
+                    const descEl = document.getElementById('pendingDescription');
+                    if (descEl) {
+                        descEl.innerHTML = 'Employee has accepted the request. <strong>Opening live tracking map...</strong>';
+                    }
+
+                    const listeningBadge = document.getElementById('pendingListeningBadge');
+                    if (listeningBadge) {
+                        listeningBadge.className = 'd-inline-flex align-items-center gap-2 px-3 py-1.5 rounded-pill bg-success-subtle text-success border border-success-subtle shadow-sm small fw-semibold';
+                        listeningBadge.innerHTML = '<span class="spinner-border spinner-border-sm text-success" role="status"></span> Loading Live Route Map...';
+                    }
+
+                    // Seamlessly reload to initialize full Leaflet map and live tracker
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 700);
+                } else if (geoStatus === '0') {
+                    // Employee declined or tracking was turned off
+                    if (checkTimer) clearInterval(checkTimer);
+                    window.location.reload();
+                }
+            })
+            .catch(err => {
+                isChecking = false;
+                console.error('Pending tracking check error:', err);
+            });
+        }
+
+        // Poll every 3 seconds while in pending state
+        checkTimer = setInterval(checkAcceptanceStatus, 3000);
+    })();
+    @endif
 </script>
 @endsection

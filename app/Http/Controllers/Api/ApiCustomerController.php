@@ -11,6 +11,21 @@ use Illuminate\Validation\ValidationException;
 
 class ApiCustomerController extends Controller
 {
+    /**
+     * @OA\Post(
+     *     path="/api/getcustomerlist",
+     *     summary="Get customer list",
+     *     tags={"Customer"},
+     *     security={{"sanctum":{}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Customer list fetched successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="user_list", type="array", @OA\Items(type="object"))
+     *         )
+     *     )
+     * )
+     */
     public function getCustomerList(){
         $customer = Customer::get();
 

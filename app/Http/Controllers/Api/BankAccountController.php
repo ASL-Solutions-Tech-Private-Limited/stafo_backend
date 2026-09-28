@@ -10,7 +10,16 @@ use Illuminate\Database\QueryException;
 
 class BankAccountController extends Controller
 {
-    // List the bank details of all employees
+    /**
+     * @OA\Get(
+     *      path="/api/bank-accounts",
+     *      operationId="getBankAccountsList",
+     *      tags={"Bank Accounts"},
+     *      security={{"sanctum":{}}},
+     *      summary="List bank details of all employees",
+     *      @OA\Response(response=200, description="Bank accounts fetched successfully")
+     * )
+     */
     public function index()
     {
         try {
@@ -46,7 +55,18 @@ class BankAccountController extends Controller
         }
     }
 
-    // Fetch bank details for a specific employee
+    /**
+     * @OA\Get(
+     *      path="/api/bank-accounts/employee/{employee_id}",
+     *      operationId="getEmployeeBankAccount",
+     *      tags={"Bank Accounts"},
+     *      security={{"sanctum":{}}},
+     *      summary="Fetch bank account details for a specific employee",
+     *      @OA\Parameter(name="employee_id", in="path", required=true, @OA\Schema(type="integer"), example=1),
+     *      @OA\Response(response=200, description="Bank details fetched successfully"),
+     *      @OA\Response(response=404, description="No bank account found")
+     * )
+     */
     public function showByEmployeeId($employee_id)
     {
         try {

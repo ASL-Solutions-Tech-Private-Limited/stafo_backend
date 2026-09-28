@@ -11,6 +11,22 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class LocationController extends Controller
 {
+    /**
+     * @OA\Get(
+     *     path="/api/countries",
+     *     summary="Get all countries",
+     *     tags={"Location"},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Countries retrieved successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Countries retrieved successfully."),
+     *             @OA\Property(property="data", type="array", @OA\Items(type="object"))
+     *         )
+     *     )
+     * )
+     */
     public function getCountries()
     {
         try {
@@ -37,6 +53,29 @@ class LocationController extends Controller
         }
     }
 
+    /**
+     * @OA\Get(
+     *     path="/api/countries/{countryId}/states",
+     *     summary="Get states by country ID",
+     *     tags={"Location"},
+     *     @OA\Parameter(
+     *         name="countryId",
+     *         in="path",
+     *         required=true,
+     *         description="Country ID",
+     *         @OA\Schema(type="integer", example=101)
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="States retrieved successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="States retrieved successfully."),
+     *             @OA\Property(property="data", type="array", @OA\Items(type="object"))
+     *         )
+     *     )
+     * )
+     */
     public function getStates($countryId)
     {
         try {
@@ -70,6 +109,29 @@ class LocationController extends Controller
         }
     }
 
+    /**
+     * @OA\Get(
+     *     path="/api/states/{stateId}/cities",
+     *     summary="Get cities by state ID",
+     *     tags={"Location"},
+     *     @OA\Parameter(
+     *         name="stateId",
+     *         in="path",
+     *         required=true,
+     *         description="State ID",
+     *         @OA\Schema(type="integer", example=10)
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Cities retrieved successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Cities retrieved successfully."),
+     *             @OA\Property(property="data", type="array", @OA\Items(type="object"))
+     *         )
+     *     )
+     * )
+     */
     public function getCities($stateId)
     {
         try {

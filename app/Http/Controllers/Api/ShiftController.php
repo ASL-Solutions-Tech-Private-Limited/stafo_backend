@@ -14,9 +14,15 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
 class ShiftController extends Controller
 {
     /**
-     * Get a list of all shifts.
-     *
-     * @return \Illuminate\Http\JsonResponse
+     * @OA\Get(
+     *      path="/api/shifts",
+     *      operationId="getShiftsList",
+     *      tags={"Shifts"},
+     *      summary="List Company Shifts",
+     *      security={{"sanctum":{}}},
+     *      @OA\Parameter(name="company_id", in="query", required=true, @OA\Schema(type="integer", example=1)),
+     *      @OA\Response(response=200, description="Shifts retrieved successfully")
+     * )
      */
     public function index(Request $request)
     {
@@ -41,10 +47,30 @@ class ShiftController extends Controller
     }
 
     /**
-     * Create a new shift.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\JsonResponse
+     * @OA\Post(
+     *      path="/api/shifts",
+     *      operationId="createShift",
+     *      tags={"Shifts"},
+     *      summary="Create a new Shift",
+     *      security={{"sanctum":{}}},
+     *      @OA\RequestBody(
+     *          required=true,
+     *          @OA\JsonContent(
+     *              required={"shift_name","start_time","end_time"},
+     *              @OA\Property(property="shift_name", type="string", example="Morning Shift"),
+     *              @OA\Property(property="start_time", type="string", example="09:00"),
+     *              @OA\Property(property="end_time", type="string", example="18:00"),
+     *              @OA\Property(property="monday", type="integer", example=1),
+     *              @OA\Property(property="tuesday", type="integer", example=1),
+     *              @OA\Property(property="wednesday", type="integer", example=1),
+     *              @OA\Property(property="thursday", type="integer", example=1),
+     *              @OA\Property(property="friday", type="integer", example=1),
+     *              @OA\Property(property="saturday", type="integer", example=1),
+     *              @OA\Property(property="sunday", type="integer", example=0)
+     *          )
+     *      ),
+     *      @OA\Response(response=201, description="Shift created successfully")
+     * )
      */
     public function store(Request $request)
     {
@@ -131,11 +157,24 @@ class ShiftController extends Controller
     }
 
     /**
-     * Update a specific shift.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id
-     * @return \Illuminate\Http\JsonResponse
+     * @OA\Put(
+     *      path="/api/shifts/{id}",
+     *      operationId="updateShift",
+     *      tags={"Shifts"},
+     *      summary="Update Shift",
+     *      security={{"sanctum":{}}},
+     *      @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer", example=1)),
+     *      @OA\RequestBody(
+     *          required=true,
+     *          @OA\JsonContent(
+     *              required={"shift_name","start_time","end_time"},
+     *              @OA\Property(property="shift_name", type="string", example="General Shift"),
+     *              @OA\Property(property="start_time", type="string", example="10:00"),
+     *              @OA\Property(property="end_time", type="string", example="19:00")
+     *          )
+     *      ),
+     *      @OA\Response(response=200, description="Shift updated successfully")
+     * )
      */
     public function update(Request $request, $id)
     {
@@ -229,6 +268,24 @@ class ShiftController extends Controller
 
 
 
+    /**
+     * @OA\Post(
+     *      path="/api/employees/assign-shift",
+     *      operationId="assignShiftToEmployee",
+     *      tags={"Shifts"},
+     *      summary="Assign Shift to Employee",
+     *      security={{"sanctum":{}}},
+     *      @OA\RequestBody(
+     *          required=true,
+     *          @OA\JsonContent(
+     *              required={"employee_id","shift_ids"},
+     *              @OA\Property(property="employee_id", type="integer", example=1),
+     *              @OA\Property(property="shift_ids", type="array", @OA\Items(type="integer", example=1))
+     *          )
+     *      ),
+     *      @OA\Response(response=200, description="Shift assigned successfully")
+     * )
+     */
     public function assignShift(Request $request)
     {
         // Validate input data

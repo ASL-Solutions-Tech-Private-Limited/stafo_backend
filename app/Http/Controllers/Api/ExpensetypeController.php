@@ -14,10 +14,17 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class ExpensetypeController extends Controller
 {
-    // public function __construct()
-    // {
-    //     $this->middleware('auth:sanctum');
-    // }
+    /**
+     * @OA\Get(
+     *      path="/api/expensetype/list",
+     *      operationId="getExpenseTypeList",
+     *      tags={"Expenses"},
+     *      security={{"sanctum":{}}},
+     *      summary="List expense types",
+     *      @OA\Parameter(name="company_id", in="query", required=true, @OA\Schema(type="integer"), example=1),
+     *      @OA\Response(response=200, description="Expense types fetched successfully")
+     * )
+     */
     public function index(Request $request)
     {
 
@@ -44,7 +51,24 @@ class ExpensetypeController extends Controller
 
 
 
-    // Create a new expensetype
+    /**
+     * @OA\Post(
+     *      path="/api/expensetype/create",
+     *      operationId="createExpenseType",
+     *      tags={"Expenses"},
+     *      security={{"sanctum":{}}},
+     *      summary="Create a new expense type",
+     *      @OA\RequestBody(
+     *          required=true,
+     *          @OA\JsonContent(
+     *              @OA\Property(property="company_id", type="integer", example=1),
+     *              @OA\Property(property="name", type="string", example="Travel & Fuel"),
+     *              @OA\Property(property="description", type="string", example="Expenses related to business travel")
+     *          )
+     *      ),
+     *      @OA\Response(response=201, description="Expense type created")
+     * )
+     */
     public function store(Request $request)
     {
         try {
@@ -77,7 +101,24 @@ class ExpensetypeController extends Controller
         }
     }
 
-    // Update an existing expensetype
+    /**
+     * @OA\Post(
+     *      path="/api/expensetype/update/{id}",
+     *      operationId="updateExpenseType",
+     *      tags={"Expenses"},
+     *      security={{"sanctum":{}}},
+     *      summary="Update expense type",
+     *      @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer"), example=1),
+     *      @OA\RequestBody(
+     *          required=true,
+     *          @OA\JsonContent(
+     *              @OA\Property(property="name", type="string", example="Updated Travel Type"),
+     *              @OA\Property(property="description", type="string", example="Updated description")
+     *          )
+     *      ),
+     *      @OA\Response(response=200, description="Expense type updated")
+     * )
+     */
     public function update(Request $request, $id)
     {
         try {
@@ -114,7 +155,17 @@ class ExpensetypeController extends Controller
         }
     }
 
-    // Delete a expensetype
+    /**
+     * @OA\Delete(
+     *      path="/api/expensetype/delete/{id}",
+     *      operationId="deleteExpenseType",
+     *      tags={"Expenses"},
+     *      security={{"sanctum":{}}},
+     *      summary="Delete expense type",
+     *      @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer"), example=1),
+     *      @OA\Response(response=200, description="Expense type deleted")
+     * )
+     */
     public function destroy($id)
     {
         try {

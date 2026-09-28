@@ -14,44 +14,6 @@
         </button>
     </div>
 
-    <!-- Leave Policy & Notice Marquee Ticker -->
-    <div class="stafo-marquee-bar mb-4">
-        <div class="stafo-marquee-pill" style="background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);">
-            <span class="pulse-dot"></span>
-            <i class="fa-solid fa-file-contract"></i>
-            <span>Leave Rules</span>
-        </div>
-        <div class="stafo-marquee-container">
-            <marquee behavior="scroll" direction="left" scrollamount="5" onmouseover="this.stop();" onmouseout="this.start();" class="stafo-marquee-content">
-                <span class="marquee-chip chip-payroll">
-                    <i class="fa-solid fa-clock-rotate-left text-info"></i>
-                    <strong>Advance Notice:</strong> Please apply for planned leaves at least 2 working days in advance for timely approval.
-                </span>
-                <span class="marquee-divider">•</span>
-
-                <span class="marquee-chip chip-holiday">
-                    <i class="fa-solid fa-briefcase-medical text-warning"></i>
-                    <strong>Medical Leave:</strong> Sick leaves exceeding 2 consecutive days require a certified medical slip upon joining.
-                </span>
-                <span class="marquee-divider">•</span>
-
-                <span class="marquee-chip chip-attendance">
-                    <i class="fa-solid fa-calendar-check text-success"></i>
-                    <strong>Half-Day Leaves:</strong> Half-day leaves require a minimum of 4 working hours logged on the shift.
-                </span>
-                <span class="marquee-divider">•</span>
-
-                <span class="marquee-chip chip-policy">
-                    <i class="fa-solid fa-scale-balanced text-primary"></i>
-                    <strong>Leave Encashment:</strong> Annual leave encashment and carry-forward rules apply as per company policy.
-                </span>
-            </marquee>
-        </div>
-        <div class="d-none d-md-flex align-items-center text-muted small ps-2 border-start" style="font-size: 0.72rem; white-space: nowrap;">
-            <i class="fa-solid fa-hand-pointer text-warning me-1"></i> Hover to pause
-        </div>
-    </div>
-
     <!-- Leave Balances Cards -->
     <div class="row g-3 mb-4">
         <div class="col-sm-4">

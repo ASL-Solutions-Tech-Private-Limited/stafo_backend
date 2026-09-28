@@ -18,6 +18,18 @@ class BranchController extends Controller
     // {
     //     $this->middleware('auth:sanctum');
     // }
+    /**
+     * @OA\Get(
+     *      path="/api/branch/list",
+     *      operationId="getBranchList",
+     *      tags={"Branches"},
+     *      summary="List Company Branches",
+     *      description="Fetches branches for a company",
+     *      security={{"sanctum":{}}},
+     *      @OA\Parameter(name="company_id", in="query", required=true, @OA\Schema(type="integer", example=1)),
+     *      @OA\Response(response=200, description="Branches retrieved successfully")
+     * )
+     */
     public function index(Request $request)
     {
 
@@ -43,7 +55,25 @@ class BranchController extends Controller
 
 
 
-    // Create a new branch
+    /**
+     * @OA\Post(
+     *      path="/api/branch/create",
+     *      operationId="createBranch",
+     *      tags={"Branches"},
+     *      summary="Create a new Branch",
+     *      security={{"sanctum":{}}},
+     *      @OA\RequestBody(
+     *          required=true,
+     *          @OA\JsonContent(
+     *              required={"company_id","branch_name","branch_address"},
+     *              @OA\Property(property="company_id", type="integer", example=1),
+     *              @OA\Property(property="branch_name", type="string", example="Main Branch"),
+     *              @OA\Property(property="branch_address", type="string", example="Plot 10, City Center")
+     *          )
+     *      ),
+     *      @OA\Response(response=201, description="Branch created successfully")
+     * )
+     */
     public function store(Request $request)
     {
         try {
@@ -75,7 +105,26 @@ class BranchController extends Controller
         }
     }
 
-    // Update an existing branch
+    /**
+     * @OA\Post(
+     *      path="/api/branch/update/{id}",
+     *      operationId="updateBranch",
+     *      tags={"Branches"},
+     *      summary="Update Branch Details",
+     *      security={{"sanctum":{}}},
+     *      @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer", example=1)),
+     *      @OA\RequestBody(
+     *          required=true,
+     *          @OA\JsonContent(
+     *              required={"company_id","branch_name","branch_address"},
+     *              @OA\Property(property="company_id", type="integer", example=1),
+     *              @OA\Property(property="branch_name", type="string", example="Main Branch Updated"),
+     *              @OA\Property(property="branch_address", type="string", example="Plot 10, City Center")
+     *          )
+     *      ),
+     *      @OA\Response(response=200, description="Branch updated successfully")
+     * )
+     */
     public function update(Request $request, $id)
     {
         try {
@@ -113,7 +162,17 @@ class BranchController extends Controller
         }
     }
 
-    // Delete a branch
+    /**
+     * @OA\Delete(
+     *      path="/api/branch/delete/{id}",
+     *      operationId="deleteBranch",
+     *      tags={"Branches"},
+     *      summary="Delete a Branch",
+     *      security={{"sanctum":{}}},
+     *      @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer", example=1)),
+     *      @OA\Response(response=200, description="Branch deleted successfully")
+     * )
+     */
     public function destroy($id)
     {
         try {

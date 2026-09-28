@@ -12,7 +12,22 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class ApiProviderController extends Controller
 {
-    // List all API Providers
+    /**
+     * @OA\Get(
+     *     path="/api/api-providers/list",
+     *     summary="List all API Providers",
+     *     tags={"API Provider"},
+     *     @OA\Response(
+     *         response=200,
+     *         description="API Provider list fetched successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="API Provider list fetched successfully."),
+     *             @OA\Property(property="data", type="array", @OA\Items(type="object"))
+     *         )
+     *     )
+     * )
+     */
     public function index()
     {
         try {
@@ -32,7 +47,32 @@ class ApiProviderController extends Controller
         }
     }
 
-    // Store new API Provider
+    /**
+     * @OA\Post(
+     *     path="/api/api-providers/create",
+     *     summary="Create new API Provider",
+     *     tags={"API Provider"},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"api_id","operator_id","api_code","api_provider_code"},
+     *             @OA\Property(property="api_id", type="string", example="1"),
+     *             @OA\Property(property="operator_id", type="integer", example=1),
+     *             @OA\Property(property="api_code", type="string", example="APICODE01"),
+     *             @OA\Property(property="api_provider_code", type="string", example="PROV01")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Created successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="API Provider created successfully."),
+     *             @OA\Property(property="data", type="object")
+     *         )
+     *     )
+     * )
+     */
     public function store(Request $request)
     {
         try {
@@ -70,7 +110,29 @@ class ApiProviderController extends Controller
     }
 
 
-    // Show single API Provider
+    /**
+     * @OA\Get(
+     *     path="/api/api-providers/details/{id}",
+     *     summary="Get single API Provider details",
+     *     tags={"API Provider"},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         description="API Provider ID",
+     *         @OA\Schema(type="integer", example=1)
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Fetched successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="API Provider fetched successfully."),
+     *             @OA\Property(property="data", type="object")
+     *         )
+     *     )
+     * )
+     */
     public function show($id)
     {
         try {
@@ -90,7 +152,38 @@ class ApiProviderController extends Controller
         }
     }
 
-    // Update API Provider
+    /**
+     * @OA\Post(
+     *     path="/api/api-providers/update/{id}",
+     *     summary="Update an API Provider",
+     *     tags={"API Provider"},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         description="API Provider ID",
+     *         @OA\Schema(type="integer", example=1)
+     *     ),
+     *     @OA\RequestBody(
+     *         required=false,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="api_id", type="string", example="1"),
+     *             @OA\Property(property="operator_id", type="integer", example=1),
+     *             @OA\Property(property="api_code", type="string", example="APICODE02"),
+     *             @OA\Property(property="api_provider_code", type="string", example="PROV02")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Updated successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="API Provider updated successfully."),
+     *             @OA\Property(property="data", type="object")
+     *         )
+     *     )
+     * )
+     */
     public function update(Request $request, $id)
     {
         try {
@@ -136,7 +229,28 @@ class ApiProviderController extends Controller
     }
 
 
-    // Delete API Provider
+    /**
+     * @OA\Delete(
+     *     path="/api/api-providers/delete/{id}",
+     *     summary="Delete an API Provider",
+     *     tags={"API Provider"},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         description="API Provider ID",
+     *         @OA\Schema(type="integer", example=1)
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Deleted successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="API Provider deleted successfully.")
+     *         )
+     *     )
+     * )
+     */
     public function destroy($id)
     {
         try {
