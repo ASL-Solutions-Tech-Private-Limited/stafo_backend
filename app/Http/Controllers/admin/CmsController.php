@@ -83,7 +83,7 @@ class CmsController extends Controller
         }
 
         $cms = Cms::where('id', $id)->update([
-            'image' => isset($imageName) ? $imageName : $imageName,
+            'image' => !empty($imageName) ? $imageName : $imagePath,
             'title' => $request->title,
             'short_description' => $request->short_description,
             'long_description' => $request->long_description,

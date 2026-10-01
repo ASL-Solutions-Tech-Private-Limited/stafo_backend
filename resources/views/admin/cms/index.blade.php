@@ -1,5 +1,5 @@
 @extends('admin.layouts.layout')
-@section('title', 'User List')
+@section('title', 'CMS List')
 @section('content')
     <div class="app-main__outer">
 

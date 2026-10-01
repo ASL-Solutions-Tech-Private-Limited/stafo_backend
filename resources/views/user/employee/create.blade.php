@@ -169,7 +169,7 @@
                     <!-- Salary Input -->
                     <div class="col-12 col-md-6">
                         <label for="salary" class="form-label fw-semibold text-dark">
-                            Monthly Basic Salary (₹)
+                            Monthly CTC (₹)
                         </label>
                         <div class="input-group">
                             <span class="input-group-text bg-white fw-bold text-success">₹</span>
@@ -177,7 +177,7 @@
                                    value="{{ old('salary') }}" placeholder="e.g. 35000"
                                    oninput="this.value = this.value.replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1');">
                         </div>
-                        <small class="text-muted d-block mt-1">Base salary used as baseline for salary components calculation.</small>
+                        <small class="text-muted d-block mt-1">Monthly Cost to Company (CTC) used as baseline for salary components calculation.</small>
                         @error('salary')
                             <div class="text-danger small mt-1">{{ $message }}</div>
                         @enderror

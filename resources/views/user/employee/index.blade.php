@@ -1042,15 +1042,19 @@
 
                     <!-- Selfie Punches Preview (if captured) -->
                     <div id="modalSelfieRow" class="mb-3 d-none">
-                        <label class="small text-muted fw-bold mb-1"><i class="fa-solid fa-camera me-1 text-primary"></i>Punch Selfies:</label>
+                        <label class="small text-muted fw-bold mb-1.5 d-block"><i class="fa-solid fa-camera me-1.5 text-primary"></i>Punch Selfies (Click to view full photo):</label>
                         <div class="row g-2">
                             <div class="col-6 text-center" id="modalPunchinImgCol">
-                                <small class="text-muted d-block mb-1">Check-in Photo</small>
-                                <img id="modalPunchinImg" src="" class="img-fluid rounded-3 border shadow-xs" style="max-height: 120px; object-fit: cover;">
+                                <small class="text-muted fw-semibold d-block mb-1">Check-in Photo</small>
+                                <a href="#" id="modalPunchinImgLink" target="_blank" class="d-inline-block w-100 position-relative text-decoration-none">
+                                    <img id="modalPunchinImg" src="" alt="Punch In Selfie" class="img-fluid rounded-3 border shadow-xs w-100" style="height: 130px; object-fit: cover; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.03)'" onmouseout="this.style.transform='scale(1)'">
+                                </a>
                             </div>
                             <div class="col-6 text-center" id="modalPunchoutImgCol">
-                                <small class="text-muted d-block mb-1">Check-out Photo</small>
-                                <img id="modalPunchoutImg" src="" class="img-fluid rounded-3 border shadow-xs" style="max-height: 120px; object-fit: cover;">
+                                <small class="text-muted fw-semibold d-block mb-1">Check-out Photo</small>
+                                <a href="#" id="modalPunchoutImgLink" target="_blank" class="d-inline-block w-100 position-relative text-decoration-none">
+                                    <img id="modalPunchoutImg" src="" alt="Punch Out Selfie" class="img-fluid rounded-3 border shadow-xs w-100" style="height: 130px; object-fit: cover; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.03)'" onmouseout="this.style.transform='scale(1)'">
+                                </a>
                             </div>
                         </div>
                     </div>
@@ -1409,27 +1413,45 @@
             const outImg = document.getElementById('modalPunchoutImg');
             const inCol = document.getElementById('modalPunchinImgCol');
             const outCol = document.getElementById('modalPunchoutImgCol');
+            const inLink = document.getElementById('modalPunchinImgLink');
+            const outLink = document.getElementById('modalPunchoutImgLink');
 
             let hasSelfies = false;
             if (dayData.punchin_image) {
-                inImg.src = dayData.punchin_image;
-                inCol.classList.remove('d-none');
+                if (inImg) {
+                    inImg.src = dayData.punchin_image;
+                    inImg.onerror = function() {
+                        if (inCol) inCol.classList.add('d-none');
+                    };
+                }
+                if (inLink) inLink.href = dayData.punchin_image;
+                if (inCol) inCol.classList.remove('d-none');
                 hasSelfies = true;
             } else {
-                inCol.classList.add('d-none');
+                if (inImg) inImg.src = '';
+                if (inLink) inLink.href = '#';
+                if (inCol) inCol.classList.add('d-none');
             }
 
             if (dayData.punchout_image) {
-                outImg.src = dayData.punchout_image;
-                outCol.classList.remove('d-none');
+                if (outImg) {
+                    outImg.src = dayData.punchout_image;
+                    outImg.onerror = function() {
+                        if (outCol) outCol.classList.add('d-none');
+                    };
+                }
+                if (outLink) outLink.href = dayData.punchout_image;
+                if (outCol) outCol.classList.remove('d-none');
                 hasSelfies = true;
             } else {
-                outCol.classList.add('d-none');
+                if (outImg) outImg.src = '';
+                if (outLink) outLink.href = '#';
+                if (outCol) outCol.classList.add('d-none');
             }
 
-            if (hasSelfies) {
+            if (hasSelfies && selfieRow) {
                 selfieRow.classList.remove('d-none');
-            } else {
+            } else if (selfieRow) {
                 selfieRow.classList.add('d-none');
             }
 

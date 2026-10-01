@@ -819,12 +819,12 @@
                 </form>
 
                 <!-- Quick Demo Login Helper for Evaluators / Test Visitors -->
-                <div class="stafo-demo-strip">
+                <!-- <div class="stafo-demo-strip">
                   <span class="text-muted"><i class="fa-solid fa-flask text-warning me-1"></i> Instant Demo:</span>
                   <a href="javascript:void(0)" class="stafo-demo-chip" id="fill_demo_mobile" title="Click to auto-test with demo phone">
                     <i class="fa-solid fa-bolt text-warning me-1"></i>Use Demo: 9999999999
                   </a>
-                </div>
+                </div> -->
 
                 <!-- New Account Link -->
                 <div class="text-center mt-3 pt-2">

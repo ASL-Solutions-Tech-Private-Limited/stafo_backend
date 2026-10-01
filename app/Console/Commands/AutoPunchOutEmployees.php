@@ -9,6 +9,7 @@ use App\Models\EmployeePunch;
 use App\Models\Shift;
 use App\Helpers\Helper;
 use Illuminate\Support\Facades\Log;
+use Carbon\Carbon;
 
 class AutoPunchOutEmployees extends Command
 {
@@ -24,7 +25,7 @@ class AutoPunchOutEmployees extends Command
      *
      * @var string
      */
-    protected $description = 'Automatically punch-out employees who forgot to punch-out today';
+    protected $description = 'Automatically process open punches for employees who forgot to punch-out today (keeping punch-out and out_time as null and emailing employees from company)';
 
     /**
      * Execute the console command.
@@ -33,36 +34,35 @@ class AutoPunchOutEmployees extends Command
     {
         try {
             $targetDate = $this->option('date') ?: date('Y-m-d');
-            $outTime = '00:00:00';
-            $punchOutDateTime = $targetDate . ' ' . $outTime;
 
-            $this->info("Running auto punch-out with 00:00:00 time for date: {$targetDate}");
+            $this->info("Running auto punch-out (setting/keeping null) for date: {$targetDate}");
 
             $openPunches = EmployeePunch::whereDate('punch_in', $targetDate)
                 ->whereNull('punch_out')
                 ->get();
 
             $count = 0;
+            $processedEmployeeIds = [];
 
             foreach ($openPunches as $punch) {
-                $employee = Employee::find($punch->employee_id);
+                $employee = Employee::with(['company', 'branch', 'department', 'shift'])->find($punch->employee_id);
                 if (!$employee) {
                     continue;
                 }
 
-                // Punchout time set as 00:00:00 format
+                // Ensure punch_out remains null
                 $punch->update([
-                    'punch_out' => $punchOutDateTime,
+                    'punch_out' => null,
                 ]);
 
-                // Update Attendance record: set out_time as 00:00:00
+                // Update Attendance record: ensure out_time remains null
                 $attendance = Attendance::where('employee_id', $employee->id)
                     ->whereDate('date', $targetDate)
                     ->first();
 
                 if ($attendance) {
                     $attendance->update([
-                        'out_time' => $outTime,
+                        'out_time' => null,
                     ]);
                 }
 
@@ -70,27 +70,46 @@ class AutoPunchOutEmployees extends Command
                 $employee->geo_status = 0;
                 $employee->save();
 
-                // Send notification
+                // Send push notification
                 if (!empty($employee->fcm_token)) {
-                    $notification_message = "You forgot to punch-out for " . date('d M Y', strtotime($targetDate)) . ". Your punch-out has been recorded as 00:00:00.";
+                    $notification_message = "You forgot to punch-out for " . date('d M Y', strtotime($targetDate)) . ". Your punch-out has been recorded.";
                     Helper::sendPushNotification($employee->fcm_token, $notification_message);
                 }
 
-                Log::info("Employee ID {$employee->id} ({$employee->name}) auto punch-out processed with 00:00:00 out_time for {$targetDate}");
+                // Send Email notification to employee from company side
+                if (!in_array($employee->id, $processedEmployeeIds)) {
+                    $inTimeStr = $punch->punch_in 
+                        ? Carbon::parse($punch->punch_in)->format('h:i A') 
+                        : ($attendance && $attendance->in_time ? Carbon::parse($attendance->in_time)->format('h:i A') : null);
+
+                    Helper::sendMissedPunchOutEmailNotification($employee, $targetDate, $inTimeStr);
+                    $processedEmployeeIds[] = $employee->id;
+                }
+
+                Log::info("Employee ID {$employee->id} ({$employee->name}) auto punch-out processed (out_time set to null) for {$targetDate}");
                 $count++;
             }
 
-            // Also check any Attendance records for the day where in_time is not null and out_time is null
+            // Also ensure any Attendance records for the day with in_time and missing out_time have out_time as null
             $openAttendances = Attendance::whereDate('date', $targetDate)
                 ->whereNotNull('in_time')
                 ->whereNull('out_time')
                 ->get();
 
             foreach ($openAttendances as $att) {
-                $att->update(['out_time' => $outTime]);
+                $att->update(['out_time' => null]);
+
+                if (!in_array($att->employee_id, $processedEmployeeIds)) {
+                    $emp = Employee::with(['company', 'branch', 'department', 'shift'])->find($att->employee_id);
+                    if ($emp) {
+                        $inTimeStr = $att->in_time ? Carbon::parse($att->in_time)->format('h:i A') : null;
+                        Helper::sendMissedPunchOutEmailNotification($emp, $targetDate, $inTimeStr);
+                        $processedEmployeeIds[] = $emp->id;
+                    }
+                }
             }
 
-            $this->info("Successfully processed {$count} employee(s) with 00:00:00 punch-out.");
+            $this->info("Successfully processed {$count} employee(s) (punch-out and out_time kept as null, missed punch-out emails dispatched).");
         } catch (\Exception $e) {
             $this->error('Error: ' . $e->getMessage());
             Log::error('Error in AutoPunchOutEmployees command: ' . $e->getMessage());

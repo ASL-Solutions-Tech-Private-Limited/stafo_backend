@@ -8,10 +8,14 @@
       </span>
     </div>
     <div class="d-none d-lg-flex align-items-center gap-3">
-      <span class="announcement-text"><i class="fa-solid fa-gift text-warning me-1"></i> 15-Day Free Trial (No Card Required)</span>
+      <a href="https://play.google.com/store/apps/details?id=com.stafo.app&hl=en_IN" target="_blank" class="announcement-call-link text-decoration-none">
+        <i class="fa-brands fa-google-play text-warning me-1"></i> Download App
+      </a>
       <span class="text-white-50">•</span>
-      <a href="tel:+916292252470" class="announcement-call-link">
-        <i class="fa-solid fa-phone me-1 text-warning"></i> +91 6292252470
+      <span class="announcement-text"><i class="fa-solid fa-gift text-warning me-1"></i> 15-Day Free Trial</span>
+      <span class="text-white-50">•</span>
+      <a href="tel:+918389039361" class="announcement-call-link">
+        <i class="fa-solid fa-phone me-1 text-warning"></i> +91 8389039361
       </a>
     </div>
   </div>
@@ -64,7 +68,11 @@
         </div>
 
         <!-- Right: Action CTAs -->
-        <div class="d-flex align-items-center gap-2 pt-2 pt-lg-0">
+        <div class="d-flex align-items-center flex-wrap gap-2 pt-2 pt-lg-0">
+          <a class="btn-app-download" href="https://play.google.com/store/apps/details?id=com.stafo.app&hl=en_IN" target="_blank" title="Download Stafo Android App on Google Play">
+            <i class="fa-brands fa-google-play text-success"></i>
+            <span>Download App</span>
+          </a>
           <a class="btn-signin-ghost" href="{{ route('login') }}">
             <i class="fa-solid fa-arrow-right-to-bracket"></i>
             <span>Sign In</span>
@@ -189,6 +197,30 @@
   .stafo-capsule-link.active .nav-icon {
     color: #424096;
     opacity: 1;
+  }
+
+  /* Download App Button */
+  .btn-app-download {
+    color: #1e293b;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    font-weight: 600;
+    font-size: 0.82rem;
+    padding: 7px 14px;
+    border-radius: 9999px;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+  }
+  .btn-app-download:hover {
+    background: #ffffff;
+    border-color: #cbd5e1;
+    color: #047857;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
+    transform: translateY(-1px);
   }
 
   /* Sign In Button */

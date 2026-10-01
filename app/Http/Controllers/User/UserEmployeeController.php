@@ -531,6 +531,15 @@ class UserEmployeeController extends Controller
         $employee = Employee::with(['branch', 'department', 'shifts', 'shift', 'designation', 'companyRole'])
             ->where('company_id', $userId)
             ->findOrFail($id);
+        $employee->selfie_url = null;
+        if ($employee->selfie_image) {
+            if (file_exists(public_path('uploads/employees/selfie/' . $employee->selfie_image))) {
+                $employee->selfie_url = asset('uploads/employees/selfie/' . $employee->selfie_image);
+            } elseif (file_exists(public_path('uploads/employees/' . $employee->selfie_image))) {
+                $employee->selfie_url = asset('uploads/employees/' . $employee->selfie_image);
+            }
+        }
+
         $branches = Branch::where('company_id', $userId)->get();
         $departments = Department::where('company_id', $userId)->get();
         $shifts = Shift::where('company_id', $userId)->get();
@@ -562,7 +571,8 @@ class UserEmployeeController extends Controller
             'shift_ids' => 'nullable|array',
             'shift_ids.*' => 'exists:shifts,id',
             'attendance_type' => 'nullable|string|in:geo,selfie,qr code,qr',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
+            'selfie_image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg,webp|max:2048',
             'resume' => 'nullable|mimes:pdf,doc,docx|max:10240',
         ]);
         $employee = Employee::where('company_id', $userId)->findOrFail($id);
@@ -628,6 +638,24 @@ class UserEmployeeController extends Controller
             $data['image'] = $imageName;
         }
 
+        // Handling reference selfie upload
+        if ($request->hasFile('selfie_image')) {
+            $selfieDir = public_path('uploads/employees/selfie');
+            if (!file_exists($selfieDir)) {
+                @mkdir($selfieDir, 0777, true);
+            }
+            if (!empty($employee->selfie_image)) {
+                $oldSelfiePath = public_path('uploads/employees/selfie/' . $employee->selfie_image);
+                if (file_exists($oldSelfiePath)) {
+                    @unlink($oldSelfiePath);
+                }
+            }
+            $extension = $request->file('selfie_image')->getClientOriginalExtension();
+            $selfieName = 'employees_' . time() . '_' . $id . '.' . $extension;
+            $request->file('selfie_image')->move($selfieDir, $selfieName);
+            $data['selfie_image'] = $selfieName;
+        }
+
         // Handling resume upload
         if ($request->hasFile('resume')) {
             // Check if a resume already exists, and delete it if needed
@@ -653,6 +681,98 @@ class UserEmployeeController extends Controller
         // Redirect back with a success message
         Alert::success('Success', 'Employee details updated successfully.');
         return redirect()->route('employee.index');
+    }
+
+    /**
+     * Upload employee reference selfie image (Web/AJAX)
+     */
+    public function selfieUpload(Request $request, $id)
+    {
+        try {
+            $userId = Auth::id();
+            $employee = Employee::where('company_id', $userId)->findOrFail($id);
+
+            $request->validate([
+                'selfie_image' => 'required|image|mimes:jpeg,png,jpg,gif,svg,webp|max:2048',
+            ]);
+
+            if ($request->hasFile('selfie_image')) {
+                $selfieDir = public_path('uploads/employees/selfie');
+                if (!file_exists($selfieDir)) {
+                    @mkdir($selfieDir, 0777, true);
+                }
+
+                if (!empty($employee->selfie_image)) {
+                    $oldImagePath = public_path('uploads/employees/selfie/' . $employee->selfie_image);
+                    if (file_exists($oldImagePath)) {
+                        @unlink($oldImagePath);
+                    }
+                }
+
+                $image = $request->file('selfie_image');
+                $imageName = 'employees_' . time() . '_' . $employee->id . '.' . $image->getClientOriginalExtension();
+                $image->move($selfieDir, $imageName);
+                $employee->selfie_image = $imageName;
+                $employee->save();
+
+                $selfieUrl = asset('uploads/employees/selfie/' . $imageName);
+
+                if ($request->ajax() || $request->wantsJson()) {
+                    return response()->json([
+                        'status' => true,
+                        'message' => 'Reference selfie uploaded successfully.',
+                        'selfie_image' => $imageName,
+                        'selfie_url' => $selfieUrl,
+                    ], 200);
+                }
+
+                Alert::success('Success', 'Reference selfie image updated successfully.');
+                return redirect()->back();
+            }
+
+            return response()->json(['status' => false, 'message' => 'No image file uploaded.'], 400);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Validation error: ' . implode(', ', \Illuminate\Support\Arr::flatten($e->errors())),
+                'errors' => $e->errors()
+            ], 422);
+        } catch (\Exception $e) {
+            return response()->json(['status' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Remove employee reference selfie image (Web/AJAX)
+     */
+    public function selfieRemove(Request $request, $id)
+    {
+        try {
+            $userId = Auth::id();
+            $employee = Employee::where('company_id', $userId)->findOrFail($id);
+
+            if (!empty($employee->selfie_image)) {
+                $oldImagePath = public_path('uploads/employees/selfie/' . $employee->selfie_image);
+                if (file_exists($oldImagePath)) {
+                    @unlink($oldImagePath);
+                }
+            }
+
+            $employee->selfie_image = null;
+            $employee->save();
+
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'status' => true,
+                    'message' => 'Reference selfie removed successfully.',
+                ], 200);
+            }
+
+            Alert::success('Success', 'Reference selfie image removed successfully.');
+            return redirect()->back();
+        } catch (\Exception $e) {
+            return response()->json(['status' => false, 'message' => $e->getMessage()], 500);
+        }
     }
 
 
@@ -1506,6 +1626,44 @@ class UserEmployeeController extends Controller
                     $badgeClass = 'bg-light text-muted';
                 }
 
+                $punchinImage = null;
+                if ($att && !empty($att->punchin_image)) {
+                    $pIn = $att->punchin_image;
+                    if (str_starts_with($pIn, 'http://') || str_starts_with($pIn, 'https://')) {
+                        $punchinImage = $pIn;
+                    } elseif (file_exists(public_path('uploads/employees/punchin/' . $pIn))) {
+                        $punchinImage = asset('uploads/employees/punchin/' . $pIn);
+                    } elseif (file_exists(public_path('uploads/employees/selfie/' . $pIn))) {
+                        $punchinImage = asset('uploads/employees/selfie/' . $pIn);
+                    } elseif (file_exists(public_path('uploads/employees/' . $pIn))) {
+                        $punchinImage = asset('uploads/employees/' . $pIn);
+                    } elseif (file_exists(public_path($pIn))) {
+                        $punchinImage = asset($pIn);
+                    } else {
+                        $punchinImage = asset('uploads/employees/punchin/' . $pIn);
+                    }
+                }
+
+                $punchoutImage = null;
+                if ($att && !empty($att->punchout_image)) {
+                    $pOut = $att->punchout_image;
+                    if (str_starts_with($pOut, 'http://') || str_starts_with($pOut, 'https://')) {
+                        $punchoutImage = $pOut;
+                    } elseif (file_exists(public_path('uploads/employees/punchout/' . $pOut))) {
+                        $punchoutImage = asset('uploads/employees/punchout/' . $pOut);
+                    } elseif (file_exists(public_path('uploads/employees/punchin/' . $pOut))) {
+                        $punchoutImage = asset('uploads/employees/punchin/' . $pOut);
+                    } elseif (file_exists(public_path('uploads/employees/selfie/' . $pOut))) {
+                        $punchoutImage = asset('uploads/employees/selfie/' . $pOut);
+                    } elseif (file_exists(public_path('uploads/employees/' . $pOut))) {
+                        $punchoutImage = asset('uploads/employees/' . $pOut);
+                    } elseif (file_exists(public_path($pOut))) {
+                        $punchoutImage = asset($pOut);
+                    } else {
+                        $punchoutImage = asset('uploads/employees/punchout/' . $pOut);
+                    }
+                }
+
                 $days[$dateStr] = [
                     'day' => $day,
                     'day_name' => $cur->format('D'),
@@ -1519,8 +1677,8 @@ class UserEmployeeController extends Controller
                     'in_time' => $inTime,
                     'out_time' => $outTime,
                     'work_duration' => $workDuration,
-                    'punchin_image' => $att && $att->punchin_image ? asset($att->punchin_image) : null,
-                    'punchout_image' => $att && $att->punchout_image ? asset($att->punchout_image) : null,
+                    'punchin_image' => $punchinImage,
+                    'punchout_image' => $punchoutImage,
                     'location_url' => route('employee.location', ['id' => $employee->id]) . '?date=' . $dateStr,
                 ];
             }

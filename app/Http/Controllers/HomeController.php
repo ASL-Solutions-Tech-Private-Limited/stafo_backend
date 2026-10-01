@@ -71,8 +71,8 @@ class HomeController extends Controller
         $validator = Validator::make($request->all(), [
             'full_name' => 'required|string|max:255',
             'email' => 'required|email|max:255',
-            'phone' => 'required|string|max:15',
-            'message' => 'required|string',
+            'phone' => 'required|string|max:20',
+            'message' => 'nullable|string',
         ]);
 
         if ($validator->fails()) {
@@ -86,11 +86,11 @@ class HomeController extends Controller
             'full_name' => $request->full_name,
             'email' => $request->email,
             'phone' => $request->phone,
-            'message' => $request->message,
+            'message' => $request->message ?? 'No message provided',
         ]);
 
         return response()->json([
-            'success' => 'Your contact form has been submitted successfully!',
+            'success' => 'Thank you for contacting STAFO! Your message has been received. Our HRMS specialist will get back to you within 2 hours.',
         ], 200);
     }
 

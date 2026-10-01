@@ -96,22 +96,6 @@ class EmployeeController extends Controller
                         });
                     }
 
-                    // If no attendance record is found for the target date, mark as 'Absent'
-                    // if ($targetDate && $attendances->isEmpty()) {
-                    //     // Create a new attendance object and mark it as Absent
-                    //     $absentAttendance = new \stdClass();
-                    //     $absentAttendance->id = '';
-                    //     $absentAttendance->attendance = 'Absent';
-                    //     $absentAttendance->halfday = 0;
-                    //     $absentAttendance->date = $targetDate;
-                    //     $absentAttendance->in_time = null;
-                    //     $absentAttendance->out_time = null;
-                    //     $absentAttendance->punchin_image = '';
-                    //     $absentAttendance->punchout_image = '';
-                    //     $attendances = collect([$absentAttendance]);
-                    // }
-
-                    // Sort attendance by date (latest first)
                     $attendances = $attendances->sortByDesc('date');
                     // Return the employee data with the related attendance
 
@@ -127,6 +111,7 @@ class EmployeeController extends Controller
                         'image_path' => asset('uploads/employees/'),
                         'selfie_image' => $employee->selfie_image,
                         'selfie_image_path' => asset('uploads/employees/selfie/'),
+                        'hasSelfie' => !empty($employee->selfie_image) && file_exists(public_path('uploads/employees/selfie/' . $employee->selfie_image)),
                         'company_id' => $employee->company_id,
                         'branch_name' => $employee->branch ? $employee->branch->branch_name : null,
                         'department_name' => $employee->department ? $employee->department->name : null,
@@ -974,6 +959,8 @@ class EmployeeController extends Controller
                     ]);
                 } catch (\Throwable $th) {}
 
+                Helper::sendAttendanceEmailNotification($employee, 'punch_out', now(), 'Mobile App Punch');
+
                 return response()->json([
                     'status' => true,
                     'message' => 'Punch-out successful.',
@@ -1017,6 +1004,8 @@ class EmployeeController extends Controller
                     ]);
                 } catch (\Throwable $th) {}
                 
+                Helper::sendAttendanceEmailNotification($employee, 'punch_in', now(), 'Mobile App Punch');
+
                 return response()->json([
                     'status' => true,
                     'message' => 'Punch-in successful.',
@@ -1287,6 +1276,7 @@ class EmployeeController extends Controller
                 // Punch OUT
                 if (file_exists($punchinDir . '/' . $punchImageName)) {
                     @copy($punchinDir . '/' . $punchImageName, $punchoutDir . '/' . $punchImageName);
+                    @unlink($punchinDir . '/' . $punchImageName);
                 }
 
                 $existingPunch->update([
@@ -1297,12 +1287,32 @@ class EmployeeController extends Controller
                     ->whereDate('date', $currentDate)
                     ->first();
 
+                // Delete old punchout images for this employee so only 1 punchout image remains
+                $previousPunchouts = Attendance::where('employee_id', $employee->id)
+                    ->whereNotNull('punchout_image')
+                    ->where('punchout_image', '!=', '')
+                    ->get();
+
+                foreach ($previousPunchouts as $prevAtt) {
+                    if ($prevAtt->punchout_image !== $punchImageName) {
+                        $oldPunchoutFile = $punchoutDir . '/' . $prevAtt->punchout_image;
+                        if (file_exists($oldPunchoutFile)) {
+                            @unlink($oldPunchoutFile);
+                        }
+                        if (!$attendance || $prevAtt->id !== $attendance->id) {
+                            $prevAtt->update(['punchout_image' => null]);
+                        }
+                    }
+                }
+
                 if ($attendance) {
                     $attendance->update([
                         'out_time' => $currentDateTime,
                         'punchout_image' => $punchImageName,
                     ]);
                 }
+
+                Helper::sendAttendanceEmailNotification($employee, 'punch_out', $nowTime, 'Selfie Attendance');
 
                 return response()->json([
                     'status' => true,
@@ -1316,6 +1326,22 @@ class EmployeeController extends Controller
                 ], 200);
             } else {
                 // Punch IN
+                // Delete old punchin images for this employee so only 1 punchin image remains
+                $previousPunchins = Attendance::where('employee_id', $employee->id)
+                    ->whereNotNull('punchin_image')
+                    ->where('punchin_image', '!=', '')
+                    ->get();
+
+                foreach ($previousPunchins as $prevAtt) {
+                    if ($prevAtt->punchin_image !== $punchImageName) {
+                        $oldPunchinFile = $punchinDir . '/' . $prevAtt->punchin_image;
+                        if (file_exists($oldPunchinFile)) {
+                            @unlink($oldPunchinFile);
+                        }
+                        $prevAtt->update(['punchin_image' => null]);
+                    }
+                }
+
                 $punchIn = EmployeePunch::create([
                     'employee_id' => $employee->id,
                     'punch_in' => $nowTime,
@@ -1344,6 +1370,8 @@ class EmployeeController extends Controller
                         'punchin_image' => $punchImageName,
                     ]);
                 }
+
+                Helper::sendAttendanceEmailNotification($employee, 'punch_in', $nowTime, 'Selfie Attendance');
 
                 return response()->json([
                     'status' => true,
@@ -1403,9 +1431,24 @@ class EmployeeController extends Controller
             ]);
 
             $employee = Employee::find($request->employee_id);
+            if (!$employee) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Employee not found.',
+                ], 404);
+            }
+
             $employeeImage = '';
 
             if ($request->hasFile('selfie_image')) {
+                // Delete previous selfie image if it exists
+                if (!empty($employee->selfie_image)) {
+                    $oldImagePath = public_path('uploads/employees/selfie/' . $employee->selfie_image);
+                    if (file_exists($oldImagePath)) {
+                        @unlink($oldImagePath);
+                    }
+                }
+
                 $image = $request->file('selfie_image');
                 $imageName = 'employees_' . time() . '.' . $image->getClientOriginalExtension();
 
@@ -1459,9 +1502,19 @@ class EmployeeController extends Controller
             ]);
 
             $employee = Employee::find($request->employee_id);
+            if (!$employee) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Employee not found.',
+                ], 404);
+            }
 
-
-            @unlink(public_path('uploads/employees/selfie') . '/' . $employee->selfie_image);
+            if (!empty($employee->selfie_image)) {
+                $oldImagePath = public_path('uploads/employees/selfie/' . $employee->selfie_image);
+                if (file_exists($oldImagePath)) {
+                    @unlink($oldImagePath);
+                }
+            }
             $employee->selfie_image = null;
             //$this->uploadImage($request, $employee);
             $employee->save();
@@ -1573,6 +1626,8 @@ class EmployeeController extends Controller
                         ]);
                     }
 
+                    Helper::sendAttendanceEmailNotification($employee, 'punch_out', now(), 'QR Code Attendance');
+
                     return response()->json([
                         'status' => true,
                         'message' => 'QR attendance Out successfully.',
@@ -1600,6 +1655,8 @@ class EmployeeController extends Controller
                             'out_time' => null, // No punch-out yet
                         ]);
                     }
+
+                    Helper::sendAttendanceEmailNotification($employee, 'punch_in', now(), 'QR Code Attendance');
 
                     return response()->json([
                         'status' => true,
@@ -2580,8 +2637,6 @@ class EmployeeController extends Controller
     {
         try {
             $targetDate = $request->input('date', date('Y-m-d'));
-            $outTime = '00:00:00';
-            $punchOutDateTime = $targetDate . ' ' . $outTime;
 
             // Find all punches for targetDate where punch_out is null
             $openPunches = EmployeePunch::whereDate('punch_in', $targetDate)
@@ -2596,19 +2651,19 @@ class EmployeeController extends Controller
                     continue;
                 }
 
-                // Punchout time set as 00:00:00 format
+                // Ensure punch_out remains null
                 $punch->update([
-                    'punch_out' => $punchOutDateTime,
+                    'punch_out' => null,
                 ]);
 
-                // Update Attendance record: set out_time as 00:00:00
+                // Update Attendance record: ensure out_time remains null
                 $attendance = Attendance::where('employee_id', $employee->id)
                     ->whereDate('date', $targetDate)
                     ->first();
 
                 if ($attendance) {
                     $attendance->update([
-                        'out_time' => $outTime,
+                        'out_time' => null,
                     ]);
                 }
 
@@ -2618,7 +2673,7 @@ class EmployeeController extends Controller
 
                 // Send push notification to employee if fcm_token available
                 if (!empty($employee->fcm_token)) {
-                    $notification_message = "You forgot to punch-out for " . date('d M Y', strtotime($targetDate)) . ". Your punch-out has been recorded as 00:00:00.";
+                    $notification_message = "You forgot to punch-out for " . date('d M Y', strtotime($targetDate)) . ". Your punch-out has been recorded.";
                     Helper::sendPushNotification($employee->fcm_token, $notification_message);
                 }
 
@@ -2626,31 +2681,31 @@ class EmployeeController extends Controller
                     'employee_id' => $employee->id,
                     'name' => $employee->name,
                     'punch_in' => $punch->punch_in,
-                    'punch_out' => $punchOutDateTime,
-                    'out_time' => $outTime,
+                    'punch_out' => null,
+                    'out_time' => null,
                 ];
 
-                Log::info("Employee ID {$employee->id} ({$employee->name}) auto punch-out processed with 00:00:00 out_time for {$targetDate}");
+                Log::info("Employee ID {$employee->id} ({$employee->name}) auto punch-out processed with null out_time for {$targetDate}");
             }
 
-            // Also check any Attendance records for the date where in_time is not null and out_time is null
+            // Also ensure any Attendance records for the date where in_time is not null and out_time is null have out_time as null
             $openAttendances = Attendance::whereDate('date', $targetDate)
                 ->whereNotNull('in_time')
                 ->whereNull('out_time')
                 ->get();
 
             foreach ($openAttendances as $att) {
-                $att->update(['out_time' => $outTime]);
+                $att->update(['out_time' => null]);
             }
 
             return response()->json([
                 'status' => true,
-                'message' => 'Auto punch-out processed successfully with 00:00:00 punchout time.',
+                'message' => 'Auto punch-out processed successfully (out_time set to null).',
                 'date' => $targetDate,
                 'total_punched_out' => count($updatedEmployees),
                 'data' => $updatedEmployees,
             ], 200);
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             Log::error('Error in autoPunchOut API: ' . $e->getMessage());
             return response()->json([
                 'status' => false,

@@ -98,6 +98,7 @@ Route::post('/request-callback', [HomeController::class, 'requestCallback'])->na
 Route::get('about-us', [HomeController::class, 'aboutUs'])->name('aboutUs');
 Route::get('contact-us', [HomeController::class, 'contactUs'])->name('contactUs');
 Route::get('price', [HomeController::class, 'price'])->name('price');
+Route::get('pricing', [HomeController::class, 'price'])->name('pricing');
 Route::get('blog', [HomeController::class, 'blog'])->name('blog');
 Route::get('blog-details/{id}/{slug}', [HomeController::class, 'blogDetails'])->name('blogDetails');
 Route::post('blog-comment-store/{id}', [HomeController::class, 'blogCommentStore'])->name('blogCommentStore');
@@ -291,6 +292,8 @@ Route::prefix('company')->namespace('App\Http\Controllers')->middleware('auth')-
 
     Route::get('employee/{id}/edit', [UserEmployeeController::class, 'edit'])->name('user.employees.edit');
     Route::put('employee/{id}', [UserEmployeeController::class, 'update'])->name('user.employees.update');
+    Route::post('employee/{id}/selfie-upload', [UserEmployeeController::class, 'selfieUpload'])->name('user.employees.selfieUpload');
+    Route::delete('employee/{id}/selfie-remove', [UserEmployeeController::class, 'selfieRemove'])->name('user.employees.selfieRemove');
     Route::get('{id}/add-bank-account', [UserEmployeeController::class, 'showBankAccountForm'])->name('addBankAccount');
     Route::post('{id}/store-bank-account', [UserEmployeeController::class, 'storeBankAccount'])->name('storeBankAccount');
 

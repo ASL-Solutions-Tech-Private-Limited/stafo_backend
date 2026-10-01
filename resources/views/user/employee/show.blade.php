@@ -168,7 +168,7 @@
                                 </td>
                             </tr>
                             <tr>
-                                <td class="text-muted ps-0 py-2">Basic Salary:</td>
+                                <td class="text-muted ps-0 py-2">Monthly CTC:</td>
                                 <td class="fw-bold text-success py-2">₹{{ number_format((float)($employee->salary ?? 0), 2) }}</td>
                             </tr>
                             <tr>

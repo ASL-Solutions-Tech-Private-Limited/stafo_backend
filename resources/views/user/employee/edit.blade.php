@@ -54,15 +54,15 @@
             @csrf
             @method('PUT')
 
-            <!-- Section 1: Profile Photo & Resume -->
+            <!-- Section 1: Profile Photo, Reference Selfie & Resume -->
             <div class="p-4 bg-light rounded-4 border mb-4">
                 <h5 class="fw-bold text-dark mb-3 d-flex align-items-center gap-2">
-                    <i class="fa-solid fa-id-badge text-primary"></i> Profile Photo & Resume Document
+                    <i class="fa-solid fa-id-badge text-primary"></i> Profile Photo, Reference Selfie & Resume
                 </h5>
                 <div class="row g-4 align-items-center">
                     
                     <!-- Profile Picture -->
-                    <div class="col-12 col-md-6">
+                    <div class="col-12 col-md-4">
                         <label class="form-label fw-semibold text-dark">Profile Picture</label>
                         <div class="d-flex align-items-center gap-3">
                             <div class="rounded-circle overflow-hidden border shadow-sm" style="width: 64px; height: 64px; flex-shrink: 0;">
@@ -84,8 +84,63 @@
                         @enderror
                     </div>
 
+                    <!-- Face ID Reference Selfie -->
+                    <div class="col-12 col-md-4">
+                        <div class="d-flex align-items-center justify-content-between mb-1">
+                            <label class="form-label fw-semibold text-dark mb-0">
+                                <i class="fa-solid fa-camera text-primary me-1"></i> Reference Selfie (Face-ID)
+                            </label>
+                            @if ($employee->selfie_url)
+                                <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill" id="selfieStatusBadge" style="font-size: 0.72rem;">
+                                    <i class="fa-solid fa-check-circle me-1"></i> Registered
+                                </span>
+                            @else
+                                <span class="badge bg-warning-subtle text-warning border border-warning-subtle rounded-pill" id="selfieStatusBadge" style="font-size: 0.72rem;">
+                                    <i class="fa-solid fa-triangle-exclamation me-1"></i> Not Registered
+                                </span>
+                            @endif
+                        </div>
+                        
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="rounded-circle overflow-hidden border shadow-sm position-relative" style="width: 64px; height: 64px; flex-shrink: 0; background: #f8fafc;">
+                                <img id="selfiePreviewImg" src="{{ $employee->selfie_url ?? '' }}" alt="Reference Selfie" class="w-100 h-100 object-fit-cover {{ $employee->selfie_url ? '' : 'd-none' }}">
+                                <div id="selfiePlaceholder" class="w-100 h-100 bg-secondary bg-opacity-10 d-flex align-items-center justify-content-center text-secondary fs-4 {{ $employee->selfie_url ? 'd-none' : '' }}">
+                                    <i class="fa-solid fa-user-astronaut text-muted"></i>
+                                </div>
+                            </div>
+                            
+                            <div class="flex-grow-1">
+                                <input class="form-control form-control-sm mb-1" type="file" name="selfie_image" id="selfieImageInput" accept="image/*">
+                                <div class="d-flex align-items-center gap-1">
+                                    <button type="button" class="btn btn-sm btn-primary py-0 px-2 fw-semibold" id="btnUploadSelfieAjax" style="font-size: 0.75rem; display: none;">
+                                        <i class="fa-solid fa-cloud-arrow-up me-1"></i> Upload Now
+                                    </button>
+                                    @if ($employee->selfie_url)
+                                        <button type="button" class="btn btn-sm btn-outline-danger py-0 px-2 fw-semibold" id="btnRemoveSelfieAjax" style="font-size: 0.75rem;">
+                                            <i class="fa-solid fa-trash me-1"></i> Remove
+                                        </button>
+                                        <a href="{{ $employee->selfie_url }}" target="_blank" id="selfieViewLink" class="btn btn-sm btn-outline-secondary py-0 px-2" style="font-size: 0.75rem;">
+                                            <i class="fa-solid fa-up-right-from-square"></i>
+                                        </a>
+                                    @else
+                                        <button type="button" class="btn btn-sm btn-outline-danger py-0 px-2 fw-semibold d-none" id="btnRemoveSelfieAjax" style="font-size: 0.75rem;">
+                                            <i class="fa-solid fa-trash me-1"></i> Remove
+                                        </button>
+                                        <a href="#" target="_blank" id="selfieViewLink" class="btn btn-sm btn-outline-secondary py-0 px-2 d-none" style="font-size: 0.75rem;">
+                                            <i class="fa-solid fa-up-right-from-square"></i>
+                                        </a>
+                                    @endif
+                                </div>
+                                <small class="text-muted d-block mt-1" style="font-size: 0.72rem;">Face-ID reference photo (Max 2MB)</small>
+                            </div>
+                        </div>
+                        @error('selfie_image')
+                            <div class="text-danger small mt-1">{{ $message }}</div>
+                        @enderror
+                    </div>
+
                     <!-- Resume Document -->
-                    <div class="col-12 col-md-6">
+                    <div class="col-12 col-md-4">
                         <label class="form-label fw-semibold text-dark">Resume / CV Document</label>
                         <input class="form-control" type="file" name="resume" accept=".pdf,.doc,.docx">
                         @if ($employee->resume)
@@ -153,10 +208,10 @@
                     </div>
 
                     <div class="col-12 col-md-4">
-                        <label class="form-label fw-semibold text-dark">Basic Salary (₹)</label>
+                        <label class="form-label fw-semibold text-dark">Monthly CTC (₹)</label>
                         <div class="input-group">
                             <span class="input-group-text bg-white fw-bold text-success">₹</span>
-                            <input type="text" name="salary" class="form-control" value="{{ old('salary', $employee->salary) }}" placeholder="Enter salary">
+                            <input type="text" name="salary" class="form-control" value="{{ old('salary', $employee->salary) }}" placeholder="Enter monthly CTC">
                         </div>
                     </div>
 
@@ -441,5 +496,162 @@
                 }
             }
         }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            const selfieInput = document.getElementById('selfieImageInput');
+            const selfiePreviewImg = document.getElementById('selfiePreviewImg');
+            const selfiePlaceholder = document.getElementById('selfiePlaceholder');
+            const btnUploadAjax = document.getElementById('btnUploadSelfieAjax');
+            const btnRemoveAjax = document.getElementById('btnRemoveSelfieAjax');
+            const selfieViewLink = document.getElementById('selfieViewLink');
+            const selfieStatusBadge = document.getElementById('selfieStatusBadge');
+            const employeeId = {{ $employee->id }};
+            const uploadUrl = "{{ route('user.employees.selfieUpload', $employee->id) }}";
+            const removeUrl = "{{ route('user.employees.selfieRemove', $employee->id) }}";
+            const csrfToken = "{{ csrf_token() }}";
+
+            // Live image preview on file choose
+            if (selfieInput) {
+                selfieInput.addEventListener('change', function (e) {
+                    const file = e.target.files[0];
+                    if (file) {
+                        const reader = new FileReader();
+                        reader.onload = function (event) {
+                            selfiePreviewImg.src = event.target.result;
+                            selfiePreviewImg.classList.remove('d-none');
+                            if (selfiePlaceholder) selfiePlaceholder.classList.add('d-none');
+                            if (btnUploadAjax) btnUploadAjax.style.display = 'inline-block';
+                        };
+                        reader.readAsDataURL(file);
+                    }
+                });
+            }
+
+            // Instant AJAX Upload
+            if (btnUploadAjax) {
+                btnUploadAjax.addEventListener('click', function () {
+                    const file = selfieInput.files[0];
+                    if (!file) {
+                        Swal.fire('No File', 'Please select a photo first.', 'warning');
+                        return;
+                    }
+
+                    const formData = new FormData();
+                    formData.append('selfie_image', file);
+                    formData.append('_token', csrfToken);
+
+                    btnUploadAjax.disabled = true;
+                    btnUploadAjax.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-1"></i> Uploading...';
+
+                    fetch(uploadUrl, {
+                        method: 'POST',
+                        body: formData,
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'Accept': 'application/json'
+                        }
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        btnUploadAjax.disabled = false;
+                        btnUploadAjax.innerHTML = '<i class="fa-solid fa-cloud-arrow-up me-1"></i> Upload Now';
+                        btnUploadAjax.style.display = 'none';
+
+                        if (data.status) {
+                            if (data.selfie_url) {
+                                selfiePreviewImg.src = data.selfie_url;
+                                selfiePreviewImg.classList.remove('d-none');
+                                if (selfiePlaceholder) selfiePlaceholder.classList.add('d-none');
+                                if (selfieViewLink) {
+                                    selfieViewLink.href = data.selfie_url;
+                                    selfieViewLink.classList.remove('d-none');
+                                }
+                            }
+                            if (btnRemoveAjax) btnRemoveAjax.classList.remove('d-none');
+                            if (selfieStatusBadge) {
+                                selfieStatusBadge.className = 'badge bg-success-subtle text-success border border-success-subtle rounded-pill';
+                                selfieStatusBadge.innerHTML = '<i class="fa-solid fa-check-circle me-1"></i> Registered';
+                            }
+                            selfieInput.value = '';
+
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Selfie Registered',
+                                text: data.message || 'Reference selfie photo updated successfully.',
+                                timer: 2000,
+                                showConfirmButton: false
+                            });
+                        } else {
+                            Swal.fire('Upload Failed', data.message || 'Could not upload selfie.', 'error');
+                        }
+                    })
+                    .catch(err => {
+                        btnUploadAjax.disabled = false;
+                        btnUploadAjax.innerHTML = '<i class="fa-solid fa-cloud-arrow-up me-1"></i> Upload Now';
+                        Swal.fire('Error', 'An unexpected error occurred while uploading.', 'error');
+                    });
+                });
+            }
+
+            // Instant AJAX Remove
+            if (btnRemoveAjax) {
+                btnRemoveAjax.addEventListener('click', function () {
+                    Swal.fire({
+                        title: 'Remove Reference Selfie?',
+                        text: 'This employee will not be able to punch attendance via Face-ID until a new selfie is registered.',
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#dc3545',
+                        cancelButtonColor: '#6c757d',
+                        confirmButtonText: 'Yes, Remove Selfie'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            btnRemoveAjax.disabled = true;
+
+                            fetch(removeUrl, {
+                                method: 'DELETE',
+                                headers: {
+                                    'X-CSRF-TOKEN': csrfToken,
+                                    'X-Requested-With': 'XMLHttpRequest',
+                                    'Accept': 'application/json'
+                                }
+                            })
+                            .then(res => res.json())
+                            .then(data => {
+                                btnRemoveAjax.disabled = false;
+                                if (data.status) {
+                                    selfiePreviewImg.src = '';
+                                    selfiePreviewImg.classList.add('d-none');
+                                    if (selfiePlaceholder) selfiePlaceholder.classList.remove('d-none');
+                                    btnRemoveAjax.classList.add('d-none');
+                                    if (selfieViewLink) selfieViewLink.classList.add('d-none');
+                                    if (btnUploadAjax) btnUploadAjax.style.display = 'none';
+                                    selfieInput.value = '';
+
+                                    if (selfieStatusBadge) {
+                                        selfieStatusBadge.className = 'badge bg-warning-subtle text-warning border border-warning-subtle rounded-pill';
+                                        selfieStatusBadge.innerHTML = '<i class="fa-solid fa-triangle-exclamation me-1"></i> Not Registered';
+                                    }
+
+                                    Swal.fire({
+                                        icon: 'success',
+                                        title: 'Removed',
+                                        text: 'Reference selfie has been removed.',
+                                        timer: 1800,
+                                        showConfirmButton: false
+                                    });
+                                } else {
+                                    Swal.fire('Error', data.message || 'Could not remove selfie.', 'error');
+                                }
+                            })
+                            .catch(err => {
+                                btnRemoveAjax.disabled = false;
+                                Swal.fire('Error', 'An error occurred while removing selfie.', 'error');
+                            });
+                        }
+                    });
+                });
+            }
+        });
     </script>
 @endsection

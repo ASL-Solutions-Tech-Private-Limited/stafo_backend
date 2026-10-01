@@ -748,7 +748,7 @@
         if (data.status === 'success') {
           renderMessage('bot', data.reply, [
             { label: 'Product Demo', action: 'Product Demo', type: 'pill' },
-            { label: 'Call Support (+91 6292252470)', url: 'tel:+916292252470', type: 'link' }
+            { label: 'Call Support (+91 8389039361)', url: 'tel:+918389039361', type: 'link' }
           ], true);
         } else {
           renderMessage('bot', "Could not upload file. Please try again or email us at support@stafo.com.", [], true);
@@ -801,8 +801,8 @@
       .catch(err => {
         console.error('Chat error:', err);
         showTyping(false);
-        renderMessage('bot', "I'm currently having trouble connecting to the support server. Please reach us directly at **+91 6292252470** or **stafo.sales@stafo.in**.", [
-          { label: 'Call Support (+91 6292252470)', url: 'tel:+916292252470', type: 'link' }
+        renderMessage('bot', "I'm currently having trouble connecting to the support server. Please reach us directly at **+91 8389039361** or **stafo.sales@stafo.in**.", [
+          { label: 'Call Support (+91 8389039361)', url: 'tel:+918389039361', type: 'link' }
         ], true);
       });
     }

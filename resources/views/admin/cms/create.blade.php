@@ -1,319 +1,256 @@
 @extends('admin.layouts.layout')
-@section('title', 'User Add')
+@section('title', 'Add CMS Page')
 @section('content')
     <div class="app-main__outer">
 
         <div class="app-main__inner">
-            <div class="d-flex justify-content-between user-access">
-                <div class="user-welcome mb-3">
-                    <h3>Add New</h3>
+            <div class="d-flex justify-content-between user-access align-items-center mb-3">
+                <div class="user-welcome">
+                    <h3 class="mb-1">Add CMS Page</h3>
+                    <p class="text-muted mb-0">Create new page or import raw HTML directly.</p>
                 </div>
-                <!-- <button class="btn primary-bg"><i class="fa-solid fa-plus"></i> Add New User</button> -->
+                <a href="{{ route('cms.list') }}" class="btn btn-outline-secondary btn-sm">
+                    <i class="fa-solid fa-arrow-left me-1"></i> Back to List
+                </a>
             </div>
-            <form action="{{ route('cms.store') }}" method="post" enctype="multipart/form-data">
+
+            <form action="{{ route('cms.store') }}" method="post" enctype="multipart/form-data" id="cmsForm">
                 @csrf
-                <div class="new-user-form ">
+                <div class="new-user-form card p-4 shadow-sm border-0">
                     <div class="row">
                         <!-- Title -->
                         <div class="col-md-6 mb-3">
-                            <label for="title">Title<span class="red">*</span></label>
-                            <input type="text" name="title" id="title" class="form-control" placeholder="Enter Title"
-                                required>
-                            <span class="error error-title"><span>
+                            <label for="title" class="form-label fw-semibold">Title<span class="text-danger">*</span></label>
+                            <input type="text" name="title" id="title" class="form-control" placeholder="Enter Title" required>
+                            <span class="error error-title"></span>
                         </div>
 
                         <!-- Short Description -->
                         <div class="col-md-6 mb-3">
-                            <label for="short_description">Short Description</label>
+                            <label for="short_description" class="form-label fw-semibold">Short Description</label>
                             <textarea name="short_description" id="short_description" class="form-control"
                                 placeholder="Enter Short Description" rows="1"></textarea>
-                            <span class="error error-short-description"><span>
+                            <span class="error error-short-description"></span>
                         </div>
 
                         <!-- Meta Title -->
                         <div class="col-md-6 mb-3">
-                            <label for="meta_title">Meta Title</label>
+                            <label for="meta_title" class="form-label fw-semibold">Meta Title</label>
                             <input type="text" name="meta_title" id="meta_title" class="form-control"
                                 placeholder="Enter Meta Title">
-                            <span class="error error-meta-title"><span>
+                            <span class="error error-meta-title"></span>
                         </div>
 
                         <!-- Meta Description -->
                         <div class="col-md-6 mb-3">
-                            <label for="meta_description">Meta Description</label>
+                            <label for="meta_description" class="form-label fw-semibold">Meta Description</label>
                             <textarea name="meta_description" id="meta_description" class="form-control"
                                 placeholder="Enter Meta Description" rows="1"></textarea>
-                            <span class="error error-meta-description"><span>
+                            <span class="error error-meta-description"></span>
                         </div>
 
-                        <!-- Long Description -->
+                        <!-- Long Description (Rich & HTML Editor) -->
                         <div class="col-md-12 mb-3">
-                            <label for="long_description">Long Description</label>
-                            <textarea name="long_description" id="long_description" class="form-control"
-                                placeholder="Enter Long Description" rows="5"></textarea>
-                            <span class="error error-long-description"><span>
+                            <div class="d-flex flex-wrap justify-content-between align-items-center mb-2 gap-2 bg-light p-2 rounded border">
+                                <div>
+                                    <label for="long_description" class="form-label fw-bold mb-0">
+                                        <i class="fa-solid fa-file-lines text-primary me-1"></i> Content (HTML / Rich Text)
+                                    </label>
+                                </div>
+                                <div class="d-flex align-items-center gap-2">
+                                    <!-- Hidden File Input for Direct HTML Upload -->
+                                    <input type="file" id="htmlFileInput" accept=".html,.htm,.txt" style="display: none;">
+                                    
+                                    <button type="button" class="btn btn-sm btn-primary text-white" id="btnUploadHtml">
+                                        <i class="fa-solid fa-cloud-arrow-up me-1"></i> Direct HTML Upload (.html)
+                                    </button>
+
+                                    <button type="button" class="btn btn-sm btn-outline-dark" id="btnToggleMode">
+                                        <i class="fa-solid fa-code me-1"></i> <span id="toggleModeText">Switch to Raw HTML Mode</span>
+                                    </button>
+
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" id="btnClearContent" title="Clear Content">
+                                        <i class="fa-solid fa-trash-can"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="alert alert-info py-2 px-3 mb-2 small d-flex align-items-center justify-content-between">
+                                <span>
+                                    <i class="fa-solid fa-circle-info me-1"></i> 
+                                    <strong>HTML Tip:</strong> Aap `.html` file direct upload kar sakte hain, toolbar me <code>&lt;&gt;</code> button se HTML paste kar sakte hain, ya "Switch to Raw HTML Mode" click karke raw code paste kar sakte hain.
+                                </span>
+                            </div>
+
+                            <!-- Visual TinyMCE Container -->
+                            <div id="visualEditorContainer">
+                                <textarea name="long_description" id="long_description" class="form-control"
+                                    rows="12"></textarea>
+                            </div>
+
+                            <!-- Raw HTML Code Mode Container (Initially Hidden) -->
+                            <div id="rawHtmlContainer" style="display: none;">
+                                <textarea id="rawHtmlEditor" class="form-control font-monospace" rows="18"
+                                    style="background-color: #1e1e2f; color: #f8f9fa; font-family: 'Consolas', 'Courier New', monospace; font-size: 13px; line-height: 1.5;"
+                                    placeholder="<!-- Paste or type your direct HTML code here -->"></textarea>
+                            </div>
+
+                            <span class="error error-long-description"></span>
                         </div>
-
-
 
                         <!-- Image -->
-                        <div class="col-md-12 mb-3">
-                            <label for="image">Image</label>
+                        <div class="col-md-12 mb-4">
+                            <label for="image" class="form-label fw-semibold">Featured Image</label>
                             <input type="file" name="image" id="image" class="form-control" accept="image/*">
-                            <span class="error error-image"><span>
+                            <span class="error error-image"></span>
                         </div>
 
                         <!-- Buttons -->
-                        <div class="d-flex justify-content-end gap-2">
-                            <a href="{{ route('cms.list') }}">
-                                <button type="button" class="btn bg-danger text-white">Cancel</button>
-                            </a>
-                            <button class="btn btn-primary text-white submit" type="submit">Save</button>
+                        <div class="col-12 d-flex justify-content-end gap-2 border-top pt-3">
+                            <a href="{{ route('cms.list') }}" class="btn btn-outline-danger">Cancel</a>
+                            <button class="btn btn-primary text-white px-4 submit" type="submit">
+                                <i class="fa-solid fa-floppy-disk me-1"></i> Save CMS
+                            </button>
                         </div>
                     </div>
                 </div>
             </form>
         </div>
 
-
     </div>
 @endsection
+
 @section('scripts')
+    <!-- TinyMCE CDN with full plugins (Code, HTML, Preview, Fullscreen, etc.) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tinymce/6.8.2/tinymce.min.js"></script>
+
     <script>
-        $(document).ready(function () {
-            let formValidator = {}
-            const isNumericInput = (event) => {
-                const key = event.keyCode;
-                return ((key >= 48 && key <= 57) || // Allow number line
-                    (key >= 96 && key <= 105) // Allow number pad
-                );
-            };
+        $(document).ready(function() {
+            let isRawMode = false;
 
-            const isModifierKey = (event) => {
-                const key = event.keyCode;
-                return (event.shiftKey === true || key === 35 || key === 36) || // Allow Shift, Home, End
-                    (key === 8 || key === 9 || key === 13 || key === 46) || // Allow Backspace, Tab, Enter, Delete
-                    (key > 36 && key < 41) || // Allow left, up, right, down
-                    (
-                        // Allow Ctrl/Command + A,C,V,X,Z
-                        (event.ctrlKey === true || event.metaKey === true) &&
-                        (key === 65 || key === 67 || key === 86 || key === 88 || key === 90)
-                    )
-            };
-
-            const enforceFormat = (event) => {
-                // Input must be of a valid number format or a modifier key, and not longer than ten digits
-                if (!isNumericInput(event) && !isModifierKey(event)) {
-                    event.preventDefault();
-                }
-            };
-
-            const formatToPhone = (event) => {
-                if (isModifierKey(event)) { return; }
-
-                // I am lazy and don't like to type things more than once
-                const target = event.target;
-                const input = event.target.value.replace(/\D/g, '').substring(0, 10); // First ten digits of input only
-                const zip = input.substring(0, 3);
-                const middle = input.substring(3, 6);
-                const last = input.substring(6, 10);
-
-                if (input.length > 6) { target.value = `(${zip}) ${middle} - ${last}`; }
-                else if (input.length > 3) { target.value = `(${zip}) ${middle}`; }
-                else if (input.length > 0) { target.value = `(${zip}`; }
-            };
-
-            const inputElement = document.getElementById('phonenumber');
-            inputElement.addEventListener('keydown', enforceFormat);
-            inputElement.addEventListener('keyup', formatToPhone);
-
-
-            $("#zip-code").on("keypress keyup", function (event) {
-                //    console.log('int = '+$(this).val());
-                $(this).val($(this).val().replace(/[^\d].+/, ""));
-                if (event.which != 8 && (event.which < 48 || event.which > 57)) {
-                    event.preventDefault();
+            // Initialize TinyMCE
+            tinymce.init({
+                selector: '#long_description',
+                height: 500,
+                menubar: true,
+                plugins: [
+                    'code', 'fullscreen', 'preview', 'visualblocks', 'visualchars',
+                    'table', 'lists', 'link', 'image', 'charmap', 'anchor',
+                    'searchreplace', 'wordcount', 'autolink', 'help'
+                ],
+                toolbar: 'code fullscreen preview | undo redo | blocks fontfamily fontsize | ' +
+                         'bold italic underline strikethrough | forecolor backcolor | alignleft aligncenter alignright alignjustify | ' +
+                         'bullist numlist | link image table | removeformat',
+                content_style: 'body { font-family: "Plus Jakarta Sans", sans-serif; font-size: 14px; line-height: 1.6; color: #333; }',
+                extended_valid_elements: '*[*]',
+                valid_elements: '*[*]',
+                valid_children: '+body[style|link|script]',
+                allow_html_in_named_anchor: true,
+                cleanup: false,
+                verify_html: false,
+                convert_urls: false,
+                setup: function(editor) {
+                    editor.on('change', function() {
+                        editor.save();
+                    });
                 }
             });
 
-            function formatPhoneNumber(number) {
-                var formattedNumber = '';
-                if (number.length >= 3) {
-                    formattedNumber += '(' + number.substring(0, 3) + ')';
-                }
-                if (number.length >= 6) {
-                    formattedNumber += ' ' + number.substring(3, 6);
-                }
-                if (number.length >= 10) {
-                    formattedNumber += '-' + number.substring(6, 10);
-                }
-                return formattedNumber;
-            }
-            //validate phoneNumber
-            function validatePhoneNumber(phoneNumber) {
+            // HTML File Upload Trigger
+            $('#btnUploadHtml').on('click', function() {
+                $('#htmlFileInput').click();
+            });
 
-                if (phoneNumber.length > 15) {
-                    return true;
+            // Handle HTML File Selection
+            $('#htmlFileInput').on('change', function(e) {
+                const file = e.target.files[0];
+                if (!file) return;
+
+                const reader = new FileReader();
+                reader.onload = function(evt) {
+                    const htmlContent = evt.target.result;
+
+                    if (tinymce.get('long_description')) {
+                        tinymce.get('long_description').setContent(htmlContent);
+                    }
+                    $('#long_description').val(htmlContent);
+                    $('#rawHtmlEditor').val(htmlContent);
+
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'HTML File Imported!',
+                        text: 'File "' + file.name + '" has been successfully loaded into the editor.',
+                        timer: 2000,
+                        showConfirmButton: false
+                    });
+                };
+                reader.readAsText(file);
+                $(this).val('');
+            });
+
+            // Mode Toggle (Visual <-> Raw HTML)
+            $('#btnToggleMode').on('click', function() {
+                isRawMode = !isRawMode;
+
+                if (isRawMode) {
+                    let currentContent = '';
+                    if (tinymce.get('long_description')) {
+                        currentContent = tinymce.get('long_description').getContent();
+                    } else {
+                        currentContent = $('#long_description').val();
+                    }
+                    $('#rawHtmlEditor').val(currentContent);
+
+                    $('#visualEditorContainer').hide();
+                    $('#rawHtmlContainer').show();
+                    $('#toggleModeText').text('Switch to Visual Editor');
+                    $(this).removeClass('btn-outline-dark').addClass('btn-dark text-white');
                 } else {
-                    return false;
-                }
-            }
-            //check email
-            function ValidateEmail(input) {
-                const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-                if (regex.test(input)) {
-                    return true;
-                } else {
-                    return false;
-                }
-            }
-
-            //for form validation
-
-            //submit form
-            $(document).on('click', '.submit', function (event) {
-                $("select[name='roles']").map(function () {
-                    console.log($(this).val())
-                    if (typeof $(this).val() === "undefined" || $(this).val() == '' || $(this).val() === null || $(this).val() === null) {
-                        $(this).next('.error-roles').html('Please Select Role');
-                        formValidator['roles'] = false;
-                    } else {
-                        $(this).next('.error-roles').html('');
-                        formValidator['roles'] = true;
+                    const rawContent = $('#rawHtmlEditor').val();
+                    if (tinymce.get('long_description')) {
+                        tinymce.get('long_description').setContent(rawContent);
                     }
-                });
-                $("input[name='fname']").map(function () {
-                    if (typeof $(this).val() === "undefined" || $(this).val() == '' || $(this).val() === null) {
-                        $(this).next('.error-fname').html('Please Enter First Name');
-                        formValidator['fname'] = false;
-                    } else {
-                        $(this).next('.error-fname').html('');
-                        formValidator['fname'] = true;
-                    }
-                });
+                    $('#long_description').val(rawContent);
 
-                $("input[name='lname']").map(function () {
-                    if (typeof $(this).val() === "undefined" || $(this).val() == '' || $(this).val() === null) {
-                        $(this).next('.error-lname').html('Please Enter Last Name');
-                        formValidator['lname'] = false;
-                    } else {
-                        $(this).next('.error-lname').html('');
-                        formValidator['lname'] = true;
-                    }
-                });
-
-                $("input[name='email']").map(function () {
-                    if (typeof $(this).val() === "undefined" || $(this).val() == '' || $(this).val() === null) {
-                        $(this).next('.error-email').html('Please Enter Email');
-                        formValidator['email'] = false;
-                    } else {
-                        if (ValidateEmail($(this).val())) {
-                            $(this).next('.error-email').html('');
-                            formValidator['email'] = true;
-                        } else {
-                            $(this).next('.error-email').html('Plese Enter Valid Email');
-                            formValidator['email'] = false;
-                        }
-                    }
-                });
-
-                $("input[name='phone']").map(function () {
-                    if (typeof $(this).val() === "undefined" || $(this).val() == '' || $(this).val() === null) {
-                        $(this).next('.error-phone').html('Please Enter Phone Number');
-                        formValidator['phone'] = false;
-                    } else {
-
-                        if (validatePhoneNumber($(this).val())) {
-                            $(this).next('.error-phone').html('');
-                            formValidator['phone'] = true;
-                        } else {
-                            $(this).next('.error-phone').html('Please Enter Valid Phone');
-                            formValidator['phone'] = false;
-                        }
-
-                    }
-                });
-
-                $("input[name='Address1']").map(function () {
-                    if (typeof $(this).val() === "undefined" || $(this).val() == '' || $(this).val() === null) {
-                        $(this).next('.error-Address1').html('Please Enter Address');
-                        formValidator['Address1'] = false;
-                    } else {
-                        $(this).next('.error-Address1').html('');
-                        formValidator['Address1'] = true;
-                    }
-                });
-
-                $("input[name='city']").map(function () {
-                    if (typeof $(this).val() === "undefined" || $(this).val() == '' || $(this).val() === null) {
-                        $(this).next('.error-city').html('Please Enter City');
-                        formValidator['city'] = false;
-                    } else {
-                        $(this).next('.error-city').html('');
-                        formValidator['city'] = true;
-                    }
-                });
-
-                $("select[name='state']").map(function () {
-                    if (typeof $(this).val() === "undefined" || $(this).val() == '' || $(this).val() === null) {
-                        $(this).next('.error-state').html('Please Select State');
-                        formValidator['state'] = false;
-                    } else {
-                        $(this).next('.error-state').html('');
-                        formValidator['state'] = true;
-                    }
-                });
-
-                $("input[name='zip']").map(function () {
-                    if (typeof $(this).val() === "undefined" || $(this).val() == '' || $(this).val() === null) {
-                        $(this).next('.error-zip').html('Please Enter Zip-Code');
-                        formValidator['zip'] = false;
-                    } else {
-                        $(this).next('.error-zip').html('');
-                        formValidator['zip'] = true;
-                    }
-                });
-
-                $("select[name='country']").map(function () {
-                    if (typeof $(this).val() === "undefined" || $(this).val() == '' || $(this).val() === null) {
-                        $(this).next('.error-country').html('Please Select Country');
-                        formValidator['country'] = false;
-                    } else {
-                        $(this).next('.error-country').html('');
-                        formValidator['country'] = true;
-                    }
-                });
-                console.log(formValidator)
-
-                const validationCheck = Object.values(formValidator).every(Boolean)
-                console.log(validationCheck)
-                if (validationCheck) {
-                    return true;
-                } else {
-                    event.preventDefault();
-                }
-            })
-
-            $('.fname, .lname, .city').on('keypress keyup', function (event) {
-                var key = String.fromCharCode(event.which || event.keyCode);
-                if (event.which !== 32 && !key.match(/[a-zA-Z0-9]/)) {
-                    event.preventDefault();
-                    return false;
+                    $('#rawHtmlContainer').hide();
+                    $('#visualEditorContainer').show();
+                    $('#toggleModeText').text('Switch to Raw HTML Mode');
+                    $(this).removeClass('btn-dark text-white').addClass('btn-outline-dark');
                 }
             });
 
+            // Clear content button
+            $('#btnClearContent').on('click', function() {
+                Swal.fire({
+                    title: 'Clear all content?',
+                    text: "This will empty the editor.",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#3085d6',
+                    confirmButtonText: 'Yes, clear it'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        if (tinymce.get('long_description')) {
+                            tinymce.get('long_description').setContent('');
+                        }
+                        $('#long_description').val('');
+                        $('#rawHtmlEditor').val('');
+                    }
+                });
+            });
+
+            // Form Submit Sync
+            $('#cmsForm').on('submit', function() {
+                if (isRawMode) {
+                    const rawContent = $('#rawHtmlEditor').val();
+                    $('#long_description').val(rawContent);
+                } else {
+                    if (tinymce.get('long_description')) {
+                        tinymce.get('long_description').save();
+                    }
+                }
+            });
         });
     </script>
-    <script src="https://cdn.ckeditor.com/ckeditor5/41.0.0/classic/ckeditor.js"></script>
-
-    <script>
-        ClassicEditor
-            .create(document.querySelector('#long_description'))
-            .catch(error => {
-                console.error(error);
-            });
-           
-    </script>
-
-
 @endsection

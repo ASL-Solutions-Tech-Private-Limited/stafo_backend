@@ -180,8 +180,90 @@ class Helper
             //         'response' => json_decode($response, true)
             //     ]);
                 
-            // }
         }
 
+    }
+
+    /**
+     * Send email notification for attendance punch in / out
+     *
+     * @param mixed $employee
+     * @param string $type ('punch_in' | 'punch_out')
+     * @param mixed $time
+     * @param string|null $method
+     * @return bool
+     */
+    public static function sendAttendanceEmailNotification($employee, string $type = 'punch_in', $time = null, ?string $method = 'Attendance System')
+    {
+        try {
+            if (!$employee) {
+                return false;
+            }
+
+            if (is_numeric($employee)) {
+                $employee = \App\Models\Employee::find($employee);
+                if (!$employee) {
+                    return false;
+                }
+            }
+
+            $recipientEmail = !empty($employee->official_email_id) ? $employee->official_email_id : ($employee->email ?? null);
+            if (!empty($recipientEmail) && filter_var($recipientEmail, FILTER_VALIDATE_EMAIL)) {
+                $timeString = $time ? (is_string($time) ? \Carbon\Carbon::parse($time)->format('h:i A') : $time->format('h:i A')) : now()->format('h:i A');
+                $dateString = now()->format('d M, Y');
+
+                \Illuminate\Support\Facades\Mail::to($recipientEmail)->send(new \App\Mail\AttendanceNotificationMail(
+                    $employee,
+                    $type,
+                    $timeString,
+                    $dateString,
+                    $method
+                ));
+                return true;
+            }
+        } catch (\Throwable $th) {
+            \Illuminate\Support\Facades\Log::error('Failed to send attendance email notification to employee ' . ($employee->id ?? '') . ': ' . $th->getMessage());
+        }
+        return false;
+    }
+
+    /**
+     * Send email notification to employee when they forget to punch out.
+     * Sent on behalf of their company.
+     *
+     * @param mixed $employee
+     * @param string|null $targetDate (format Y-m-d)
+     * @param string|null $inTime
+     * @return bool
+     */
+    public static function sendMissedPunchOutEmailNotification($employee, ?string $targetDate = null, ?string $inTime = null)
+    {
+        try {
+            if (!$employee) {
+                return false;
+            }
+
+            if (is_numeric($employee)) {
+                $employee = \App\Models\Employee::with(['company', 'branch', 'department', 'shift'])->find($employee);
+                if (!$employee) {
+                    return false;
+                }
+            } else {
+                $employee->loadMissing(['company', 'branch', 'department', 'shift']);
+            }
+
+            $recipientEmail = !empty($employee->official_email_id) ? $employee->official_email_id : ($employee->email ?? null);
+            if (!empty($recipientEmail) && filter_var($recipientEmail, FILTER_VALIDATE_EMAIL)) {
+                \Illuminate\Support\Facades\Mail::to($recipientEmail)->send(new \App\Mail\MissedPunchOutMail(
+                    $employee,
+                    $targetDate,
+                    $inTime
+                ));
+                return true;
+            }
+        } catch (\Throwable $th) {
+            \Illuminate\Support\Facades\Log::error('Failed to send missed punch-out email to employee ' . ($employee->id ?? '') . ': ' . $th->getMessage());
+        }
+        return false;
     }
 }

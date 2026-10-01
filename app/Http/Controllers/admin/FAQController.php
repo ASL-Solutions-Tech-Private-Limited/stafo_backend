@@ -3,19 +3,22 @@
 namespace App\Http\Controllers\admin;
 
 use App\Models\FAQ;
+use App\Traits\FileUpload;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use RealRashid\SweetAlert\Facades\Alert;
 
 class FAQController extends Controller
 {
+    use FileUpload;
 
     public function index()
     {
-        $faqs = FAQ::orderBy('created_at', 'desc')
+        $faqs = FAQ::orderBy('id', 'asc')
             ->paginate(10);
         return view('admin.faq.index', compact('faqs'));
     }
+
     public function create()
     {
         return view('admin.faq.create');
@@ -26,14 +29,23 @@ class FAQController extends Controller
         $request->validate([
             'question' => 'required|string|max:255',
             'answer' => 'required|string',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg,webp|max:4096',
         ]);
+
+        $imagePath = null;
+        if ($request->hasFile('image')) {
+            $path = 'uploads/faq';
+            $image = $request->file('image');
+            $imagePath = FileUpload::imageUpload($image, $path);
+        }
 
         FAQ::create([
             'question' => $request->question,
             'answer' => $request->answer,
+            'image' => $imagePath,
         ]);
 
-        Alert::success('Success', 'faq has been saved successfully.');
+        Alert::success('Success', 'FAQ has been saved successfully.');
         return redirect()->route('faq.index')->with('success', 'FAQ created successfully.');
     }
 
@@ -46,24 +58,46 @@ class FAQController extends Controller
     public function update(Request $request, $id)
     {
         $request->validate([
-            'question' => 'nullable|string|max:255',
-            'answer' => 'nullable|string',
+            'question' => 'required|string|max:255',
+            'answer' => 'required|string',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg,webp|max:4096',
         ]);
 
         $faq = FAQ::findOrFail($id);
+        $imageName = $faq->image;
+
+        if ($request->hasFile('image')) {
+            $path = 'uploads/faq';
+            $image = $request->file('image');
+            $imageName = FileUpload::imageUpload($image, $path);
+
+            // Delete old file if exists
+            if ($faq->image && file_exists(public_path('uploads/faq/' . $faq->image))) {
+                @unlink(public_path('uploads/faq/' . $faq->image));
+            }
+        }
+
         $faq->update([
             'question' => $request->question,
             'answer' => $request->answer,
+            'image' => $imageName,
         ]);
 
-        Alert::success('Success', 'faq has been updated successfully.');
+        Alert::success('Success', 'FAQ has been updated successfully.');
         return redirect()->route('faq.index')->with('success', 'FAQ updated successfully.');
     }
 
     // Delete an FAQ
     public function destroy($id)
     {
-        FAQ::findOrFail($id)->delete();
+        $faq = FAQ::findOrFail($id);
+
+        if ($faq->image && file_exists(public_path('uploads/faq/' . $faq->image))) {
+            @unlink(public_path('uploads/faq/' . $faq->image));
+        }
+
+        $faq->delete();
+        Alert::success('Success', 'FAQ has been deleted successfully.');
         return redirect()->route('faq.index')->with('success', 'FAQ deleted successfully.');
     }
 }

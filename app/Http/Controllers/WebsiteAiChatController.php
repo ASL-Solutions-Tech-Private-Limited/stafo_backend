@@ -63,7 +63,7 @@ class WebsiteAiChatController extends Controller
                 'quick_actions' => [
                     ['label' => 'Start 15-Day Free Trial', 'url' => route('register'), 'type' => 'link'],
                     ['label' => 'View Pricing Plans', 'action' => 'Pricing', 'type' => 'pill'],
-                    ['label' => 'Call Support (+91 6292252470)', 'url' => 'tel:+916292252470', 'type' => 'link'],
+                    ['label' => 'Call Support (+91 8389039361)', 'url' => 'tel:+918389039361', 'type' => 'link'],
                 ]
             ]);
         }
@@ -121,7 +121,7 @@ class WebsiteAiChatController extends Controller
                 'text' => "We'd love to show you how Stafo can automate your HR and payroll operations! ✨\n\n• Live 1-on-1 walkthrough with an HRMS expert\n• Custom setup for your company size\n• 15-Day Free Trial (no credit card needed)\n\nPlease share your **Phone Number** or **Company Name**, and our team will schedule a demo immediately.",
                 'quick_actions' => [
                     ['label' => 'Start 15-Day Free Trial', 'url' => route('register'), 'type' => 'link'],
-                    ['label' => 'Call +91 6292252470', 'url' => 'tel:+916292252470', 'type' => 'link'],
+                    ['label' => 'Call +91 8389039361', 'url' => 'tel:+918389039361', 'type' => 'link'],
                     ['label' => 'View Pricing', 'action' => 'Pricing', 'type' => 'pill'],
                 ]
             ];
@@ -183,13 +183,13 @@ class WebsiteAiChatController extends Controller
         if (preg_match('/(support|contact|help|call|phone|number|mobile|email|address|office|location|whatsapp)/i', $msg)) {
             return [
                 'text' => "We are here to help you 24/7! You can reach the Stafo support team directly:\n\n"
-                    . "📞 **Helpline**: [+91 6292252470](tel:+916292252470)\n"
-                    . "✉️ **Email**: [stafo.sales@stafo.in](mailto:stafo.sales@stafo.in) / [support@stafo.com](mailto:support@stafo.com)\n"
-                    . "📍 **Head Office**: F/28/1, Katjunagar Colony, Kolkata - 700032\n"
-                    . "🕒 **Support Hours**: Mon - Sat, 9:30 AM to 7:00 PM (Emergency 24/7 assistance)\n\n"
+                    . "📞 **Helpline**: [+91 8389039361](tel:+918389039361)\n"
+                    . "✉️ **Email**: [sales@stafo.in](mailto:sales@stafo.in)\n"
+                    . "📍 **Headquarters**: Jadavpur, Kolkata – 700032, West Bengal, India\n"
+                    . "🕒 **Support Hours**: Mon - Sat, 9:30 AM to 7:00 PM IST\n\n"
                     . "You can also leave your phone number here, and we'll call you right back!",
                 'quick_actions' => [
-                    ['label' => 'Call +91 6292252470', 'url' => 'tel:+916292252470', 'type' => 'link'],
+                    ['label' => 'Call +91 8389039361', 'url' => 'tel:+918389039361', 'type' => 'link'],
                     ['label' => 'Visit Contact Page', 'url' => route('contactUs'), 'type' => 'link'],
                     ['label' => 'Book a Demo', 'action' => 'Product Demo', 'type' => 'pill'],
                 ]
@@ -222,7 +222,7 @@ class WebsiteAiChatController extends Controller
                     . "• Co-branded marketing collateral\n\n"
                     . "Please drop your contact number or company email, and our Partnership Director will connect with you.",
                 'quick_actions' => [
-                    ['label' => 'Call +91 6292252470', 'url' => 'tel:+916292252470', 'type' => 'link'],
+                    ['label' => 'Call +91 8389039361', 'url' => 'tel:+918389039361', 'type' => 'link'],
                     ['label' => 'Email: stafo.sales@stafo.in', 'url' => 'mailto:stafo.sales@stafo.in', 'type' => 'link'],
                 ]
             ];
@@ -252,7 +252,7 @@ class WebsiteAiChatController extends Controller
                     . "🔑 **Password Reset**: If you are unable to login, contact your company HR admin or reach our helpline for immediate account unlock.",
                 'quick_actions' => [
                     ['label' => 'Go to Login', 'url' => route('login'), 'type' => 'link'],
-                    ['label' => 'Call Support', 'url' => 'tel:+916292252470', 'type' => 'link'],
+                    ['label' => 'Call Support', 'url' => 'tel:+918389039361', 'type' => 'link'],
                 ]
             ];
         }
