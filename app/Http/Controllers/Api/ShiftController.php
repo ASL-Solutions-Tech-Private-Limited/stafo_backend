@@ -74,51 +74,47 @@ class ShiftController extends Controller
      */
     public function store(Request $request)
     {
-        // Validate input data with custom end_time validation
         $validator = Validator::make($request->all(), [
             'shift_name' => 'required|string|max:255',
             'start_time' => 'required',
-            'end_time' => 'required',
+            'end_time'   => 'required',
         ]);
 
-        // Check if validation fails
         if ($validator->fails()) {
             return response()->json([
                 'success' => false,
                 'message' => 'Validation error.',
-                'errors' => $validator->errors(),
-            ], 200);
+                'errors'  => $validator->errors(),
+            ], 422);
         }
 
-        $company_id = Auth::id(); // Get company_id from authenticated user
+        $company_id = Auth::id() ?: $request->company_id;
 
         try {
-            // Create the shift
             $shift = Shift::create([
                 'shift_name' => $request->shift_name,
                 'start_time' => $request->start_time,
-                'end_time' => $request->end_time,
-                'company_id' => $company_id, // Store the company_id
-                'sunday' => $request->sunday,
-                'monday' => $request->monday,
-                'tuesday' => $request->tuesday,
-                'wednesday' => $request->wednesday,
-                'thursday' => $request->thursday,
-                'friday' => $request->friday,
-                'saturday' => $request->saturday,               
-                
+                'end_time'   => $request->end_time,
+                'company_id' => $company_id,
+                'sunday'     => filter_var($request->input('sunday', false), FILTER_VALIDATE_BOOLEAN) ? 1 : 0,
+                'monday'     => filter_var($request->input('monday', false), FILTER_VALIDATE_BOOLEAN) ? 1 : 0,
+                'tuesday'    => filter_var($request->input('tuesday', false), FILTER_VALIDATE_BOOLEAN) ? 1 : 0,
+                'wednesday'  => filter_var($request->input('wednesday', false), FILTER_VALIDATE_BOOLEAN) ? 1 : 0,
+                'thursday'   => filter_var($request->input('thursday', false), FILTER_VALIDATE_BOOLEAN) ? 1 : 0,
+                'friday'     => filter_var($request->input('friday', false), FILTER_VALIDATE_BOOLEAN) ? 1 : 0,
+                'saturday'   => filter_var($request->input('saturday', false), FILTER_VALIDATE_BOOLEAN) ? 1 : 0,
             ]);
 
             return response()->json([
                 'success' => true,
                 'message' => 'Shift created successfully.',
-                'data' => $shift,
+                'data'    => $shift,
             ], 201);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
                 'message' => 'An error occurred while creating the shift.',
-                'error' => $e->getMessage(),
+                'error'   => $e->getMessage(),
             ], 500);
         }
     }
@@ -132,26 +128,26 @@ class ShiftController extends Controller
     public function show($id)
     {
         try {
-            $company_id = Auth::id(); // Get company_id from authenticated user
+            $company_id = Auth::id();
 
-            $shift = Shift::where('company_id', $company_id)->findOrFail($id); // Find shift by ID for the specific company
+            $shift = Shift::where('company_id', $company_id)->findOrFail($id);
 
             return response()->json([
                 'success' => true,
                 'message' => 'Shift retrieved successfully.',
-                'data' => $shift,
+                'data'    => $shift,
             ], 200);
         } catch (ModelNotFoundException $e) {
             return response()->json([
                 'success' => false,
                 'message' => 'Shift not found.',
-                'error' => $e->getMessage(),
-            ], 200);
+                'error'   => $e->getMessage(),
+            ], 404);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
                 'message' => 'An error occurred while fetching the shift.',
-                'error' => $e->getMessage(),
+                'error'   => $e->getMessage(),
             ], 500);
         }
     }
@@ -178,57 +174,54 @@ class ShiftController extends Controller
      */
     public function update(Request $request, $id)
     {
-        // Validate input data with custom end_time validation
         $validator = Validator::make($request->all(), [
             'shift_name' => 'required|string|max:255',
-            'start_time' => 'required|date_format:H:i',
-            'end_time' => 'required|date_format:H:i|after:start_time',
+            'start_time' => 'required',
+            'end_time'   => 'required',
         ]);
 
-        // Check if validation fails
         if ($validator->fails()) {
             return response()->json([
                 'success' => false,
                 'message' => 'Validation error.',
-                'errors' => $validator->errors(),
-            ], 200);
+                'errors'  => $validator->errors(),
+            ], 422);
         }
 
-        $company_id = Auth::id();
+        $company_id = Auth::id() ?: $request->company_id;
 
         try {
-            $shift = Shift::where('company_id', $company_id)->findOrFail($id); // Find shift by ID for the specific company
+            $shift = Shift::where('company_id', $company_id)->findOrFail($id);
 
-            // Update the shift
             $shift->update([
                 'shift_name' => $request->shift_name,
                 'start_time' => $request->start_time,
-                'end_time' => $request->end_time,
-                'sunday' => $request->sunday,
-                'monday' => $request->monday,
-                'tuesday' => $request->tuesday,
-                'wednesday' => $request->wednesday,
-                'thursday' => $request->thursday,
-                'friday' => $request->friday,
-                'saturday' => $request->saturday, 
+                'end_time'   => $request->end_time,
+                'sunday'     => filter_var($request->input('sunday', false), FILTER_VALIDATE_BOOLEAN) ? 1 : 0,
+                'monday'     => filter_var($request->input('monday', false), FILTER_VALIDATE_BOOLEAN) ? 1 : 0,
+                'tuesday'    => filter_var($request->input('tuesday', false), FILTER_VALIDATE_BOOLEAN) ? 1 : 0,
+                'wednesday'  => filter_var($request->input('wednesday', false), FILTER_VALIDATE_BOOLEAN) ? 1 : 0,
+                'thursday'   => filter_var($request->input('thursday', false), FILTER_VALIDATE_BOOLEAN) ? 1 : 0,
+                'friday'     => filter_var($request->input('friday', false), FILTER_VALIDATE_BOOLEAN) ? 1 : 0,
+                'saturday'   => filter_var($request->input('saturday', false), FILTER_VALIDATE_BOOLEAN) ? 1 : 0,
             ]);
 
             return response()->json([
                 'success' => true,
                 'message' => 'Shift updated successfully.',
-                'data' => $shift,
+                'data'    => $shift,
             ], 200);
         } catch (ModelNotFoundException $e) {
             return response()->json([
                 'success' => false,
                 'message' => 'Shift not found.',
-                'error' => $e->getMessage(),
-            ], 200);
+                'error'   => $e->getMessage(),
+            ], 404);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
                 'message' => 'An error occurred while updating the shift.',
-                'error' => $e->getMessage(),
+                'error'   => $e->getMessage(),
             ], 500);
         }
     }
