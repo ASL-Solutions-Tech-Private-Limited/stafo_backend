@@ -120,15 +120,12 @@ class Helper
 
     public static function sendPushNotification($fcm,$notification)
     {
-        
-        // $user = CompanyDetail::find($company_id);
-        // $fcm = $user->fcm_token;
 
         if ($fcm) {            
 
-            $title = 'Stafo'; //$request->title;
+            $title = 'Stafo'; 
             $description = $notification;
-            $projectId = 'stafo-38601';//config('services.fcm.project_id'); # INSERT COPIED PROJECT ID
+            $projectId = 'stafo-38601';
 
             $credentialsFilePath = Storage::path('json/fcm.json');
             $client = new GoogleClient();
@@ -138,7 +135,6 @@ class Helper
             $token = $client->getAccessToken();
 
             $access_token = $token['access_token'];
-            //dd($access_token);
             $headers = [
                 "Authorization: Bearer $access_token",
                 'Content-Type: application/json'
@@ -154,7 +150,6 @@ class Helper
                 ]
             ];
             $payload = json_encode($data);
-            //dd($payload);
             $ch = curl_init();
             curl_setopt($ch, CURLOPT_URL, "https://fcm.googleapis.com/v1/projects/{$projectId}/messages:send");
             curl_setopt($ch, CURLOPT_POST, true);
@@ -162,23 +157,10 @@ class Helper
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
             curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
             curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
-            curl_setopt($ch, CURLOPT_VERBOSE, true); // Enable verbose output for debugging
+            curl_setopt($ch, CURLOPT_VERBOSE, true); 
             $response = curl_exec($ch);
             $err = curl_error($ch);
             curl_close($ch);
-            //$response = json_decode($response);
-            // dd($response);
-            // if (isset($response->error)) {
-            //     return response()->json([
-            //         'message' => 'Unable to send notification',
-            //         'response' => $response->error->message
-            //     ]);
-               
-            // } else {
-            //     return response()->json([
-            //         'message' => 'Notification has been sent',
-            //         'response' => json_decode($response, true)
-            //     ]);
                 
         }
 

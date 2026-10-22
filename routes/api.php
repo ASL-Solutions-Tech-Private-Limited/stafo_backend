@@ -45,7 +45,7 @@ use App\Http\Controllers\Api\ExpensetypeController;
 use App\Http\Controllers\Api\ExpenseformController;
 use App\Http\Controllers\Api\ExpenseController;
 use App\Http\Controllers\Api\LeavetypeController;
-
+use App\Http\Controllers\Api\BillPayController;
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -369,6 +369,19 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('delete', [TripApiExpenseController::class, 'destroy']);
     });
     //trips expense routes end
+
+
+     
+    // bbps latest start
+    Route::post('getCircle', [BillPayController::class, 'getBBPSCircle']);
+    Route::post('biller/category', [BillPayController::class, 'getBillerCategory']);
+    Route::post('biller/sub/category', [BillPayController::class, 'getBillerSubCategory']);
+    Route::post('getBiller', [BillPayController::class, 'getBiller']);
+    Route::post('biller/detail', [BillPayController::class, 'getBillerDetail']); 
+    Route::post('fetchBill', [BillPayController::class, 'fetchBill']); 
+    Route::post('payBill', [BillPayController::class, 'initiateBillPay']); 
+    Route::post('checkPaymentStatus', [BillPayController::class, 'checkPaymentStatusAndPayBill']);
+      // bbps latest end
 
 });
 

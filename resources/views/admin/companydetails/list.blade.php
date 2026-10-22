@@ -220,6 +220,12 @@
                                                         <a href="{{ route('referralCodeList', $item->id) }}" class="view" title="View Referral">
                                                             <i class="fa fa-user-plus"></i>
                                                         </a>
+                                                        <a href="{{ route('admin.bbps.commission.index', ['company_id' => $item->id]) }}" class="view" title="BBPS Commission Setup" style="color: #0d6efd;">
+                                                            <i class="fa-solid fa-percent"></i>
+                                                        </a>
+                                                        <button type="button" class="view btn-open-bbps-modal" data-company-id="{{ $item->id }}" data-company-name="{{ $item->company_name }}" title="Quick BBPS Commission Modal" style="all:unset; cursor:pointer; color:#198754; margin: 0 4px;">
+                                                            <i class="fa-solid fa-sliders"></i>
+                                                        </button>
                                                         <a class="edit" href="{{ route('company.details.edit', $item->id) }}"><i
                                                                 class="fa fa-solid fa-pen"></i></a>
                                                         <button class="text-primary"
@@ -344,7 +350,61 @@
                     }
                 });
             });
+
+            // Quick BBPS Commission Modal Handler
+            $('.btn-open-bbps-modal').on('click', function(e) {
+                e.preventDefault();
+                const companyId = $(this).data('company-id');
+                const companyName = $(this).data('company-name');
+                $('#modalCompanyNameTitle').text(companyName);
+                $('#bbpsModalContainer').html(`
+                    <div class="text-center py-5">
+                        <div class="spinner-border text-primary" role="status"></div>
+                        <div class="mt-2 text-muted">Loading BBPS commission for ${companyName}...</div>
+                    </div>
+                `);
+                const myModal = new bootstrap.Modal(document.getElementById('bbpsCommissionModal'));
+                myModal.show();
+
+                $.ajax({
+                    url: "{{ url('admin/bbps-commission/modal') }}/" + companyId,
+                    type: 'GET',
+                    success: function(res) {
+                        if (res.status) {
+                            $('#bbpsModalContainer').html(res.html);
+                        } else {
+                            $('#bbpsModalContainer').html('<div class="alert alert-danger">Failed to load commission data.</div>');
+                        }
+                    },
+                    error: function() {
+                        $('#bbpsModalContainer').html('<div class="alert alert-danger">Error connecting to server.</div>');
+                    }
+                });
+            });
         });
         
     </script>
+
+    <!-- BBPS Commission Modal -->
+    <div class="modal fade" id="bbpsCommissionModal" tabindex="-1" role="dialog" aria-labelledby="bbpsCommissionModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-centered" role="document">
+            <div class="modal-content shadow-lg border-0" style="border-radius: 12px; overflow: hidden;">
+                <div class="modal-header bg-dark text-white py-3">
+                    <h5 class="modal-title fw-bold" id="bbpsCommissionModalLabel">
+                        <i class="fa-solid fa-percent text-primary me-2"></i> BBPS Commission Setup - <span id="modalCompanyNameTitle"></span>
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4" id="bbpsModalContainer">
+                    <div class="text-center py-5">
+                        <div class="spinner-border text-primary" role="status"></div>
+                        <div class="mt-2 text-muted">Loading BBPS commission...</div>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light py-2">
+                    <button type="button" class="btn btn-secondary px-4 fw-bold" data-bs-dismiss="modal">CLOSE</button>
+                </div>
+            </div>
+        </div>
+    </div>
 @endsection

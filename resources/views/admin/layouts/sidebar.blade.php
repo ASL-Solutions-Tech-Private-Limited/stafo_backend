@@ -38,7 +38,7 @@
 
             <!-- 1. Company & Staff -->
             @php
-                $isCompanyActive = request()->is('admin/company*') || request()->is('admin/employee*') || request()->is('admin/document*') || request()->is('admin/branches*') || request()->is('admin/attendances*') || request()->is('admin/businessTypes*');
+                $isCompanyActive = request()->is('admin/company*') || request()->is('admin/employee*') || request()->is('admin/document*') || request()->is('admin/branches*') || request()->is('admin/attendances*') || request()->is('admin/businessTypes*') || request()->is('admin/bbps-commission*');
             @endphp
             <div class="admin-nav-item admin-nav-dropdown {{ $isCompanyActive ? 'is-open' : '' }}">
                 <a href="#collapseCompanyStaff" class="admin-nav-link {{ $isCompanyActive ? 'active' : '' }}" data-bs-toggle="collapse" role="button" aria-expanded="{{ $isCompanyActive ? 'true' : 'false' }}" aria-controls="collapseCompanyStaff">
@@ -53,6 +53,11 @@
                         <li>
                             <a href="{{ route('company.details.list') }}" class="admin-sub-item {{ request()->is('admin/company-details*') ? 'active' : '' }}">
                                 <i class="fa-solid fa-building width-16"></i> Companies
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{{ route('admin.bbps.commission.index') }}" class="admin-sub-item {{ request()->is('admin/bbps-commission*') ? 'active' : '' }}">
+                                <i class="fa-solid fa-percent width-16"></i> BBPS Commission
                             </a>
                         </li>
                         <li>
@@ -355,15 +360,18 @@
     <div class="admin-sidebar-footer">
         <div class="admin-user-pill">
             <a href="{{ route('admin.profile') }}" class="d-flex align-items-center flex-grow-1 overflow-hidden text-decoration-none" title="View & Edit Admin Profile">
-                @if(Auth::user()->image && file_exists(public_path('uploads/' . Auth::user()->image)))
-                    <img class="admin-avatar" src="{{ asset('uploads/' . Auth::user()->image) }}" alt="{{ Auth::user()->name }}">
+                @php
+                    $adminUser = Auth::guard('admin')->user() ?? Auth::user();
+                @endphp
+                @if($adminUser && $adminUser->image && file_exists(public_path('uploads/' . $adminUser->image)))
+                    <img class="admin-avatar" src="{{ asset('uploads/' . $adminUser->image) }}" alt="{{ $adminUser->name ?? 'Admin' }}">
                 @else
                     <div class="admin-avatar-initials">
-                        {{ strtoupper(substr(Auth::user()->name ?? 'A', 0, 2)) }}
+                        {{ strtoupper(substr($adminUser->name ?? 'A', 0, 2)) }}
                     </div>
                 @endif
                 <div class="admin-user-info flex-grow-1 overflow-hidden ms-2">
-                    <div class="text-white fw-bold small text-truncate">{{ Auth::user()->name }}</div>
+                    <div class="text-white fw-bold small text-truncate">{{ $adminUser->name ?? 'Administrator' }}</div>
                     <div class="text-white-50" style="font-size: 0.7rem;">Super Admin</div>
                 </div>
             </a>

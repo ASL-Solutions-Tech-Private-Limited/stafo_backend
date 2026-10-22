@@ -77,6 +77,7 @@ use App\Http\Controllers\admin\BlogCategoryController;
 use App\Http\Controllers\User\UserHolidayController;
 use App\Http\Controllers\admin\BlogTagController;
 use App\Http\Controllers\admin\BlogController;
+use App\Http\Controllers\admin\BbpsCommissionController;
 use App\Http\Controllers\WebsiteAiChatController;
 
 
@@ -653,6 +654,15 @@ Route::group(['prefix' => 'admin', 'namespace' => 'App\Http\Controllers\admin', 
     Route::put('company/referralcode-update/{id}', [CompanyDetailController::class, 'updateReferralCode'])->name('updateReferralCode');
     // Business type
     Route::resource('businessTypes', BusinessTypeController::class);
+
+    // BBPS Company-wise Commission Setup
+    Route::prefix('bbps-commission')->group(function () {
+        Route::get('/', [BbpsCommissionController::class, 'index'])->name('admin.bbps.commission.index');
+        Route::get('/get-table', [BbpsCommissionController::class, 'getTable'])->name('admin.bbps.commission.getTable');
+        Route::post('/save', [BbpsCommissionController::class, 'saveSingle'])->name('admin.bbps.commission.save');
+        Route::post('/save-all', [BbpsCommissionController::class, 'saveAll'])->name('admin.bbps.commission.saveAll');
+        Route::get('/modal/{companyId}', [BbpsCommissionController::class, 'getCompanyModal'])->name('admin.bbps.commission.modal');
+    });
 
     Route::get('/contact-form-submissions', [ContactFormController::class, 'index'])->name('admin.contact_form_submissions');
 

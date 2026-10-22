@@ -1,0 +1,190 @@
+services:
+  # -------------------------------------------------------------
+  # Laravel Application (PHP 8.2-FPM)
+  # -------------------------------------------------------------
+  app:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+    container_name: stafo-backend-app
+    restart: unless-stopped
+    working_dir: /var/www
+    volumes:
+      - ./:/var/www
+      - ./docker/php/custom.ini:/usr/local/etc/php/conf.d/custom.ini
+    environment:
+      - APP_NAME=${APP_NAME:-Stafo Backend}
+      - APP_ENV=${APP_ENV:-local}
+      - APP_KEY=${APP_KEY}
+      - APP_DEBUG=${APP_DEBUG:-true}
+      - APP_URL=${APP_URL:-http://localhost:8000}
+      - DB_HOST=db
+      - DB_PORT=3306
+      - DB_DATABASE=${DB_DATABASE:-stafo_db}
+      - DB_USERNAME=${DB_USERNAME:-stafo_user}
+      - DB_PASSWORD=${DB_PASSWORD:-secret}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - FACE_SERVICE_URL=http://python:5005
+      - CHAT_PORT=${CHAT_PORT:-6001}
+    depends_on:
+      - db
+      - redis
+    networks:
+      - stafo-network
+
+  # -------------------------------------------------------------
+  # Nginx Web Server (Reverse Proxy for Laravel, Node & Python)
+  # -------------------------------------------------------------
+  web:
+    image: nginx:alpine
+    container_name: stafo-backend-nginx
+    restart: unless-stopped
+    ports:
+      - "${APP_PORT:-8000}:80"
+    volumes:
+      - ./:/var/www
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - app
+      - chat
+      - python
+    networks:
+      - stafo-network
+
+  # -------------------------------------------------------------
+  # Node.js Chat Server (WebSocket & Real-time Messaging)
+  # -------------------------------------------------------------
+  chat:
+    build:
+      context: .
+      dockerfile: docker/node/Dockerfile
+    container_name: stafo-backend-chat
+    restart: unless-stopped
+    working_dir: /var/www/chat-server
+    ports:
+      - "${CHAT_PORT:-6001}:6001"
+    volumes:
+      - ./:/var/www
+    environment:
+      - DB_HOST=db
+      - DB_PORT=3306
+      - DB_DATABASE=${DB_DATABASE:-stafo_db}
+      - DB_USERNAME=${DB_USERNAME:-stafo_user}
+      - DB_PASSWORD=${DB_PASSWORD:-secret}
+      - CHAT_PORT=${CHAT_PORT:-6001}
+      - CHAT_HOST=0.0.0.0
+    depends_on:
+      - db
+    networks:
+      - stafo-network
+
+  # -------------------------------------------------------------
+  # Python Face Verification Microservice
+  # -------------------------------------------------------------
+  python:
+    build:
+      context: .
+      dockerfile: docker/python/Dockerfile
+    container_name: stafo-backend-python
+    restart: unless-stopped
+    working_dir: /var/www
+    ports:
+      - "${FACE_SERVICE_PORT:-5005}:5005"
+    volumes:
+      - ./:/var/www
+    environment:
+      - PYTHONUNBUFFERED=1
+      - FACE_SERVICE_PORT=${FACE_SERVICE_PORT:-5005}
+    networks:
+      - stafo-network
+
+  # -------------------------------------------------------------
+  # MySQL Database Server
+  # -------------------------------------------------------------
+  db:
+    image: mysql:8.0
+    container_name: stafo-backend-db
+    restart: unless-stopped
+    command: --default-authentication-plugin=mysql_native_password
+    ports:
+      - "${FORWARD_DB_PORT:-3306}:3306"
+    environment:
+      MYSQL_DATABASE: ${DB_DATABASE:-stafo_db}
+      MYSQL_USER: ${DB_USERNAME:-stafo_user}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-secret}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-rootsecret}
+    volumes:
+      - stafo_db_data:/var/lib/mysql
+    networks:
+      - stafo-network
+
+  # -------------------------------------------------------------
+  # Redis Cache & Queue Backend
+  # -------------------------------------------------------------
+  redis:
+    image: redis:alpine
+    container_name: stafo-backend-redis
+    restart: unless-stopped
+    ports:
+      - "${FORWARD_REDIS_PORT:-6379}:6379"
+    volumes:
+      - stafo_redis_data:/data
+    networks:
+      - stafo-network
+
+  # -------------------------------------------------------------
+  # Laravel Queue Worker (Background Jobs)
+  # -------------------------------------------------------------
+  queue:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+    container_name: stafo-backend-queue
+    restart: unless-stopped
+    working_dir: /var/www
+    volumes:
+      - ./:/var/www
+      - ./docker/supervisor/supervisord.conf:/etc/supervisord.conf
+    command: [ "/usr/bin/supervisord", "-c", "/etc/supervisord.conf" ]
+    depends_on:
+      - app
+      - redis
+      - db
+    networks:
+      - stafo-network
+
+  # -------------------------------------------------------------
+  # phpMyAdmin (Web GUI for Database Management)
+  # -------------------------------------------------------------
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: stafo-backend-phpmyadmin
+    restart: unless-stopped
+    ports:
+      - "${PMA_PORT:-8081}:80"
+    environment:
+      PMA_ARBITRARY: 1
+      PMA_HOST: db
+      PMA_PORT: 3306
+      UPLOAD_LIMIT: 100M
+    depends_on:
+      - db
+    networks:
+      - stafo-network
+
+# -------------------------------------------------------------
+# Networks & Persistent Volumes
+# -------------------------------------------------------------
+networks:
+  stafo-network:
+    name: stafo-network
+    driver: bridge
+
+volumes:
+  stafo_db_data:
+    name: stafo_db_data
+    driver: local
+  stafo_redis_data:
+    name: stafo_redis_data
+    driver: local

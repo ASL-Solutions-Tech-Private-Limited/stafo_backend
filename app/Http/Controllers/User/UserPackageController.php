@@ -17,6 +17,7 @@ class UserPackageController extends Controller
      */
     public function index()
     {
+       
         $packages = Package::with('features')->where('status', 'active')->orderBy('price', 'asc')->get();
         $userId = Auth::id();
         $company = CompanyDetail::with('package')->find($userId);
@@ -120,7 +121,7 @@ class UserPackageController extends Controller
 
         $package = Package::find($packageId);
         $subscription = date('Y-m-d', strtotime("+".$duration." days", strtotime(date("Y-m-d"))) );
-        return view('user.packages.success', compact('package','subscription'));
+        return view('user.packages.success', compact('package','subscription','request'));
     }
 
     public function failure(Request $request){

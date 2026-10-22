@@ -276,11 +276,18 @@
         <div class="pricing-hero mb-4">
             <div class="row align-items-center">
                 <div class="col-lg-8">
-                    <span class="badge bg-primary bg-opacity-10 text-primary fw-semibold px-3 py-1 rounded-pill mb-2" style="font-size: 0.8rem;">
-                        <i class="fa-solid fa-gem me-1"></i> Flexible & Scalable HRMS Plans
-                    </span>
+                    <div class="d-flex align-items-center gap-3 mb-3">
+                        <div class="bg-white p-2 rounded-3 shadow-xs d-inline-flex align-items-center justify-content-center border" style="width: 52px; height: 52px;">
+                            <img src="{{ asset('assets/images/icon/c_logo.png') }}" alt="STAFO Logo" style="max-height: 38px; max-width: 38px; object-fit: contain;">
+                        </div>
+                        <div>
+                            <span class="badge bg-primary bg-opacity-10 text-primary fw-semibold px-3 py-1 rounded-pill" style="font-size: 0.8rem;">
+                                <i class="fa-solid fa-gem me-1"></i> Flexible & Scalable HRMS Plans
+                            </span>
+                        </div>
+                    </div>
                     <h2 class="fw-extrabold text-dark mb-2" style="font-size: 1.85rem; letter-spacing: -0.02em;">
-                        Choose the Perfect Plan for Your Workforce
+                        Choose the Perfect STAFO Plan for Your Workforce
                     </h2>
                     <p class="text-muted mb-0" style="font-size: 0.95rem; max-width: 650px;">
                         Automate employee attendance, GPS location tracking, compliant payroll calculation, leave workflows, and task tracking seamlessly.
@@ -508,22 +515,22 @@
 
                         <!-- PayU Checkout Action Button -->
                         <div class="mt-auto pt-2">
-                            <form action="{{ $payuUrl }}" method="post" name="payuForm_{{ $package->id }}">
+                            <form action="{{ $payuUrl }}" method="post" name="payuForm_{{ $package->id }}" id="payuForm_{{ $package->id }}">
                                 @foreach ($formData as $key => $value)
                                     <input type="hidden" name="{{ $key }}" value="{{ $value }}">
                                 @endforeach
 
                                 @if ($isCurrentPlan)
-                                    <button type="submit" class="btn btn-outline-success w-100 py-2 fw-bold d-flex align-items-center justify-content-center gap-2" style="border-radius: 10px;">
+                                    <button type="button" onclick="launchPayU({{ $package->id }})" class="btn btn-outline-success w-100 py-2 fw-bold d-flex align-items-center justify-content-center gap-2" style="border-radius: 10px;">
                                         <i class="fa-solid fa-rotate me-1"></i> Renew Active Plan
                                     </button>
                                 @elseif ($isPopular)
-                                    <button type="submit" class="btn btn-upgrade-primary w-100 py-2 d-flex align-items-center justify-content-center gap-2">
+                                    <button type="button" onclick="launchPayU({{ $package->id }})" class="btn btn-upgrade-primary w-100 py-2 d-flex align-items-center justify-content-center gap-2">
                                         <span>Get Started Now</span>
                                         <i class="fa-solid fa-arrow-right"></i>
                                     </button>
                                 @else
-                                    <button type="submit" class="btn btn-upgrade-outline w-100 py-2 d-flex align-items-center justify-content-center gap-2">
+                                    <button type="button" onclick="launchPayU({{ $package->id }})" class="btn btn-upgrade-outline w-100 py-2 d-flex align-items-center justify-content-center gap-2">
                                         <span>Choose Plan</span>
                                         <i class="fa-solid fa-arrow-right"></i>
                                     </button>
@@ -698,7 +705,7 @@
                             <td class="ps-4 fw-semibold text-muted">Ready to upgrade?</td>
                             @foreach ($packages as $package)
                                 <td class="text-center p-3">
-                                    <button type="button" class="btn btn-sm btn-primary px-3 py-1 fw-semibold rounded-pill" onclick="document.forms['payuForm_{{ $package->id }}'].submit()">
+                                    <button type="button" class="btn btn-sm btn-primary px-3 py-1 fw-semibold rounded-pill" onclick="launchPayU({{ $package->id }})">
                                         Choose {{ $package->package_name }}
                                     </button>
                                 </td>
@@ -777,4 +784,118 @@
         </div>
 
     </div>
+@endsection
+
+@section('js')
+    <!-- PayU Bolt JavaScript SDK (In-Page Checkout Modal with STAFO Logo) -->
+    <script id="bolt" src="https://checkout-static.citruspay.com/bolt/run/bolt.min.js" bolt-color="4f46e5" bolt-logo="https://stafo.in/public/assets/images/icon/c_logo.png"></script>
+
+    <script>
+        function launchPayU(packageId) {
+            const form = document.getElementById('payuForm_' + packageId);
+            if (!form) {
+                console.error('PayU form not found for package id:', packageId);
+                return;
+            }
+
+            // Gather all form data
+            const formData = new FormData(form);
+            const boltData = {
+                key: formData.get('key'),
+                txnid: formData.get('txnid'),
+                hash: formData.get('hash'),
+                amount: formData.get('amount'),
+                firstname: formData.get('firstname'),
+                email: formData.get('email'),
+                phone: formData.get('phone'),
+                productinfo: formData.get('productinfo'),
+                surl: formData.get('surl'),
+                furl: formData.get('furl'),
+                mode: 'dropout',
+                logo: 'https://stafo.in/public/assets/images/icon/c_logo.png'
+            };
+
+            // Include UDF parameters
+            ['udf1', 'udf2', 'udf3', 'udf4', 'udf5'].forEach(function(u) {
+                const val = formData.get(u);
+                if (val !== null && val !== undefined && val !== '') {
+                    boltData[u] = val;
+                }
+            });
+
+            console.log('Initiating PayU Bolt with data:', boltData);
+
+            // Verify if Bolt SDK is loaded
+            if (typeof bolt === 'undefined' || !bolt || typeof bolt.launch !== 'function') {
+                console.warn('PayU Bolt SDK not ready, falling back to standard checkout...');
+                form.submit();
+                return;
+            }
+
+            try {
+                bolt.launch(boltData, {
+                    responseHandler: function(BOLT) {
+                        console.log('PayU Bolt responseHandler received:', BOLT);
+                        const response = BOLT && BOLT.response ? BOLT.response : BOLT;
+                        if (!response) return;
+
+                        if (response.txnStatus === 'SUCCESS') {
+                            submitPayuPost("{{ url('success') }}", response);
+                        } else if (response.txnStatus === 'FAILED') {
+                            submitPayuPost("{{ url('failure') }}", response);
+                        } else if (response.txnStatus === 'CANCEL') {
+                            if (typeof Swal !== 'undefined') {
+                                Swal.fire({
+                                    title: 'Payment Cancelled',
+                                    text: 'You cancelled the payment process. You can retry whenever you are ready.',
+                                    icon: 'info',
+                                    confirmButtonColor: '#4f46e5'
+                                });
+                            } else if (typeof toastr !== 'undefined') {
+                                toastr.info('Payment window closed.');
+                            } else {
+                                console.log('Payment modal was closed/cancelled by user.');
+                            }
+                        }
+                    },
+                    catchException: function(BOLT) {
+                        console.error('PayU Bolt exception caught:', BOLT);
+                        const msg = (BOLT && BOLT.message) ? BOLT.message : 'Checkout modal encountered an issue.';
+                        // Fallback to standard form submit if modal is blocked or unsupported
+                        if (confirm(msg + '\n\nWould you like to proceed with standard secure payment instead?')) {
+                            form.submit();
+                        }
+                    }
+                });
+            } catch (err) {
+                console.error('Error invoking bolt.launch:', err);
+                form.submit();
+            }
+        }
+
+        function submitPayuPost(targetUrl, responseData) {
+            const tempForm = document.createElement('form');
+            tempForm.method = 'POST';
+            tempForm.action = targetUrl;
+
+            for (const key in responseData) {
+                if (Object.prototype.hasOwnProperty.call(responseData, key)) {
+                    const input = document.createElement('input');
+                    input.type = 'hidden';
+                    input.name = key;
+                    input.value = responseData[key];
+                    tempForm.appendChild(input);
+                }
+            }
+
+            const csrfInput = document.createElement('input');
+            csrfInput.type = 'hidden';
+            csrfInput.name = '_token';
+            csrfInput.value = '{{ csrf_token() }}';
+            tempForm.appendChild(csrfInput);
+
+            document.body.appendChild(tempForm);
+            tempForm.submit();
+        }
+    </script>
 @endsection

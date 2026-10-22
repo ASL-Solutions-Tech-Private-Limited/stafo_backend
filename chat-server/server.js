@@ -326,6 +326,7 @@ io.on('connection', (socket) => {
     });
 });
 
-server.listen(PORT, '127.0.0.1', () => {
-    console.log(`🚀 Stafo Real-time Chat WebSocket Server running on http://127.0.0.1:${PORT}`);
+const HOST = process.env.CHAT_HOST || '0.0.0.0';
+server.listen(PORT, HOST, () => {
+    console.log(`🚀 Stafo Real-time Chat WebSocket Server running on http://${HOST}:${PORT}`);
 });

@@ -32,15 +32,18 @@
         <!-- User Profile Dropdown Pill -->
         <div class="dropdown">
             <a href="#" class="admin-profile-btn" data-bs-toggle="dropdown" aria-expanded="false">
-                @if(Auth::user()->image && file_exists(public_path('uploads/' . Auth::user()->image)))
-                    <img class="admin-avatar" src="{{ asset('uploads/' . Auth::user()->image) }}" alt="{{ Auth::user()->name }}">
+                @php
+                    $adminUser = Auth::guard('admin')->user() ?? Auth::user();
+                @endphp
+                @if($adminUser && $adminUser->image && file_exists(public_path('uploads/' . $adminUser->image)))
+                    <img class="admin-avatar" src="{{ asset('uploads/' . $adminUser->image) }}" alt="{{ $adminUser->name ?? 'Admin' }}">
                 @else
                     <div class="admin-avatar-initials">
-                        {{ strtoupper(substr(Auth::user()->name ?? 'A', 0, 2)) }}
+                        {{ strtoupper(substr($adminUser->name ?? 'A', 0, 2)) }}
                     </div>
                 @endif
                 <div class="d-none d-lg-block text-start lh-1">
-                    <div class="fw-bold text-dark small">{{ Auth::user()->name }}</div>
+                    <div class="fw-bold text-dark small">{{ $adminUser->name ?? 'Administrator' }}</div>
                     <span class="text-muted" style="font-size: 0.68rem;">Super Admin</span>
                 </div>
                 <i class="fa-solid fa-chevron-down text-muted ms-1" style="font-size: 0.65rem;"></i>
@@ -49,8 +52,8 @@
             <!-- Modern Dropdown Menu -->
             <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 rounded-4 p-2 mt-2" style="min-width: 220px;">
                 <li class="px-3 py-2 border-bottom mb-1">
-                    <div class="fw-bold text-dark">{{ Auth::user()->name }}</div>
-                    <div class="text-muted small text-truncate" style="font-size: 0.75rem;">{{ Auth::user()->email ?? 'superadmin@stafo.in' }}</div>
+                    <div class="fw-bold text-dark">{{ $adminUser->name ?? 'Admin' }}</div>
+                    <div class="text-muted small text-truncate" style="font-size: 0.75rem;">{{ $adminUser->email ?? 'admin@stafo.in' }}</div>
                     <span class="badge bg-danger bg-opacity-10 text-danger rounded-pill px-2 py-0.5 mt-1" style="font-size: 0.65rem;">
                         <i class="fa-solid fa-shield-halved me-1"></i>Master Admin
                     </span>

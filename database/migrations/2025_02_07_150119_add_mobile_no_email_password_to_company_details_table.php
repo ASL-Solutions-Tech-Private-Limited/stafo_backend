@@ -13,8 +13,12 @@ return new class extends Migration
             $table->string('otp')->nullable();
             $table->string('email')->nullable();
             $table->string('password')->nullable();
-            $table->dropForeign(['proprietor_id']);
-            $table->dropColumn('proprietor_id');
+            if (Schema::hasColumn('company_details', 'proprietor_id')) {
+                try {
+                    $table->dropForeign(['proprietor_id']);
+                } catch (\Throwable $e) {}
+                $table->dropColumn('proprietor_id');
+            }
         });
     }
 
