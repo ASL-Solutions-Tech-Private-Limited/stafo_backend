@@ -60,9 +60,9 @@ use App\Http\Controllers\Api\BillPayController;
 // Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 //     return $request->user();
 // });
-Route::post('login', 'App\Http\Controllers\Api\ApiLoginController@login')->name('login');
+Route::post('login', 'App\Http\Controllers\Api\ApiLoginController@login')->name('api.login');
 
-Route::post('register', 'App\Http\Controllers\Api\ApiLoginController@register')->name('register');
+Route::post('register', 'App\Http\Controllers\Api\ApiLoginController@register')->name('api.register');
 
 Route::post('send-otp', 'App\Http\Controllers\Api\ApiLoginController@sendOtp')->name('sendOtp');
 Route::post('verify-otp', 'App\Http\Controllers\Api\ApiLoginController@loginWithOtp')->name('loginWithOtp');
@@ -97,7 +97,7 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
     //   comapny Dashboard api
-    Route::post('company-dashboard', [companyDashboardController::class, 'dashboard'])->name('dashboard');
+    Route::post('company-dashboard', [companyDashboardController::class, 'dashboard'])->name('api.dashboard');
     Route::post('employeesOnLeave', [companyDashboardController::class, 'employeesOnLeave'])->name('employeesOnLeave');
 
 
@@ -110,7 +110,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('feedback-list', [CompanyController::class, 'feedbackList'])->name('feedbackList');
 
     // employee-create
-    Route::post('employees-create', [EmployeeController::class, 'store'])->name('employees.store');
+    Route::post('employees-create', [EmployeeController::class, 'store'])->name('api.employees.store');
 
     // Route::post('employee/punch-in', [EmployeeController::class, 'punchIn']);
     // Route::post('employee/punch-out', [EmployeeController::class, 'punchOut']);
@@ -123,7 +123,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('employee/selfie-image-upload', [EmployeeController::class, 'selfieImageUpload']);
     Route::post('employee/selfie-image-remove', [EmployeeController::class, 'selfieImageRemove']);
     // employee-update
-    Route::post('employees-update/{id?}', [EmployeeController::class, 'update'])->name('employees.update');
+    Route::post('employees-update/{id?}', [EmployeeController::class, 'update'])->name('api.employees.update');
 
     // employee-list
     Route::post('employees-list', [EmployeeController::class, 'index'])->name('employees-list.index');
@@ -148,7 +148,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::post('leave-request-status-change', [EmployeeController::class, 'leaveRequestStatusChange'])->name('leaveRequestStatusChange');
 
-    Route::post('leave-list', [EmployeeController::class, 'leaveList'])->name('leaveList');
+    Route::post('leave-list', [EmployeeController::class, 'leaveList'])->name('api.leaveList');
 
     Route::post('update-geo-status', [EmployeeController::class, 'updateGeoStatus'])->name('updateGeoStatus');
     Route::post('accept-geo-tracking', [EmployeeController::class, 'acceptGeoTracking'])->name('acceptGeoTracking');
@@ -405,14 +405,14 @@ Route::get('app-banner', [companyDashboardController::class, 'appbanner']);
 
 
 // download report for employee
-Route::post('report/export-employee', [EmployeeReportController::class, 'exportEmployee'])->name('report.exportEmployee');
+Route::post('report/export-employee', [EmployeeReportController::class, 'exportEmployee'])->name('api.report.exportEmployee');
 
 // employee report list
 Route::get('employee/reports/list', [EmployeeReportController::class, 'getAllEmployeeReports']);
 
 
 // download report for attendance
-Route::post('report/export-attendace', [AttendaceReportController::class, 'exportAttendance'])->name('report.exportAttendance');
+Route::post('report/export-attendace', [AttendaceReportController::class, 'exportAttendance'])->name('api.report.exportAttendance');
 
 //  attendance report list
 Route::get('attendace/reports/list', [AttendaceReportController::class, 'getAllAttendanceReports']);

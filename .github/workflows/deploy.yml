@@ -20,6 +20,7 @@ jobs:
           SERVER_SSH_KEY: ${{ secrets.SERVER_SSH_KEY }}
           SERVER_PORT: ${{ secrets.SERVER_PORT }}
           SERVER_PROJECT_PATH: ${{ secrets.SERVER_PROJECT_PATH }}
+          TARGET_BRANCH: ${{ github.ref_name }}
         run: |
           set -e
 
@@ -61,8 +62,9 @@ jobs:
 
           # Target project directory on VPS
           TARGET_DIR="${SERVER_PROJECT_PATH:-/var/www/php-apps/stafo}"
+          BRANCH_NAME="${TARGET_BRANCH:-master}"
 
-          echo "🚀 Executing deployment on $SERVER_USER@$SERVER_HOST..."
+          echo "🚀 Executing deployment on $SERVER_USER@$SERVER_HOST for branch: $BRANCH_NAME..."
           ssh -i ~/.ssh/deploy_key -p "$PORT" -o StrictHostKeyChecking=accept-new "$SERVER_USER@$SERVER_HOST" "
             set -e
             echo '📁 Navigating to project directory: $TARGET_DIR'
@@ -71,11 +73,10 @@ jobs:
             echo '⏸️ Putting application in maintenance mode...'
             php artisan down || true
 
-            echo '📥 Pulling latest code...'
-            git fetch origin
-            CURRENT_BRANCH=\$(git rev-parse --abbrev-ref HEAD)
-            echo \"Current branch: \$CURRENT_BRANCH\"
-            git pull origin \"\$CURRENT_BRANCH\"
+            echo '📥 Pulling latest code for branch: $BRANCH_NAME...'
+            git fetch origin $BRANCH_NAME
+            git checkout $BRANCH_NAME || git checkout -b $BRANCH_NAME origin/$BRANCH_NAME
+            git pull origin $BRANCH_NAME
 
             echo '📦 Installing composer dependencies...'
             composer install --no-interaction --prefer-dist --optimize-autoloader --no-dev --ignore-platform-reqs
