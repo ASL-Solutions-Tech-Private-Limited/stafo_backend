@@ -20,6 +20,8 @@ use App\Models\BbpsCommission;
 
 use App\Models\WalletHistory;
 use Illuminate\Support\Facades\Log;
+use App\Models\CompanyDetail;
+use App\Models\Employee;
 
 
 class BillPayController extends Controller
@@ -141,7 +143,7 @@ class BillPayController extends Controller
 
 public function getBillerDetail(Request $request){
       try {
-
+        
          $request = $request->all();
          $operatorCode = $request['operator_code'] ?? '';  
 
@@ -249,7 +251,8 @@ public function fetchBill(Request $request)
             if (env('APP_ENV') != 'local') {
                
                 $datarr = $cfO->billFetchRequest($xml1, $refId);
-            } else {
+            } 
+            else {
                 $datarr = '<?xml version="1.0" encoding="UTF-8"?><billFetchResponse> <responseCode>000</responseCode> <paymentRefId>45f7c2fbeadc4e0c9fe9586735e94101</paymentRefId> <inputParams> <input> <paramName>a</paramName> <paramValue>10</paramValue> </input> </inputParams> <billerResponse> <billAmount>100000</billAmount> <billDate>2015-06-14</billDate> <billNumber>12303</billNumber> <billPeriod>june</billPeriod> <customerName>BBPS</customerName> <dueDate>2015-06-20</dueDate> </billerResponse> </billFetchResponse>';
             }
 
@@ -380,23 +383,101 @@ public function fetchBill(Request $request)
    try {
          $cfO = CommonFunction::getInstance();
          $userId = Auth::id();
-         $request = $request->all();
-         $postdata = $request['postdata'];
-         $userType = CommonFunction::sanitizeInput($request['user_type'] ?? '');
+
+       
+         $requestData = $request->all();
+         $postdata = $requestData['postdata'] ?? [];
+         $userType = CommonFunction::sanitizeInput($requestData['user_type'] ?? '');
          $ref_id = CommonFunction::sanitizeInput($postdata['requestId'] ?? '');
-         $txnAmt = CommonFunction::sanitizeInput($postdata['amount'] ?? '');
-         $operatorCode = CommonFunction::sanitizeInput($request['operator_code'] ?? '');
-         $category = $request['category'] ?? '';
+         $txnAmt = (float)CommonFunction::sanitizeInput($postdata['amount'] ?? 0);
+         $operatorCode = CommonFunction::sanitizeInput($requestData['operator_code'] ?? '');
+         $category = $requestData['category'] ?? '';
          $mode = $postdata['mode'] ?? 'online';
-         $bill_fetch =$postdata ['billPaymentRequestxml'];      
+         $bill_fetch = $postdata['billPaymentRequestxml'] ?? '';      
          $txnId = $this->generateTxnId();
-         $product_info = "Bill Payment - ". $category . '- Amount '. $txnAmt;
-         $cashback = 0; // getting from promocode
+
+         // 1. Resolve BBPS Service Category using only BbpsServiceCategory model
+         $serviceCategory = BbpsServiceCategory::where('name', $category)->first();
+
+         // 2. Resolve ID based on user_type (only Employee and CompanyDetail)
+         $companyId = null;
+         if ($userType === 'employee') {
+             $employee = Employee::find($userId);
+             $companyId = $employee->id ?? $userId;
+         } elseif ($userType === 'company') {
+             $company = CompanyDetail::find($userId);
+             $companyId = $company->id ?? $userId;
+         }
+
+         // 3. Fetch BBPS Commission Rule using only BbpsCommission model
+         $commissionRule = null;
+         if ($companyId && $serviceCategory) {
+             $commissionRule = BbpsCommission::where('company_id', $companyId)
+                 ->where('billtypeid', $serviceCategory->id)
+                 ->where('status', '1')
+                 ->first();
+
+             // Fallback for employee if commission is configured under company_id
+             if (!$commissionRule && $userType === 'employee' && !empty($employee->company_id)) {
+                 $commissionRule = BbpsCommission::where('company_id', $employee->company_id)
+                     ->where('billtypeid', $serviceCategory->id)
+                     ->where('status', '1')
+                     ->first();
+             }
+         }
+
+         // 4. Resolve Commission / Surcharge rates and type
+         $comper = 0.0;
+         $gstper = 0.0;
+         $isFlat = false;
+         $isSurcharge = false;
+
+         if ($commissionRule) {
+             $comper = (float)($commissionRule->comper ?? 0);
+             $gstper = (float)($commissionRule->gstper ?? 0);
+             $isFlat = ($commissionRule->isflat == '1');
+             $isSurcharge = ($commissionRule->issurcharge == '1');
+         } elseif ($serviceCategory && $serviceCategory->commission !== null) {
+             $comper = (float)$serviceCategory->commission;
+             $gstper = 0.0;
+             $isFlat = ($serviceCategory->isFlat == '1');
+             $isSurcharge = false;
+         }
+
+         // 5. Calculate Commission, GST and Deductible/Payable Amount
+         $commissionAmount = 0.0;
+         $gstAmount = 0.0;
+
+         if ($comper > 0) {
+             if ($isFlat) {
+                 $commissionAmount = round($comper, 2);
+             } else {
+                 $commissionAmount = round(($txnAmt * $comper) / 100, 2);
+             }
+
+             if ($gstper > 0 && $commissionAmount > 0) {
+                 $gstAmount = round(($commissionAmount * $gstper) / 100, 2);
+             }
+         }
+
+         if ($isSurcharge) {
+             // Surcharge increases the payable amount
+             $totalSurcharge = round($commissionAmount + $gstAmount, 2);
+             $cashback = 0.0;
+             $deductibleAmount = round($txnAmt + $totalSurcharge, 2);
+         } else {
+             // Commission reduces deductible amount / serves as cashback
+             $netCommission = round(max(0, $commissionAmount - $gstAmount), 2);
+             $cashback = $netCommission;
+             $deductibleAmount = round(max(0, $txnAmt - $netCommission), 2);
+         }
+
+         $product_info = "Bill Payment - " . $category . ' - Amount ' . $deductibleAmount;
          $initialRequest = [
                'user_id' => $userId,
                'user_type' => $userType,
                'txnid' => $txnId,
-               'amount' => $txnAmt,
+               'amount' => $deductibleAmount,
                'product_info' => $product_info,
                'status'=> 'pending'
          ];
@@ -411,15 +492,22 @@ public function fetchBill(Request $request)
                'user_id' => $userId ?? 123,
                'user_type' => $userType,
                'txnid' => $txnId,
-               'amount' => $txnAmt,
-               'deductibleAmount' => ($txnAmt-$cashback),
+               'amount' => $deductibleAmount,
+               'bill_amount' => $txnAmt,
+               'deductibleAmount' => $deductibleAmount,
                'product_info' => $product_info,
                'BillType' => $category,
                'mode' => $mode,
                'operator_code' => $operatorCode,
-               'billFetchPost' =>$bill_fetch,
+               'billFetchPost' => $bill_fetch,
                'requestId' => $ref_id,
-               'cashBack' => 0,
+               'cashBack' => $cashback,
+               'commission' => $comper,
+               'commission_amount' => $commissionAmount,
+               'gst_percentage' => $gstper,
+               'gst_amount' => $gstAmount,
+               'is_surcharge' => $isSurcharge ? 1 : 0,
+               'is_flat' => $isFlat ? 1 : 0,
                'hash_calculated' => $calculatedHash
            ]; 
          
@@ -650,11 +738,8 @@ private function processBillPayment($request){
 
 
 private function convertXMLToJson($xmlString){
-  
    $xml = simplexml_load_string($xmlString, "SimpleXMLElement", LIBXML_NOCDATA);
-  
-  // return $json = json_encode($xml);
-
+   return json_encode($xml);
 } 
 /** 
  * Function is to generate hash for payU
@@ -668,26 +753,31 @@ private function convertXMLToJson($xmlString){
 private function generatePayUHash($request, $userId, $userType)
 {
          $modelMap = [
-         'employee' => 'App\Models\Employee',
-         'company' => 'App\Models\CompanyDetail',
+             'employee' => 'App\Models\Employee',
+             'company'  => 'App\Models\CompanyDetail',
+             'user'     => 'App\Models\User',
          ];
 
          $modalName = $modelMap[$userType] ?? null;
-         if(empty($modalName)){
-         throw new Exception ("Unknown User Type");
+         $userDetail = null;
+         if(!empty($modalName)){
+             $userDetail = $modalName::where('id', $userId)->first();
          }
 
-         $userDetail =  $modalName::where('id', $userId)->lockForUpdate()->first();
+         if (!$userDetail && $userId) {
+             $userDetail = Employee::find($userId) ?? CompanyDetail::find($userId) ?? User::find($userId);
+         }
+
          $key         =  '1AJhSD';
          $salt        = 'tBjCq35cgf3f12ya0usuhEtH9IJ7pSyq';
          $txnid       = $request['txnid'];
          $amount      = $request['amount'];
          $productinfo = $request['product_info'];
-         $firstname   = $userDetail->name ?? $userDetail->company_name; 
-         $email       = $userDetail->email; 
+         $firstname   = $userDetail->name ?? ($userDetail->company_name ?? 'Customer'); 
+         $email       = $userDetail->email ?? 'customer@example.com'; 
          $hash_string = $key . "|" . $txnid . "|" . $amount . "|" . $productinfo . "|" . $firstname . "|" . $email . "|||||||||||" . $salt;
-        $hash = strtolower(hash("sha512", $hash_string));
-        return $hash;
+         $hash = strtolower(hash("sha512", $hash_string));
+         return $hash;
 }
 
 }

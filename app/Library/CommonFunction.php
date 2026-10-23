@@ -77,21 +77,9 @@ class CommonFunction {
         return $randomString;
     }
 
+
     function mdmRequestNew($blno,$requestId){
-        /*
-            Agent Institution ID 	AS55
-            Agent Institution Name 	ASL Solutions Private Limited
-            Access Code 	AVTT22LO03UF72FGDB
-            Working Key 	9476883E8E42D993FC49728E3BED16E1
-            stgapi.billavenue.com
-            
-            Institute ID:	AC62
-            Access Code:	AVQQ81XX06RT98DLVC
-            Working Key:	2A2C80485B5E3B1BE5D99D67E2DF8309
-            api.billavenue.com
-        */
         $plainText = '<?xml version="1.0" encoding="UTF-8"?><billerInfoRequest><billerId>'.$blno.'</billerId></billerInfoRequest>';
-       
         $key = "2A2C80485B5E3B1BE5D99D67E2DF8309";
         $encrypt_xml_data= $this->encryptt($plainText, $key);
         $data['accessCode'] = "AVQQ81XX06RT98DLVC";
@@ -100,21 +88,31 @@ class CommonFunction {
         $data['instituteId'] = "AC62";
         
         $parameters = http_build_query($data);
-        if(!isLocal()){
-        
+         if (!app()->environment('local')) {
         $url = "https://api.billavenue.com/billpay/extMdmCntrl/mdmRequestNew/xml?" . $parameters;
         
-        //return $url.' - '.$encrypt_xml_data;
-        $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, $url);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_POST, true);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, $encrypt_xml_data);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type: text/xml'));
-        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
-        $result = curl_exec($ch);
+       $postArray = [
+           "url" => $url,
+           "encrypt_xml_data" => $encrypt_xml_data
+        ];
+        
+        $curl = curl_init();
+        curl_setopt_array($curl, array(
+            CURLOPT_URL => "https://payzones.net/api/providerCall/bbps/biilerDetails.php",
+            CURLOPT_SSL_VERIFYPEER => false,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_ENCODING => '',
+            CURLOPT_MAXREDIRS => 10,
+            CURLOPT_TIMEOUT => 0,
+            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+            CURLOPT_CUSTOMREQUEST => 'POST',
+            CURLOPT_POSTFIELDS => json_encode($postArray),
+
+        ));
+        $result = curl_exec($curl);
+        curl_close($curl);
+        
         $response = $this->decryptt($result, $key);
         $xml = simplexml_load_string($response, "SimpleXMLElement", LIBXML_NOCDATA);
     	}else{
@@ -238,41 +236,9 @@ class CommonFunction {
         
         return json_encode($xml);
     }
+
     
     /* CC bill Fetch Request*/
-    
-    // function billFetchRequest($xml,$requestId){
-    //     $key = "2A2C80485B5E3B1BE5D99D67E2DF8309";
-    //     $encrypt_xml_data = $this->encryptt($xml, $key);
-    //     //echo "<pre>".htmlentities(decrypt($encrypt_xml_data, $key)).'<br><br>';
-        
-    //     $data['accessCode'] = "AVQQ81XX06RT98DLVC";
-    //     $data['requestId'] = $requestId;
-    //     $data['encRequest'] = $encrypt_xml_data;
-    //     $data['ver'] = "1.0";
-    //     $data['instituteId'] = "AC62";
-    //     $parameters = http_build_query($data);
-    //     //echo$parameters.'<br>';
-    //     $url = "https://api.billavenue.com/billpay/extBillCntrl/billFetchRequest/xml";
-    //     //echo '<br>'.$encrypt_xml_data;
-        
-    //     $ch = curl_init();
-    //     curl_setopt($ch, CURLOPT_URL, $url);
-    //     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    //     curl_setopt($ch, CURLOPT_POST, true);
-    //     curl_setopt($ch, CURLOPT_POSTFIELDS, $parameters);
-    //     curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-    //     curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-    //     curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
-    //     $result = curl_exec($ch);
-    //     //echo '<br><br>Encrypted Response: ' . $result . "<br><br>";
-    //     $response =  $this->decryptt($result, $key);
-    //     $xmlrs=htmlentities($response);
-    //     //echo "<pre>".$xmlrs;
-    //     return $response;
-    // }
-
-
 
         function billFetchRequest($xml,$requestId){
         $key = "2A2C80485B5E3B1BE5D99D67E2DF8309";
