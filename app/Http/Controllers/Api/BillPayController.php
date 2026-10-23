@@ -478,6 +478,8 @@ public function fetchBill(Request $request)
                'user_type' => $userType,
                'txnid' => $txnId,
                'amount' => $deductibleAmount,
+               'bill_amount' => $txnAmt,
+               'commission' => $commissionAmount,
                'product_info' => $product_info,
                'status'=> 'pending'
          ];
@@ -779,5 +781,188 @@ private function generatePayUHash($request, $userId, $userType)
          $hash = strtolower(hash("sha512", $hash_string));
          return $hash;
 }
+
+    /**
+     * Function / API to get BBPS Transaction Report with summary KPIs, filters & pagination
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function bbpsTransactionReport(Request $request)
+    {
+        try {
+            $userId = Auth::id();
+            $authUser = Auth::user();
+
+            // Detect user type (employee or company)
+            $userType = $request->input('user_type');
+            if (empty($userType)) {
+                if ($authUser instanceof Employee) {
+                    $userType = 'employee';
+                } elseif ($authUser instanceof CompanyDetail) {
+                    $userType = 'company';
+                } else {
+                    $isEmployee = Employee::where('id', $userId)->exists();
+                    $userType = $isEmployee ? 'employee' : 'company';
+                }
+            }
+
+            // Input filters
+            $search   = $request->input('search');
+            $status   = $request->input('status');
+            $category = $request->input('category');
+            $dateFrom = $request->input('date_from');
+            $dateTo   = $request->input('date_to');
+            $date     = $request->input('date');
+            $perPage  = (int)$request->input('per_page', 15);
+            if ($perPage <= 0 || $perPage > 100) {
+                $perPage = 15;
+            }
+
+            // Base query with relationships
+            $query = Transaction::with(['employee.company', 'company'])->latest('id');
+
+            // Scoping based on user role
+            if ($userType === 'employee') {
+                // Employee views their own transactions
+                $query->where('user_id', $userId)->where('user_type', 'employee');
+            } elseif ($userType === 'company') {
+                // Company views company transactions + employee transactions under this company
+                $employeeIds = Employee::where('company_id', $userId)->pluck('id')->toArray();
+                $query->where(function ($q) use ($userId, $employeeIds) {
+                    $q->where(function ($sub) use ($userId) {
+                        $sub->where('user_type', 'company')->where('user_id', $userId);
+                    });
+                    if (!empty($employeeIds)) {
+                        $q->orWhere(function ($sub) use ($employeeIds) {
+                            $sub->where('user_type', 'employee')->whereIn('user_id', $employeeIds);
+                        });
+                    }
+                });
+            }
+
+            // Search filter (txnid, payu_payment_id, product_info)
+            if (!empty($search)) {
+                $query->where(function ($q) use ($search) {
+                    $q->where('txnid', 'like', "%{$search}%")
+                      ->orWhere('payu_payment_id', 'like', "%{$search}%")
+                      ->orWhere('product_info', 'like', "%{$search}%");
+                });
+            }
+
+            // Status filter
+            if (!empty($status) && $status !== 'all') {
+                $query->where('status', $status);
+            }
+
+            // Category filter
+            if (!empty($category) && $category !== 'all') {
+                $query->where('product_info', 'like', "%{$category}%");
+            }
+
+            // Date filters
+            if (!empty($date)) {
+                $query->whereDate('created_at', $date);
+            } else {
+                if (!empty($dateFrom)) {
+                    $query->whereDate('created_at', '>=', $dateFrom);
+                }
+                if (!empty($dateTo)) {
+                    $query->whereDate('created_at', '<=', $dateTo);
+                }
+            }
+
+            // KPI Summary metrics (clone query before pagination)
+            $statsQuery = clone $query;
+            $totalCount = $statsQuery->count();
+            $totalAmount = (float)$statsQuery->sum('amount');
+            $totalCommission = (float)$statsQuery->sum('commission');
+
+            $successQuery = (clone $statsQuery)->where('status', 'success');
+            $successCount = $successQuery->count();
+            $successAmount = (float)$successQuery->sum('amount');
+
+            $pendingQuery = (clone $statsQuery)->where('status', 'pending');
+            $pendingCount = $pendingQuery->count();
+            $pendingAmount = (float)$pendingQuery->sum('amount');
+
+            $failedQuery = (clone $statsQuery)->where(function ($q) {
+                $q->where('status', 'failed')->orWhere('status', 'failure');
+            });
+            $failedCount = $failedQuery->count();
+            $failedAmount = (float)$failedQuery->sum('amount');
+
+            // Paginate Results
+            $paginated = $query->paginate($perPage);
+
+            // Transform records
+            $transactions = collect($paginated->items())->map(function ($txn) {
+                $payerName = '-';
+                $companyName = '-';
+                if ($txn->user_type === 'employee' && $txn->employee) {
+                    $payerName = $txn->employee->name ?? ('Employee #' . $txn->user_id);
+                    $companyName = $txn->employee->company->company_name ?? '-';
+                } elseif ($txn->user_type === 'company' && $txn->company) {
+                    $payerName = $txn->company->company_name ?? ('Company #' . $txn->user_id);
+                    $companyName = $txn->company->company_name ?? '-';
+                }
+
+                $commVal = (float)($txn->commission ?? 0);
+                $billAmt = (float)($txn->bill_amount ?? $txn->amount);
+
+                return [
+                    'id'                   => $txn->id,
+                    'txnid'                => $txn->txnid,
+                    'amount'               => (float)$txn->amount,
+                    'formatted_amount'     => '₹' . number_format((float)$txn->amount, 2),
+                    'bill_amount'          => $billAmt,
+                    'formatted_bill_amount'=> '₹' . number_format($billAmt, 2),
+                    'commission'           => $commVal,
+                    'formatted_commission' => '₹' . number_format($commVal, 2),
+                    'product_info'         => $txn->product_info ?? 'BBPS Payment',
+                    'status'               => strtolower($txn->status ?? 'pending'),
+                    'payu_payment_id'      => $txn->payu_payment_id,
+                    'user_id'              => $txn->user_id,
+                    'user_type'            => $txn->user_type,
+                    'payer_name'           => $payerName,
+                    'company_name'         => $companyName,
+                    'created_at'           => $txn->created_at ? $txn->created_at->format('Y-m-d H:i:s') : null,
+                    'date'                 => $txn->created_at ? $txn->created_at->format('d M Y') : null,
+                    'time'                 => $txn->created_at ? $txn->created_at->format('h:i A') : null,
+                ];
+            });
+
+            $responseData = [
+                'summary' => [
+                    'total_count'                 => $totalCount,
+                    'total_amount'                => round($totalAmount, 2),
+                    'total_amount_formatted'      => '₹' . number_format($totalAmount, 2),
+                    'total_commission'            => round($totalCommission, 2),
+                    'total_commission_formatted'  => '₹' . number_format($totalCommission, 2),
+                    'success_count'               => $successCount,
+                    'success_amount'              => round($successAmount, 2),
+                    'success_amount_formatted'    => '₹' . number_format($successAmount, 2),
+                    'pending_count'               => $pendingCount,
+                    'pending_amount'              => round($pendingAmount, 2),
+                    'pending_amount_formatted'    => '₹' . number_format($pendingAmount, 2),
+                    'failed_count'                => $failedCount,
+                    'failed_amount'               => round($failedAmount, 2),
+                    'failed_amount_formatted'     => '₹' . number_format($failedAmount, 2),
+                ],
+                'pagination' => [
+                    'current_page' => $paginated->currentPage(),
+                    'last_page'    => $paginated->lastPage(),
+                    'per_page'     => $paginated->perPage(),
+                    'total'        => $paginated->total(),
+                    'from'         => $paginated->firstItem(),
+                    'to'           => $paginated->lastItem(),
+                ],
+                'transactions' => $transactions,
+            ];
+
+            return $this->success($responseData, "BBPS Transaction Report fetched successfully");
+        } catch (Exception $e) {
+            return $this->error($e->getMessage());
+        }
+    }
 
 }

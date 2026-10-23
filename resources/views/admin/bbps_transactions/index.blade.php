@@ -166,11 +166,11 @@
         </div>
     </div>
 
-    <!-- 4 KPI Summary Cards -->
+    <!-- 5 KPI Summary Cards -->
     <div class="row g-3 mb-4">
         <!-- 1. Total Volume -->
-        <div class="col-xl-3 col-sm-6">
-            <div class="kpi-card d-flex align-items-center justify-content-between">
+        <div class="col-xl col-md-4 col-sm-6">
+            <div class="kpi-card d-flex align-items-center justify-content-between h-100">
                 <div>
                     <div class="text-muted small fw-semibold text-uppercase">Total Transactions</div>
                     <h3 class="fw-bold mb-0 text-dark mt-1">{{ number_format($totalCount) }}</h3>
@@ -182,9 +182,23 @@
             </div>
         </div>
 
-        <!-- 2. Success -->
-        <div class="col-xl-3 col-sm-6">
-            <div class="kpi-card d-flex align-items-center justify-content-between">
+        <!-- 2. Total Commission -->
+        <div class="col-xl col-md-4 col-sm-6">
+            <div class="kpi-card d-flex align-items-center justify-content-between h-100">
+                <div>
+                    <div class="text-info small fw-semibold text-uppercase">Total Commission</div>
+                    <h3 class="fw-bold mb-0 text-info mt-1">₹{{ number_format($totalCommission, 2) }}</h3>
+                    <div class="text-muted small mt-1">Total <span class="fw-bold text-info">Cashback / Comm</span></div>
+                </div>
+                <div class="kpi-icon-wrap bg-info-subtle text-info">
+                    <i class="fa-solid fa-hand-holding-dollar"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. Success -->
+        <div class="col-xl col-md-4 col-sm-6">
+            <div class="kpi-card d-flex align-items-center justify-content-between h-100">
                 <div>
                     <div class="text-success small fw-semibold text-uppercase">Successful</div>
                     <h3 class="fw-bold mb-0 text-success mt-1">{{ number_format($successCount) }}</h3>
@@ -196,9 +210,9 @@
             </div>
         </div>
 
-        <!-- 3. Pending -->
-        <div class="col-xl-3 col-sm-6">
-            <div class="kpi-card d-flex align-items-center justify-content-between">
+        <!-- 4. Pending -->
+        <div class="col-xl col-md-4 col-sm-6">
+            <div class="kpi-card d-flex align-items-center justify-content-between h-100">
                 <div>
                     <div class="text-warning small fw-semibold text-uppercase">Pending</div>
                     <h3 class="fw-bold mb-0 text-warning mt-1">{{ number_format($pendingCount) }}</h3>
@@ -210,9 +224,9 @@
             </div>
         </div>
 
-        <!-- 4. Failed -->
-        <div class="col-xl-3 col-sm-6">
-            <div class="kpi-card d-flex align-items-center justify-content-between">
+        <!-- 5. Failed -->
+        <div class="col-xl col-md-4 col-sm-6">
+            <div class="kpi-card d-flex align-items-center justify-content-between h-100">
                 <div>
                     <div class="text-danger small fw-semibold text-uppercase">Failed / Error</div>
                     <h3 class="fw-bold mb-0 text-danger mt-1">{{ number_format($failedCount) }}</h3>
@@ -311,7 +325,9 @@
                         <th>Payer / User</th>
                         <th>Company</th>
                         <th>Category / Bill Info</th>
-                        <th class="text-end">Amount</th>
+                        <th class="text-end">Bill Amt</th>
+                        <th class="text-end">Commission</th>
+                        <th class="text-end">Paid Amt</th>
                         <th class="text-center">Status</th>
                         <th>Date &amp; Time</th>
                         <th class="text-center" style="width: 100px;">Action</th>
@@ -389,7 +405,21 @@
                                 <div class="text-dark fw-medium">{{ $txn->product_info ?? 'BBPS Payment' }}</div>
                             </td>
 
-                            <!-- Amount -->
+                            <!-- Bill Amount -->
+                            <td class="text-end">
+                                <span class="text-muted fw-semibold">₹{{ number_format((float)($txn->bill_amount ?? $txn->amount), 2) }}</span>
+                            </td>
+
+                            <!-- Commission -->
+                            <td class="text-end">
+                                @if((float)($txn->commission ?? 0) > 0)
+                                    <span class="badge bg-success-subtle text-success fw-bold">₹{{ number_format((float)$txn->commission, 2) }}</span>
+                                @else
+                                    <span class="text-muted">₹0.00</span>
+                                @endif
+                            </td>
+
+                            <!-- Paid Amount -->
                             <td class="text-end">
                                 <span class="fw-bold fs-6 text-dark">₹{{ number_format((float)$txn->amount, 2) }}</span>
                             </td>
@@ -416,7 +446,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="9" class="text-center py-5">
+                            <td colspan="11" class="text-center py-5">
                                 <div class="py-3">
                                     <i class="fa-solid fa-receipt fa-3x text-muted mb-3 d-block opacity-50"></i>
                                     <h6 class="fw-bold text-muted">No BBPS Transactions Found</h6>
@@ -524,7 +554,15 @@
                                 <div class="fs-5 fw-bold font-monospace text-dark">${d.txnid || '-'}</div>
                             </div>
                             <div class="text-end">
-                                <div class="text-muted small fw-semibold">TRANSACTION AMOUNT</div>
+                                <div class="text-muted small fw-semibold">ORIGINAL BILL</div>
+                                <div class="fs-5 fw-bold text-secondary">₹${d.bill_amount || d.amount}</div>
+                            </div>
+                            <div class="text-end">
+                                <div class="text-muted small fw-semibold">COMMISSION</div>
+                                <div class="fs-5 fw-bold text-info">₹${d.commission || '0.00'}</div>
+                            </div>
+                            <div class="text-end">
+                                <div class="text-muted small fw-semibold">PAID AMOUNT</div>
                                 <div class="fs-4 fw-bold text-success">₹${d.amount}</div>
                             </div>
                             <div>
@@ -555,8 +593,11 @@
                                         <i class="fa-solid fa-credit-card me-2 text-primary"></i>Payment &amp; Gateway
                                     </h6>
                                     <table class="table table-sm table-borderless mb-0">
-                                        <tr><td class="text-muted" style="width: 110px;">PayU Txn ID:</td><td class="fw-semibold font-monospace text-dark">${d.payu_payment_id || '-'}</td></tr>
+                                        <tr><td class="text-muted" style="width: 120px;">PayU Txn ID:</td><td class="fw-semibold font-monospace text-dark">${d.payu_payment_id || '-'}</td></tr>
                                         <tr><td class="text-muted">Product / Bill:</td><td class="fw-semibold text-dark">${d.product_info || '-'}</td></tr>
+                                        <tr><td class="text-muted">Bill Amount:</td><td class="fw-semibold text-dark">₹${d.bill_amount || d.amount}</td></tr>
+                                        <tr><td class="text-muted">Commission:</td><td class="fw-semibold text-success">₹${d.commission || '0.00'}</td></tr>
+                                        <tr><td class="text-muted">Paid Amount:</td><td class="fw-semibold text-dark">₹${d.amount}</td></tr>
                                         <tr><td class="text-muted">Created At:</td><td class="fw-semibold text-dark">${d.created_at || '-'}</td></tr>
                                         <tr><td class="text-muted">Updated At:</td><td class="fw-semibold text-dark">${d.updated_at || '-'}</td></tr>
                                     </table>

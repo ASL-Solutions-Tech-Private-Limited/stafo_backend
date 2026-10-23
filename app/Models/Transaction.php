@@ -12,7 +12,19 @@ class Transaction extends Model
     protected $table = 'transactions';
 
     protected $fillable = [
-        'user_id','user_type','txnid','amount','product_info','status','payu_payment_id','hash_received','hash_calculated','payu_response'];
+        'user_id',
+        'user_type',
+        'txnid',
+        'amount',
+        'bill_amount',
+        'commission',
+        'product_info',
+        'status',
+        'payu_payment_id',
+        'hash_received',
+        'hash_calculated',
+        'payu_response'
+    ];
 
     public function transaction_insert($data){
        return Transaction::create($data)->id;

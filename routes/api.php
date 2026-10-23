@@ -381,6 +381,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('fetchBill', [BillPayController::class, 'fetchBill']); 
     Route::post('payBill', [BillPayController::class, 'initiateBillPay']); 
     Route::post('checkPaymentStatus', [BillPayController::class, 'checkPaymentStatusAndPayBill']);
+    Route::match(['get', 'post'], 'bbpsReport', [BillPayController::class, 'bbpsTransactionReport'])->name('api.bbps.report');
+    Route::match(['get', 'post'], 'bbps/report', [BillPayController::class, 'bbpsTransactionReport']);
       // bbps latest end
 
 });

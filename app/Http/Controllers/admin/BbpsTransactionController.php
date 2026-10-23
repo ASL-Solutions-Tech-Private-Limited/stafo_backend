@@ -75,6 +75,7 @@ class BbpsTransactionController extends Controller
         $statsQuery = clone $query;
         $totalCount = $statsQuery->count();
         $totalAmount = (float)$statsQuery->sum('amount');
+        $totalCommission = (float)$statsQuery->sum('commission');
 
         $successQuery = (clone $statsQuery)->where('status', 'success');
         $successCount = $successQuery->count();
@@ -111,6 +112,7 @@ class BbpsTransactionController extends Controller
             'dateTo',
             'totalCount',
             'totalAmount',
+            'totalCommission',
             'successCount',
             'successAmount',
             'pendingCount',
@@ -165,6 +167,8 @@ class BbpsTransactionController extends Controller
                 'id' => $transaction->id,
                 'txnid' => $transaction->txnid,
                 'amount' => number_format((float)$transaction->amount, 2),
+                'bill_amount' => number_format((float)($transaction->bill_amount ?? $transaction->amount), 2),
+                'commission' => number_format((float)($transaction->commission ?? 0), 2),
                 'product_info' => $transaction->product_info ?? 'N/A',
                 'status' => strtolower($transaction->status ?? 'pending'),
                 'payu_payment_id' => $transaction->payu_payment_id ?? 'N/A',
@@ -244,7 +248,9 @@ class BbpsTransactionController extends Controller
                 'Payer Name',
                 'Company Name',
                 'Product / Category Info',
-                'Amount (INR)',
+                'Bill Amount (INR)',
+                'Commission (INR)',
+                'Paid Amount (INR)',
                 'Status',
                 'PayU Payment ID',
                 'Created At',
@@ -271,6 +277,8 @@ class BbpsTransactionController extends Controller
                         $userName,
                         $compName,
                         $txn->product_info ?? '',
+                        number_format((float)($txn->bill_amount ?? $txn->amount), 2, '.', ''),
+                        number_format((float)($txn->commission ?? 0), 2, '.', ''),
                         number_format((float)$txn->amount, 2, '.', ''),
                         strtoupper($txn->status ?? 'PENDING'),
                         $txn->payu_payment_id ?? '',
