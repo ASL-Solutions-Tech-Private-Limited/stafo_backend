@@ -12,7 +12,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 class BbpsTransactionController extends Controller
 {
     /**
-     * Display BBPS Transaction Report with filters and summary KPI cards.
+     *  Display BBPS Transaction Report with filters and summary KPI cards.
      */
     public function index(Request $request)
     {
