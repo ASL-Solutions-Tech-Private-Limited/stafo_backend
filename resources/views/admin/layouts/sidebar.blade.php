@@ -38,7 +38,7 @@
 
             <!-- 1. Company & Staff -->
             @php
-                $isCompanyActive = request()->is('admin/company*') || request()->is('admin/employee*') || request()->is('admin/document*') || request()->is('admin/branches*') || request()->is('admin/attendances*') || request()->is('admin/businessTypes*') || request()->is('admin/bbps-commission*');
+                $isCompanyActive = request()->is('admin/company*') || request()->is('admin/employee*') || request()->is('admin/document*') || request()->is('admin/branches*') || request()->is('admin/attendances*') || request()->is('admin/businessTypes*') || request()->is('admin/bbps-commission*') || request()->is('admin/bbps-transactions*');
             @endphp
             <div class="admin-nav-item admin-nav-dropdown {{ $isCompanyActive ? 'is-open' : '' }}">
                 <a href="#collapseCompanyStaff" class="admin-nav-link {{ $isCompanyActive ? 'active' : '' }}" data-bs-toggle="collapse" role="button" aria-expanded="{{ $isCompanyActive ? 'true' : 'false' }}" aria-controls="collapseCompanyStaff">
@@ -58,6 +58,11 @@
                         <li>
                             <a href="{{ route('admin.bbps.commission.index') }}" class="admin-sub-item {{ request()->is('admin/bbps-commission*') ? 'active' : '' }}">
                                 <i class="fa-solid fa-percent width-16"></i> BBPS Commission
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{{ route('admin.bbps.transactions.index') }}" class="admin-sub-item {{ request()->is('admin/bbps-transactions*') ? 'active' : '' }}">
+                                <i class="fa-solid fa-receipt width-16"></i> BBPS Transactions
                             </a>
                         </li>
                         <li>

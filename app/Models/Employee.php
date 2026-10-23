@@ -635,4 +635,4 @@ class Employee extends Authenticatable
             'is_overnight' => $shiftEnd->format('Y-m-d') !== $shiftStart->format('Y-m-d'),
         ];
     }
-}
+}

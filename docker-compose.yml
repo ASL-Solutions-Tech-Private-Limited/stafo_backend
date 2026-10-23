@@ -146,6 +146,18 @@ services:
     volumes:
       - ./:/var/www
       - ./docker/supervisor/supervisord.conf:/etc/supervisord.conf
+    environment:
+      - APP_NAME=${APP_NAME:-Stafo Backend}
+      - APP_ENV=${APP_ENV:-production}
+      - APP_KEY=${APP_KEY}
+      - DB_HOST=db
+      - DB_PORT=3306
+      - DB_DATABASE=${DB_DATABASE:-stafo_db}
+      - DB_USERNAME=${DB_USERNAME:-stafo_user}
+      - DB_PASSWORD=${DB_PASSWORD:-secret}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - QUEUE_CONNECTION=redis
     command: [ "/usr/bin/supervisord", "-c", "/etc/supervisord.conf" ]
     depends_on:
       - app

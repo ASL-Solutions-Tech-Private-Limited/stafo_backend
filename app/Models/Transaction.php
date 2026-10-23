@@ -23,4 +23,19 @@ class Transaction extends Model
        return $id;
     }
 
+    /**
+     * Relationship to Employee
+     */
+    public function employee()
+    {
+        return $this->belongsTo(Employee::class, 'user_id');
+    }
+
+    /**
+     * Relationship to Company
+     */
+    public function company()
+    {
+        return $this->belongsTo(CompanyDetail::class, 'user_id');
+    }
 }

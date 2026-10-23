@@ -78,6 +78,7 @@ use App\Http\Controllers\User\UserHolidayController;
 use App\Http\Controllers\admin\BlogTagController;
 use App\Http\Controllers\admin\BlogController;
 use App\Http\Controllers\admin\BbpsCommissionController;
+use App\Http\Controllers\admin\BbpsTransactionController;
 use App\Http\Controllers\WebsiteAiChatController;
 
 
@@ -662,6 +663,13 @@ Route::group(['prefix' => 'admin', 'namespace' => 'App\Http\Controllers\admin', 
         Route::post('/save', [BbpsCommissionController::class, 'saveSingle'])->name('admin.bbps.commission.save');
         Route::post('/save-all', [BbpsCommissionController::class, 'saveAll'])->name('admin.bbps.commission.saveAll');
         Route::get('/modal/{companyId}', [BbpsCommissionController::class, 'getCompanyModal'])->name('admin.bbps.commission.modal');
+    });
+
+    // BBPS Transaction Report
+    Route::prefix('bbps-transactions')->group(function () {
+        Route::get('/', [BbpsTransactionController::class, 'index'])->name('admin.bbps.transactions.index');
+        Route::get('/export', [BbpsTransactionController::class, 'export'])->name('admin.bbps.transactions.export');
+        Route::get('/{id}', [BbpsTransactionController::class, 'show'])->name('admin.bbps.transactions.show');
     });
 
     Route::get('/contact-form-submissions', [ContactFormController::class, 'index'])->name('admin.contact_form_submissions');
