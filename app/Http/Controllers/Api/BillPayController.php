@@ -16,6 +16,8 @@ use App\Models\Transaction;
 use Illuminate\Support\Facades\DB;
 use App\Library\Constant;
 use App\Models\BillPayment;
+use App\Models\BbpsCommission;
+
 use App\Models\WalletHistory;
 use Illuminate\Support\Facades\Log;
 
@@ -495,6 +497,9 @@ public function checkPaymentStatusAndPayBill(Request $request){
     return substr(hash('sha256', uniqid(mt_rand(), true)), 0, 20);
 }
 
+
+
+
 private function processBillPayment($request){
   try {
 
@@ -647,7 +652,7 @@ private function processBillPayment($request){
 private function convertXMLToJson($xmlString){
   
    $xml = simplexml_load_string($xmlString, "SimpleXMLElement", LIBXML_NOCDATA);
-    dd($xml);
+  
   // return $json = json_encode($xml);
 
 } 
