@@ -23,6 +23,26 @@ jobs:
         run: |
           set -e
 
+          # 1. Validate Required Secrets
+          MISSING_SECRETS=""
+          if [ -z "$SERVER_HOST" ]; then MISSING_SECRETS="$MISSING_SECRETS SERVER_HOST"; fi
+          if [ -z "$SERVER_USER" ]; then MISSING_SECRETS="$MISSING_SECRETS SERVER_USER"; fi
+          if [ -z "$SERVER_SSH_KEY" ]; then MISSING_SECRETS="$MISSING_SECRETS SERVER_SSH_KEY"; fi
+
+          if [ -n "$MISSING_SECRETS" ]; then
+            echo "❌ ERROR: The following required GitHub Secrets are MISSING or EMPTY:$MISSING_SECRETS"
+            echo ""
+            echo "👉 How to fix:"
+            echo "1. Go to your GitHub Repository: https://github.com/ASL-Solutions-Tech-Private-Limited/stafo_backend"
+            echo "2. Click 'Settings' (top menu) -> 'Secrets and variables' (left sidebar) -> 'Actions'"
+            echo "3. Under 'Repository secrets', make sure these are added with the exact names:"
+            echo "   - SERVER_HOST      (your VPS IP, e.g. 123.45.67.89)"
+            echo "   - SERVER_USER      (your VPS username, e.g. ubuntu or root)"
+            echo "   - SERVER_SSH_KEY   (your private SSH key)"
+            echo "   (Note: Do NOT add them under 'Environments', add them under 'Repository secrets')"
+            exit 1
+          fi
+
           echo "🔐 Configuring SSH..."
           mkdir -p ~/.ssh
           chmod 700 ~/.ssh
