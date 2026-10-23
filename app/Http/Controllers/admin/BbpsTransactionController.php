@@ -23,7 +23,7 @@ class BbpsTransactionController extends Controller
         $dateFrom = $request->query('date_from', '');
         $dateTo = $request->query('date_to', '');
 
-        // Base Query with Relationships
+        //Base Query with Relationships
         $query = Transaction::with(['employee.company', 'company'])->latest('id');
 
         // Filter: Search Keyword
