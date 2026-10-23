@@ -1,153 +1,102 @@
-name: CI/CD Pipeline - Stafo Backend
+name: Deploy to Ubuntu VPS
 
 on:
   push:
     branches:
       - master
       - main
-  pull_request:
-    branches:
-      - master
-      - main
   workflow_dispatch:
 
 jobs:
-  # =============================================================
-  # 1. CI Job: Code Quality, Lint & Test
-  # =============================================================
-  ci:
-    name: Code Quality & Tests
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Setup PHP 8.2
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: '8.2'
-          extensions: mbstring, xml, ctype, iconv, intl, pdo_mysql, bcmath, curl, zip, redis
-          coverage: none
-
-      - name: Check PHP Syntax (Lint)
-        run: |
-          echo "Checking PHP syntax across project..."
-          find app routes config database -name "*.php" -exec php -l {} \; > /dev/null
-          echo "All PHP files passed syntax check successfully!"
-
-      - name: Validate composer.json
-        run: composer validate --no-check-lock
-
-      - name: Cache Composer Dependencies
-        uses: actions/cache@v4
-        with:
-          path: vendor
-          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-composer-
-
-      - name: Install Composer Dependencies
-        run: |
-          composer install --no-interaction --prefer-dist --optimize-autoloader --no-progress --ignore-platform-reqs
-
-      - name: Prepare Laravel Environment
-        run: |
-          cp .env.example .env
-          php artisan key:generate
-
-      - name: Run Unit Tests
-        run: |
-          php artisan test --testsuite=Unit || true
-
-  # =============================================================
-  # 2. CD Job: Auto-Deploy to Ubuntu VPS via SSH
-  # =============================================================
   deploy:
-    name: Deploy to Ubuntu VPS
-    needs: [ci]
-    if: (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main') && github.event_name != 'pull_request'
+    name: Deploy to Ubuntu VPS via SSH
     runs-on: ubuntu-latest
 
     steps:
-      - name: Execute Remote SSH Commands on Ubuntu VPS
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.SERVER_HOST }}
-          username: ${{ secrets.SERVER_USER }}
-          key: ${{ secrets.SERVER_SSH_KEY }}
-          port: ${{ secrets.SERVER_PORT }}
-          script_stop: true
-          command_timeout: 30m
-          script: |
+      - name: Deploy to Ubuntu VPS
+        env:
+          SERVER_HOST: ${{ secrets.SERVER_HOST }}
+          SERVER_USER: ${{ secrets.SERVER_USER }}
+          SERVER_SSH_KEY: ${{ secrets.SERVER_SSH_KEY }}
+          SERVER_PORT: ${{ secrets.SERVER_PORT }}
+          SERVER_PROJECT_PATH: ${{ secrets.SERVER_PROJECT_PATH }}
+        run: |
+          set -e
+
+          echo "🔐 Configuring SSH..."
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+
+          # Save private SSH key from GitHub Secrets
+          echo "$SERVER_SSH_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+
+          # Set default port 22 if not specified
+          PORT="${SERVER_PORT:-22}"
+
+          # Add remote server to known_hosts to prevent interactive prompt
+          echo "🌐 Adding $SERVER_HOST to known_hosts on port $PORT..."
+          ssh-keyscan -p "$PORT" -H "$SERVER_HOST" >> ~/.ssh/known_hosts 2>/dev/null || true
+          chmod 644 ~/.ssh/known_hosts
+
+          # Target project directory on VPS
+          TARGET_DIR="${SERVER_PROJECT_PATH:-/var/www/php-apps/stafo}"
+
+          echo "🚀 Executing deployment on $SERVER_USER@$SERVER_HOST..."
+          ssh -i ~/.ssh/deploy_key -p "$PORT" -o StrictHostKeyChecking=accept-new "$SERVER_USER@$SERVER_HOST" "
             set -e
+            echo '📁 Navigating to project directory: $TARGET_DIR'
+            cd $TARGET_DIR || exit 1
 
-            # 1. Navigate to Project Directory
-            PROJECT_DIR="${{ secrets.SERVER_PROJECT_PATH }}"
-            if [ -z "$PROJECT_DIR" ]; then
-              PROJECT_DIR="/var/www/php-apps/stafo"
-            fi
-
-            echo "🚀 Navigating to project directory: $PROJECT_DIR"
-            cd "$PROJECT_DIR" || { echo "❌ Directory $PROJECT_DIR does not exist on server!"; exit 1; }
-
-            # 2. Put Application in Maintenance Mode (Zero interruption during deploy)
-            echo "⏸️ Putting application in maintenance mode..."
+            echo '⏸️ Putting application in maintenance mode...'
             php artisan down || true
 
-            # 3. Pull Latest Code from Git
-            echo "📥 Pulling latest changes from Git..."
-            CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
-            echo "Current branch is: $CURRENT_BRANCH"
+            echo '📥 Pulling latest code...'
             git fetch origin
-            git pull origin "$CURRENT_BRANCH"
+            CURRENT_BRANCH=\$(git rev-parse --abbrev-ref HEAD)
+            echo \"Current branch: \$CURRENT_BRANCH\"
+            git pull origin \"\$CURRENT_BRANCH\"
 
-            # 4. Install Composer Production Dependencies
-            echo "📦 Installing composer dependencies..."
+            echo '📦 Installing composer dependencies...'
             composer install --no-interaction --prefer-dist --optimize-autoloader --no-dev --ignore-platform-reqs
 
-            # 5. Fix File Permissions for Storage and Cache
-            echo "🔒 Ensuring correct permissions on storage and bootstrap/cache..."
+            echo '🔒 Ensuring permissions...'
             chmod -R 775 storage bootstrap/cache || true
-            sudo chown -R www-data:www-data storage bootstrap/cache 2>/dev/null || chown -R www-data:www-data storage bootstrap/cache || true
+            sudo chown -R www-data:www-data storage bootstrap/cache 2>/dev/null || chown -R www-data:www-data storage bootstrap/cache 2>/dev/null || true
 
-            # 6. Run Database Migrations
-            echo "🗄️ Running database migrations..."
+            echo '🗄️ Running migrations...'
             php artisan migrate --force
 
-            # 7. Clear & Optimize Laravel Caches
-            echo "⚡ Optimizing Laravel caching..."
+            echo '⚡ Optimizing caches...'
             php artisan optimize:clear
             php artisan config:cache
             php artisan route:cache
             php artisan view:cache
 
-            # 8. Restart Queue Workers & Background Services
-            echo "🔄 Restarting queue workers and background services..."
+            echo '🔄 Restarting queue...'
             php artisan queue:restart || true
 
-            # Restart Supervisor if running
             if command -v supervisorctl > /dev/null 2>&1; then
-              echo "⚙️ Reloading Supervisor workers..."
-              sudo supervisorctl reread 2>/dev/null || supervisorctl reread || true
-              sudo supervisorctl update 2>/dev/null || supervisorctl update || true
-              sudo supervisorctl restart all 2>/dev/null || supervisorctl restart all || true
+              echo '⚙️ Reloading Supervisor...'
+              sudo supervisorctl reread 2>/dev/null || true
+              sudo supervisorctl update 2>/dev/null || true
+              sudo supervisorctl restart all 2>/dev/null || true
             fi
 
-            # Restart PM2 if running for Node chat server
             if command -v pm2 > /dev/null 2>&1; then
-              echo "💬 Reloading PM2 chat server..."
-              pm2 reload all || true
+              echo '💬 Reloading PM2...'
+              pm2 reload all 2>/dev/null || true
             fi
 
-            # Reload PHP-FPM to clear OPcache
             if command -v systemctl > /dev/null 2>&1; then
-              echo "🔄 Reloading PHP-FPM..."
+              echo '🔄 Reloading PHP-FPM...'
               sudo systemctl reload php8.2-fpm 2>/dev/null || sudo systemctl reload php-fpm 2>/dev/null || true
             fi
 
-            # 9. Bring Application Out of Maintenance Mode
-            echo "▶️ Bringing application back online..."
+            echo '▶️ Bringing application back online...'
             php artisan up || true
 
-            echo "✅ Direct deployment completed successfully at $(date)!"
+            echo '🎉 Deployment completed successfully!'
+          "
+
+          echo "✅ Deployment finished successfully!"
