@@ -46,6 +46,7 @@ use App\Http\Controllers\Api\ExpenseformController;
 use App\Http\Controllers\Api\ExpenseController;
 use App\Http\Controllers\Api\LeavetypeController;
 use App\Http\Controllers\Api\BillPayController;
+use App\Http\Controllers\Api\GraceSettingController;
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -385,6 +386,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::match(['get', 'post'], 'bbps/report', [BillPayController::class, 'bbpsTransactionReport']);
       // bbps latest end
 
+    // Company Grace Settings (Only 2 APIs: 1. List, 2. Update)
+    Route::match(['get', 'post'], 'company/grace-settings/list', [GraceSettingController::class, 'index']);
+    Route::match(['post', 'put'], 'company/grace-settings/update', [GraceSettingController::class, 'update']);
+
 });
 
 //location country,state,city
@@ -440,8 +445,8 @@ Route::post('salary/preview', [SalaryController::class, 'generateEmployeeSalaryP
 Route::post('salary/save', [SalaryController::class, 'saveGeneratedEmployeeSalary']);
 
 Route::post('employee/salary-slip/download', [SalaryController::class, 'salaryPDF']);
-Route::get('gracesetting-list', [SalaryController::class, 'gracesettingList']);
-Route::post('gracesetting-update/{id}', [SalaryController::class, 'gracesettingUpdate']);
+Route::match(['get', 'post'], 'gracesetting-list', [GraceSettingController::class, 'index']);
+Route::match(['put', 'post'], 'gracesetting-update/{id}', [GraceSettingController::class, 'update']);
 Route::post('generate-all-salary', [SalaryController::class, 'generateAllSalary']);
 
 // bbps category
