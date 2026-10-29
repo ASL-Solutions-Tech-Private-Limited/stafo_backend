@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - master
+      - nikhil
   workflow_dispatch:
 
 jobs:
