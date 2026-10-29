@@ -43,8 +43,10 @@ const pool = mysql.createPool({
     password: process.env.DB_PASSWORD || '',
     database: process.env.DB_DATABASE || 'stafo_db',
     waitForConnections: true,
-    connectionLimit: 15,
-    queueLimit: 0
+    connectionLimit: 30,
+    queueLimit: 100,
+    enableKeepAlive: true,
+    keepAliveInitialDelay: 10000
 });
 
 // Test DB Connection
@@ -85,7 +87,10 @@ io.on('connection', (socket) => {
 
         const roomState = activeRooms.get(roomName);
         roomState.sockets.add(socket.id);
-        if (role === 'admin') roomState.adminCount++;
+        if (role === 'admin') {
+            roomState.adminCount++;
+            socket.join('admins');
+        }
         if (role === 'company') roomState.companyCount++;
 
         console.log(`[Join Room] Socket ${socket.id} joined ${roomName} as ${role}. Admins: ${roomState.adminCount}, Company: ${roomState.companyCount}`);
@@ -163,8 +168,8 @@ io.on('connection', (socket) => {
             // Broadcast to the whole room
             io.to(roomName).emit('new_message', messageObj);
 
-            // Also broadcast global update for admin chat list if sent by company
-            io.emit('chat_list_activity', {
+            // Only broadcast update for admin chat list to authenticated admins room
+            io.to('admins').emit('chat_list_activity', {
                 company_id: parseInt(company_id),
                 last_message: cleanAttachment ? '📷 [Image attachment]' : cleanMsg,
                 message_by: message_by,
@@ -184,7 +189,7 @@ io.on('connection', (socket) => {
         if (company_id && messageObj) {
             const roomName = `company_${company_id}`;
             io.to(roomName).emit('new_message', messageObj);
-            io.emit('chat_list_activity', {
+            io.to('admins').emit('chat_list_activity', {
                 company_id: parseInt(company_id),
                 last_message: messageObj.attachment ? '📷 [Image attachment]' : messageObj.message,
                 message_by: messageObj.message_by,
@@ -289,7 +294,7 @@ io.on('connection', (socket) => {
                 system_message: systemMsgObj
             });
 
-            io.emit('chat_list_activity', {
+            io.to('admins').emit('chat_list_activity', {
                 company_id: parseInt(company_id),
                 last_message: actionText,
                 message_by: 'system',

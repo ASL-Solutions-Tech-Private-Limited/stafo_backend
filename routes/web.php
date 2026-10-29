@@ -119,9 +119,9 @@ Route::post('failure', [UserPackageController::class, 'failure'])->name('failure
 
 Route::controller(LoginRegisterController::class)->group(function () {
     Route::get('/register', 'register')->name('register');
-    Route::post('/store', 'store')->name('store');
+    Route::post('/store', 'store')->middleware('throttle:5,1')->name('store');
     Route::get('/login', 'login')->name('login');
-    Route::post('/authenticate', 'authenticate')->name('authenticate');
+    Route::post('/authenticate', 'authenticate')->middleware('throttle:login')->name('authenticate');
     Route::get('/logout', 'logout')->name('logout');
 });
 

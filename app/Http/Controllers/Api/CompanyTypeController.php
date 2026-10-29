@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\CompanyType;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Validator;
 
 class CompanyTypeController extends Controller
@@ -28,8 +29,9 @@ class CompanyTypeController extends Controller
     public function index()
     {
         try {
-
-            $companyTypes = CompanyType::all();
+            $companyTypes = Cache::remember('api_company_types_all', 86400 * 7, function () {
+                return CompanyType::all();
+            });
 
             return response()->json([
                 'success' => true,
@@ -93,6 +95,8 @@ class CompanyTypeController extends Controller
                 'company_name' => $request->company_name,
                 'status' => $request->status,
             ]);
+
+            Cache::forget('api_company_types_all');
 
 
             return response()->json([

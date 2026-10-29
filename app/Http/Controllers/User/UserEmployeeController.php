@@ -322,15 +322,16 @@ class UserEmployeeController extends Controller
 
         $employees = $employeesQuery->paginate($perPage)->withQueryString();
 
-        // Calculate quick directory statistics
-        $totalEmployees = Employee::where('company_id', $userId)->count();
-        $activeEmployees = Employee::where('company_id', $userId)->where('status', '1')->count();
-        $verifiedEmployees = Employee::where('company_id', $userId)->where(function ($q) {
-            $q->where('aadhar_verify', 'Yes')
-              ->orWhere('pan_verify', 'Yes')
-              ->orWhere('voter_verify', 'Yes')
-              ->orWhere('dl_verify', 'Yes');
-        })->count();
+        // Calculate quick directory statistics in a single aggregated query
+        $stats = Employee::where('company_id', $userId)->selectRaw("
+            COUNT(*) as total,
+            SUM(CASE WHEN status = '1' THEN 1 ELSE 0 END) as active,
+            SUM(CASE WHEN aadhar_verify = 'Yes' OR pan_verify = 'Yes' OR voter_verify = 'Yes' OR dl_verify = 'Yes' THEN 1 ELSE 0 END) as verified
+        ")->first();
+
+        $totalEmployees = (int)($stats->total ?? 0);
+        $activeEmployees = (int)($stats->active ?? 0);
+        $verifiedEmployees = (int)($stats->verified ?? 0);
         $unverifiedEmployees = max(0, $totalEmployees - $verifiedEmployees);
 
         $assignedShifts = [];
@@ -338,7 +339,8 @@ class UserEmployeeController extends Controller
             $assignedShifts[$employee->id] = $employee->shifts->pluck('id')->toArray();
         }
 
-        $allEmployeesList = Employee::where('company_id', $userId)->orderBy('name', 'asc')->get();
+        // Project only necessary columns for calendar dropdown to prevent memory bloat
+        $allEmployeesList = Employee::where('company_id', $userId)->select('id', 'name', 'emp_id')->orderBy('name', 'asc')->get();
         $calendarEmployeeId = $request->input('calendar_employee_id') ?: ($employees->first()->id ?? ($allEmployeesList->first()->id ?? null));
         $calendarEmployee = $calendarEmployeeId ? Employee::with(['branch', 'department', 'shift', 'shifts'])->find($calendarEmployeeId) : null;
         $currentMonth = date('m');
@@ -572,7 +574,7 @@ class UserEmployeeController extends Controller
             'shift_ids.*' => 'exists:shifts,id',
             'attendance_type' => 'nullable|string|in:geo,selfie,qr code,qr',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
-            'selfie_image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg,webp|max:2048',
+            'selfie_image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
             'resume' => 'nullable|mimes:pdf,doc,docx|max:10240',
         ]);
         $employee = Employee::where('company_id', $userId)->findOrFail($id);

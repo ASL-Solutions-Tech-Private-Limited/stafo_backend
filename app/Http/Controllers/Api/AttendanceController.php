@@ -75,12 +75,13 @@ class AttendanceController extends Controller
             }
             
             
-          if (!empty($employeeId)) {
+            $shifts = collect([]);
+            if (!empty($employeeId)) {
                 $employeeShifts = EmployeeShift::with('shift')
                     ->where('employee_id', $employeeId)
                     ->get();
                 
-                $shifts = $employeeShifts->pluck('shift')->filter();
+                $shifts = $employeeShifts->pluck('shift')->filter()->values();
             }
             
             $holidays = Holiday::where('company_id', $companyId)->get();

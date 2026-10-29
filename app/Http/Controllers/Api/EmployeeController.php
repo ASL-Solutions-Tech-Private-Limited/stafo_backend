@@ -67,8 +67,21 @@ class EmployeeController extends Controller
             $targetDate = $request->input('date');
             $employeeId = $request->input('employee_id');
 
-            $employeesQuery = Employee::with(['branch', 'department', 'attendances', 'shifts'])
-                ->where('company_id', $companyId);
+            $employeesQuery = Employee::with([
+                'branch',
+                'department',
+                'shifts',
+                'attendances' => function ($q) use ($targetDate) {
+                    if ($targetDate) {
+                        $q->where('date', $targetDate);
+                    }
+                },
+                'punches' => function ($q) use ($targetDate) {
+                    if ($targetDate) {
+                        $q->whereDate('created_at', $targetDate);
+                    }
+                }
+            ])->where('company_id', $companyId);
 
             // If employee_id is provided, filter by employee_id
             if ($employeeId) {

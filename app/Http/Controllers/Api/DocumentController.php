@@ -41,8 +41,16 @@ class DocumentController extends Controller
                 $file = $request->file('document');
                 $company_id = Auth::id();
 
+                $allowedExtensions = ['pdf', 'doc', 'docx', 'jpg', 'jpeg', 'png', 'webp'];
                 foreach ($request->file('document') as $key => $file) {
-                    $filename = $request->document_type_id[$key] . '_' . $company_id . '_' . time() . $key . '.' . $file->getClientOriginalExtension();
+                    $extension = strtolower($file->getClientOriginalExtension());
+                    if (!in_array($extension, $allowedExtensions)) {
+                        return response()->json([
+                            'status' => false,
+                            'message' => 'Invalid file type. Allowed formats: PDF, DOC, DOCX, JPG, PNG, WEBP.',
+                        ], 200);
+                    }
+                    $filename = $request->document_type_id[$key] . '_' . $company_id . '_' . time() . $key . '.' . $extension;
                     $file->move(public_path('uploads/documents'), $filename);
 
                     $companyDocument = CompanyDocument::create([
@@ -132,7 +140,15 @@ class DocumentController extends Controller
             // If a new document is provided, handle file upload
             if ($request->hasFile('document')) {
                 $file = $request->file('document');
-                $filename = time() . '.' . $file->getClientOriginalExtension();
+                $allowedExtensions = ['pdf', 'doc', 'docx', 'jpg', 'jpeg', 'png', 'webp'];
+                $extension = strtolower($file->getClientOriginalExtension());
+                if (!in_array($extension, $allowedExtensions)) {
+                    return response()->json([
+                        'status' => false,
+                        'message' => 'Invalid file type. Allowed formats: PDF, DOC, DOCX, JPG, PNG, WEBP.',
+                    ], 200);
+                }
+                $filename = time() . '.' . $extension;
 
                 // Delete old document file
                 if (file_exists(public_path('uploads/documents/' . $companyDocument->document))) {
@@ -189,6 +205,12 @@ class DocumentController extends Controller
     public function getDocumentsByCompany($company_id)
     {
         try {
+            $authenticatedId = Auth::id();
+            // Tenant isolation: if authenticated as a company, only allow accessing own documents
+            if ($authenticatedId && $authenticatedId != $company_id) {
+                $company_id = $authenticatedId;
+            }
+
             $company = CompanyDetail::find($company_id);
 
             if (!$company) {

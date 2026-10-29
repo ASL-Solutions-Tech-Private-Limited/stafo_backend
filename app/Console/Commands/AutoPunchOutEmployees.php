@@ -37,15 +37,23 @@ class AutoPunchOutEmployees extends Command
 
             $this->info("Running auto punch-out (setting/keeping null) for date: {$targetDate}");
 
-            $openPunches = EmployeePunch::whereDate('punch_in', $targetDate)
+            $openPunches = EmployeePunch::with(['employee.company', 'employee.branch', 'employee.department', 'employee.shift'])
+                ->whereDate('punch_in', $targetDate)
                 ->whereNull('punch_out')
                 ->get();
 
             $count = 0;
             $processedEmployeeIds = [];
 
+            // Pre-fetch attendances for open punch employees in 1 query
+            $punchEmployeeIds = $openPunches->pluck('employee_id')->filter()->unique();
+            $attendancesByEmpId = Attendance::whereDate('date', $targetDate)
+                ->whereIn('employee_id', $punchEmployeeIds)
+                ->get()
+                ->keyBy('employee_id');
+
             foreach ($openPunches as $punch) {
-                $employee = Employee::with(['company', 'branch', 'department', 'shift'])->find($punch->employee_id);
+                $employee = $punch->employee;
                 if (!$employee) {
                     continue;
                 }
@@ -56,10 +64,7 @@ class AutoPunchOutEmployees extends Command
                 ]);
 
                 // Update Attendance record: ensure out_time remains null
-                $attendance = Attendance::where('employee_id', $employee->id)
-                    ->whereDate('date', $targetDate)
-                    ->first();
-
+                $attendance = $attendancesByEmpId->get($employee->id);
                 if ($attendance) {
                     $attendance->update([
                         'out_time' => null,
@@ -91,7 +96,8 @@ class AutoPunchOutEmployees extends Command
             }
 
             // Also ensure any Attendance records for the day with in_time and missing out_time have out_time as null
-            $openAttendances = Attendance::whereDate('date', $targetDate)
+            $openAttendances = Attendance::with(['employee.company', 'employee.branch', 'employee.department', 'employee.shift'])
+                ->whereDate('date', $targetDate)
                 ->whereNotNull('in_time')
                 ->whereNull('out_time')
                 ->get();
@@ -100,7 +106,7 @@ class AutoPunchOutEmployees extends Command
                 $att->update(['out_time' => null]);
 
                 if (!in_array($att->employee_id, $processedEmployeeIds)) {
-                    $emp = Employee::with(['company', 'branch', 'department', 'shift'])->find($att->employee_id);
+                    $emp = $att->employee;
                     if ($emp) {
                         $inTimeStr = $att->in_time ? Carbon::parse($att->in_time)->format('h:i A') : null;
                         Helper::sendMissedPunchOutEmailNotification($emp, $targetDate, $inTimeStr);

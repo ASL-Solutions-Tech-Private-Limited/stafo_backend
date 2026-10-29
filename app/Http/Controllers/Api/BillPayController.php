@@ -20,6 +20,7 @@ use App\Models\BbpsCommission;
 
 use App\Models\WalletHistory;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Cache;
 use App\Models\CompanyDetail;
 use App\Models\Employee;
 
@@ -38,7 +39,9 @@ class BillPayController extends Controller
    public function getBillerCategory(Request $request){
 
     try {
-       $serviceCategory = BbpsServiceCategory::select(['name','category_icon','name as category_code'])->where(['status'=>1])->orderBy('orderBy', 'asc')->get();
+       $serviceCategory = Cache::remember('bbps_categories_list', 86400, function () {
+           return BbpsServiceCategory::select(['name','category_icon','name as category_code'])->where(['status'=>1])->orderBy('orderBy', 'asc')->get();
+       });
        return $this->success($serviceCategory, "Biller Category List");   
     } catch ( Exception $e ) { 
     
@@ -66,7 +69,9 @@ class BillPayController extends Controller
           }
 
         $billerCategory = CommonFunction::sanitizeInput($billerCategory);
-        $serviceCategory = DcCcBbpsSubCategory::select(['name','category','code'])->where(['status'=>1, 'category'=>$billerCategory])->orderBy('order_by', 'asc')->get();
+        $serviceCategory = Cache::remember("bbps_subcategories_" . md5($billerCategory), 86400, function () use ($billerCategory) {
+            return DcCcBbpsSubCategory::select(['name','category','code'])->where(['status'=>1, 'category'=>$billerCategory])->orderBy('order_by', 'asc')->get();
+        });
        return $this->success($serviceCategory, "Biller Sub Category List");   
     } catch ( Exception $e ) { 
     

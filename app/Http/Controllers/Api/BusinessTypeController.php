@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\BusinessType;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Validator;
 
 class BusinessTypeController extends Controller
@@ -28,8 +29,10 @@ class BusinessTypeController extends Controller
     public function index()
     {
         try {
-            // Fetch all business types from the database
-            $businessTypes = BusinessType::all();
+            // Fetch all business types with caching (7 days TTL)
+            $businessTypes = Cache::remember('api_business_types_all', 86400 * 7, function () {
+                return BusinessType::all();
+            });
 
             // Return a success response with the business types
             return response()->json([
@@ -93,6 +96,8 @@ class BusinessTypeController extends Controller
                 'business_name' => $request->business_name,
                 'status' => $request->status,
             ]);
+
+            Cache::forget('api_business_types_all');
 
             // Return success response with created business type
             return response()->json([

@@ -7,6 +7,7 @@ use App\Models\Country;
 use App\Models\State;
 use App\Models\City;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class LocationController extends Controller
@@ -30,7 +31,9 @@ class LocationController extends Controller
     public function getCountries()
     {
         try {
-            $countries = Country::all();
+            $countries = Cache::remember('api_countries_all', 86400 * 7, function () {
+                return Country::all();
+            });
 
             if ($countries->isEmpty()) {
                 return response()->json([
@@ -79,15 +82,11 @@ class LocationController extends Controller
     public function getStates($countryId)
     {
         try {
-            $country = Country::findOrFail($countryId);
-            $states = State::where('country_id', $countryId)->get();
-
-            // if ($states->isEmpty()) {
-            //     return response()->json([
-            //         'success' => false,
-            //         'message' => 'No states found for this country.',
-            //     ], 404);
-            // }
+            $states = Cache::remember("api_states_country_{$countryId}", 86400 * 7, function () use ($countryId) {
+                // Ensure country exists
+                Country::findOrFail($countryId);
+                return State::where('country_id', $countryId)->get();
+            });
 
             return response()->json([
                 'success' => true,
@@ -135,15 +134,11 @@ class LocationController extends Controller
     public function getCities($stateId)
     {
         try {
-            $state = State::findOrFail($stateId);
-            $cities = City::where('state_id', $stateId)->get();
-
-            // if ($cities->isEmpty()) {
-            //     return response()->json([
-            //         'success' => false,
-            //         'message' => 'No cities found for this state.',
-            //     ], 404);
-            // }
+            $cities = Cache::remember("api_cities_state_{$stateId}", 86400 * 7, function () use ($stateId) {
+                // Ensure state exists
+                State::findOrFail($stateId);
+                return City::where('state_id', $stateId)->get();
+            });
 
             return response()->json([
                 'success' => true,

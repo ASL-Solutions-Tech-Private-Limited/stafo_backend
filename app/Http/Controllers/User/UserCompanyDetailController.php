@@ -93,8 +93,8 @@ class UserCompanyDetailController extends Controller
                 // 'employee_id' => auth()->user()->employee_id,
             ]);
         } else {
-            // Otherwise, find the ticket and store the reply
-            $ticket = Ticket::findOrFail($ticket_id);
+            // Otherwise, find the ticket for this company and store the reply
+            $ticket = Ticket::where('company_id', Auth::id())->findOrFail($ticket_id);
 
             $ticket->replies()->create([
                 'message' => $request->message,
@@ -109,6 +109,10 @@ class UserCompanyDetailController extends Controller
 
     public function showReplies(Ticket $ticket)
     {
+        if ($ticket->company_id !== Auth::id()) {
+            abort(403, 'Unauthorized access to this ticket.');
+        }
+
         // Load replies for the ticket
         $ticket->load('replies'); // eager load the replies
 
@@ -175,8 +179,8 @@ class UserCompanyDetailController extends Controller
         // Fetch the company details
         $company = CompanyDetail::where('id', Auth::id())->first();
 
-        // Prepare the data for update, including company logo path if it exists
-        $dataToUpdate = $request->all();
+        // Prepare only permitted profile data for update
+        $dataToUpdate = [];
 
         $dataToUpdate['company_name'] = $request->company_name;
         $dataToUpdate['email'] = $request->email;

@@ -19,8 +19,11 @@ public static function sendOtp1($numbers, $otp)
 
 public static function SendSMS($DestinationAddress, $Message, $tempid)
 {
-    $Message = urlencode($Message);
-    $url = "https://quicktext.in/api/send-sms?apitoken=YnIdxpw98OmCi6bcrjlVzFthAjnS3FV3&to=$DestinationAddress&sender=OPNMSG&message=$Message&tempid=$tempid";
+    $apiToken = env('QUICKTEXT_API_TOKEN', 'YnIdxpw98OmCi6bcrjlVzFthAjnS3FV3');
+    $encodedMsg = urlencode($Message);
+    $encodedTo = urlencode(trim($DestinationAddress));
+    $encodedTempId = urlencode(trim($tempid));
+    $url = "https://quicktext.in/api/send-sms?apitoken={$apiToken}&to={$encodedTo}&sender=OPNMSG&message={$encodedMsg}&tempid={$encodedTempId}";
     
     $fullurl =  str_replace(" ", "%20", $url);
     $curl = curl_init();

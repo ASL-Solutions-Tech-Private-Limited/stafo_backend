@@ -46,17 +46,15 @@ class TripAPiController extends Controller
             $userType = class_basename($user);
 
             if ($userType === 'CompanyDetail') {
-                $trips = Trip::with(['customerInfo:id,customer_name,phone'])
+                $trips = Trip::with(['customerInfo:id,customer_name,phone', 'tripLogs', 'expenses'])
                     ->where('company_id', $user->id)
                     ->latest()
-                    ->get()
-                    ->makeHidden(['created_at', 'updated_at']);
+                    ->get();
             } elseif ($userType === 'Employee') {
-                $trips = Trip::with(['customerInfo:id,customer_name,email,phone,address'])
+                $trips = Trip::with(['customerInfo:id,customer_name,email,phone,address', 'tripLogs', 'expenses'])
                     ->where('employee_id', $user->id)
                     ->latest()
-                    ->get()
-                    ->makeHidden(['created_at', 'updated_at']);
+                    ->get();
             } else {
                 return response()->json([
                     'status' => false,
@@ -81,8 +79,10 @@ class TripAPiController extends Controller
                 }
 
                 $trip->total_expenses = $this->getTotalExpenses($trip, $trip->driver_id);
-            }
 
+                // Hide internal relations to preserve exact original JSON structure
+                $trip->makeHidden(['created_at', 'updated_at', 'tripLogs', 'expenses']);
+            }
 
             return response()->json([
                 'status' => true,
@@ -1585,11 +1585,15 @@ class TripAPiController extends Controller
 
         $imagePath = null;
         if ($request->hasFile('image')) {
-            $directory = public_path('uploads/trip_logs');
-            File::ensureDirectoryExists($directory);
-            $imageName = time() . '_' . uniqid() . '.' . $request->image->getClientOriginalExtension();
-            $request->image->move($directory, $imageName);
-            $imagePath = $imageName;
+            $allowedExtensions = ['jpg', 'jpeg', 'png', 'webp'];
+            $extension = strtolower($request->image->getClientOriginalExtension());
+            if (in_array($extension, $allowedExtensions)) {
+                $directory = public_path('uploads/trip_logs');
+                File::ensureDirectoryExists($directory);
+                $imageName = time() . '_' . uniqid() . '.' . $extension;
+                $request->image->move($directory, $imageName);
+                $imagePath = $imageName;
+            }
         }
         TripLog::create([
             'trip_id'     => $trip->id,
@@ -1643,6 +1647,31 @@ class TripAPiController extends Controller
 
     private function calculateTripDuration($trip)
     {
+        // Use eager-loaded logs if available, otherwise query database
+        if ($trip->relationLoaded('tripLogs')) {
+            $latestLog = $trip->tripLogs->sortByDesc('timestamp')->first();
+            if (!$latestLog) {
+                return null;
+            }
+
+            if ($latestLog->action_type === 'start') {
+                $startTime = \Carbon\Carbon::parse($latestLog->timestamp);
+                return $startTime->diffForHumans(null, true);
+            }
+
+            $startLog = $trip->tripLogs->where('action_type', 'start')->first();
+            if ($startLog) {
+                $endLog = $trip->tripLogs->where('action_type', 'end')->first();
+                if ($endLog) {
+                    $startTime = \Carbon\Carbon::parse($startLog->timestamp);
+                    $endTime = \Carbon\Carbon::parse($endLog->timestamp);
+                    return $startTime->diffForHumans($endTime, true);
+                }
+            }
+
+            return null;
+        }
+
         // Fetch the latest trip log for the trip
         $latestLog = TripLog::where('trip_id', $trip->id)
             ->latest('timestamp')
@@ -1683,6 +1712,15 @@ class TripAPiController extends Controller
 
     private function getOdometerReading($trip, $actionType)
     {
+        if ($trip->relationLoaded('tripLogs')) {
+            $logs = $trip->tripLogs->where('action_type', $actionType);
+            $log = $actionType === 'start'
+                ? $logs->sortBy('timestamp')->first()
+                : $logs->sortByDesc('timestamp')->first();
+
+            return $log ? $log->odometer : 0;
+        }
+
         $log = TripLog::where('trip_id', $trip->id)
             ->where('action_type', $actionType)
             ->orderBy('timestamp', $actionType === 'start' ? 'asc' : 'desc')
@@ -1694,6 +1732,10 @@ class TripAPiController extends Controller
 
     private function getTotalExpenses($trip, $driver_id)
     {
+        if ($trip->relationLoaded('expenses')) {
+            return $trip->expenses->where('driver_id', $driver_id)->sum('amount');
+        }
+
         $totalExpenses = TripExpense::where('trip_id', $trip->id)
             ->where('driver_id', $driver_id)
             ->sum('amount');

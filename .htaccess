@@ -1,13 +1,11 @@
-# === Secure Hidden Files (dotfiles) ===
-#Disable index view
-options -Indexes
+# === Secure Hidden Files (dotfiles) & Sensitive Configs ===
+Options -Indexes
 
-#hide a Specifuc File
-
-<Files .env>
-order allow,deny
-Deny from all
-</Files>
+# Block sensitive configuration, git, and environment files
+<FilesMatch "(^\..*|composer\.(json|lock)|package(-lock)?\.json|\.env.*|phpunit\.xml|docker-compose\.ya?ml|error_log)$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
 
 # === Laravel Default Rewrite Rules ===
 <IfModule mod_rewrite.c>
@@ -37,7 +35,7 @@ Deny from all
 # To make changes to this file, use the cPanel MultiPHP INI Editor (Home >> Software >> MultiPHP INI Editor)
 # For more information, read our documentation (https://go.cpanel.net/EA4ModifyINI)
 <IfModule php8_module>
-   php_flag display_errors On
+   php_flag display_errors Off
    php_value max_execution_time 30
    php_value max_input_time 60
    php_value max_input_vars 1000
@@ -49,7 +47,7 @@ Deny from all
    php_flag zlib.output_compression Off
 </IfModule>
 <IfModule lsapi_module>
-   php_flag display_errors On
+   php_flag display_errors Off
    php_value max_execution_time 30
    php_value max_input_time 60
    php_value max_input_vars 1000

@@ -99,7 +99,7 @@ class CommonFunction {
         $curl = curl_init();
         curl_setopt_array($curl, array(
             CURLOPT_URL => "https://payzones.net/api/providerCall/bbps/biilerDetails.php",
-            CURLOPT_SSL_VERIFYPEER => false,
+            CURLOPT_SSL_VERIFYPEER => env('CURL_SSL_VERIFY', true),
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_ENCODING => '',
             CURLOPT_MAXREDIRS => 10,
@@ -261,7 +261,7 @@ class CommonFunction {
         $curl = curl_init();
         curl_setopt_array($curl, array(
             CURLOPT_URL => "https://payzones.net/api/providerCall/bbps/fetchBill.php",
-            CURLOPT_SSL_VERIFYPEER => false,
+            CURLOPT_SSL_VERIFYPEER => env('CURL_SSL_VERIFY', true),
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_ENCODING => '',
             CURLOPT_MAXREDIRS => 10,
@@ -302,8 +302,8 @@ class CommonFunction {
         curl_setopt($ch, CURLOPT_POST, true);
         curl_setopt($ch, CURLOPT_POSTFIELDS, $parameters);
         curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, env('CURL_SSL_VERIFY', true));
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, env('CURL_SSL_VERIFY', true) ? 2 : false);
         $result = curl_exec($ch);
         //echo '<br><br>Encrypted Response: ' . $result . "<br><br>";
         $response =  $this->decryptt($result, $key);
@@ -335,8 +335,8 @@ class CommonFunction {
         curl_setopt($ch, CURLOPT_POST, true);
         curl_setopt($ch, CURLOPT_POSTFIELDS, $parameters);
         curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, env('CURL_SSL_VERIFY', true));
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, env('CURL_SSL_VERIFY', true) ? 2 : false);
         $result = curl_exec($ch);
         $response = $this->decryptt($result, $key);
         return $response;
@@ -364,8 +364,8 @@ class CommonFunction {
         curl_setopt($ch, CURLOPT_POST, true);
         curl_setopt($ch, CURLOPT_POSTFIELDS, $parameters);
         curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, env('CURL_SSL_VERIFY', true));
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, env('CURL_SSL_VERIFY', true) ? 2 : false);
         $result = curl_exec($ch);
         $response =  $this->decryptt($result, $key);
         return $response;
@@ -392,8 +392,8 @@ class CommonFunction {
         curl_setopt($ch, CURLOPT_POST, true);
         curl_setopt($ch, CURLOPT_POSTFIELDS, $parameters);
         curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, env('CURL_SSL_VERIFY', true));
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, env('CURL_SSL_VERIFY', true) ? 2 : false);
         $result = curl_exec($ch);
         //echo '<br><br>Encrypted Response: ' . $result . "<br><br>";
         $response =  $this->decryptt($result, $key);
@@ -433,11 +433,12 @@ class CommonFunction {
             $headers_encoded = $this->base64url_encode($headers);
 
             //build the payload
-            $payload = json_encode(['timestamp' => time(), 'partnerId' => Constant::PARTNERID, 'reqid' => time() . rand(111,999)]);
+            $partnerId = env('PAYSPRINT_PARTNER_ID', Constant::PARTNERID);
+            $payload = json_encode(['timestamp' => time(), 'partnerId' => $partnerId, 'reqid' => time() . rand(111,999)]);
             $payload_encoded = $this->base64url_encode($payload);
 
             //build the signature
-            $key = Constant::JWTKEY;
+            $key = env('PAYSPRINT_JWT_KEY', Constant::JWTKEY);
             $signature = hash_hmac('sha256', $headers_encoded . "." . $payload_encoded, $key, true);
             $signature_encoded = $this->base64url_encode($signature);
 
@@ -456,11 +457,12 @@ class CommonFunction {
             $headers_encoded = $this->base64url_encode($headers);
 
             //build the payload
-            $payload = json_encode(['timestamp' => time(), 'partnerId' => Constant::PARTNERID, 'reqid' => time() . rand(0,9)]);
+            $partnerId = env('PAYSPRINT_PARTNER_ID', Constant::PARTNERID);
+            $payload = json_encode(['timestamp' => time(), 'partnerId' => $partnerId, 'reqid' => time() . rand(0,9)]);
             $payload_encoded = $this->base64url_encode($payload);
 
             //build the signature
-             $key = Constant::JWTKEY;
+            $key = env('PAYSPRINT_JWT_KEY', Constant::JWTKEY);
             $signature = hash_hmac('sha256', $headers_encoded . "." . $payload_encoded, $key, true);
             $signature_encoded = $this->base64url_encode($signature);
 
@@ -494,8 +496,8 @@ class CommonFunction {
 
             curl_setopt($curl, CURLOPT_URL, $url);
             curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, false);
-            curl_setopt($curl, CURLOPT_SSL_VERIFYHOST, false);
+            curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, env('CURL_SSL_VERIFY', true));
+            curl_setopt($curl, CURLOPT_SSL_VERIFYHOST, env('CURL_SSL_VERIFY', true) ? 2 : false);
 
             if (!empty($headers)) {
                 curl_setopt($curl, CURLOPT_HTTPHEADER, $headers);

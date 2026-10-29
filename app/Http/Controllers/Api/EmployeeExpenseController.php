@@ -46,14 +46,18 @@ class EmployeeExpenseController extends Controller
 
         if ($request->hasFile('bill_receipt')) 
         {
-        $file     = $request->file('bill_receipt');
-        $fileName = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
-        $folder   = public_path('uploads/employee_expenses');
-        if (!file_exists($folder)) {
-            mkdir($folder, 0777, true);
+            $file = $request->file('bill_receipt');
+            $allowedExtensions = ['pdf', 'doc', 'docx', 'jpg', 'jpeg', 'png', 'webp'];
+            $extension = strtolower($file->getClientOriginalExtension());
+            if (in_array($extension, $allowedExtensions)) {
+                $fileName = time() . '_' . uniqid() . '.' . $extension;
+                $folder = public_path('uploads/employee_expenses');
+                if (!file_exists($folder)) {
+                    mkdir($folder, 0755, true);
+                }
+                $file->move($folder, $fileName);
+            }
         }
-        $file->move($folder, $fileName);
-       }
 
      
         //   dd($request->note);
@@ -116,21 +120,25 @@ class EmployeeExpenseController extends Controller
             // File upload logic
             if ($request->hasFile('bill_receipt')) {
                 $file = $request->file('bill_receipt');
-                $fileName = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
-                $folder = public_path('uploads/employee_expenses');
-                if (!file_exists($folder)) {
-                    mkdir($folder, 0777, true);
-                }
-
-                if ($expense->bill_receipt) {
-                    $oldFilePath = public_path('uploads/employee_expenses/' . $expense->bill_receipt);
-                    if (file_exists($oldFilePath)) {
-                        unlink($oldFilePath);
+                $allowedExtensions = ['pdf', 'doc', 'docx', 'jpg', 'jpeg', 'png', 'webp'];
+                $extension = strtolower($file->getClientOriginalExtension());
+                if (in_array($extension, $allowedExtensions)) {
+                    $fileName = time() . '_' . uniqid() . '.' . $extension;
+                    $folder = public_path('uploads/employee_expenses');
+                    if (!file_exists($folder)) {
+                        mkdir($folder, 0755, true);
                     }
-                }
 
-                $file->move($folder, $fileName);
-                $expense->bill_receipt = $fileName;
+                    if ($expense->bill_receipt) {
+                        $oldFilePath = public_path('uploads/employee_expenses/' . $expense->bill_receipt);
+                        if (file_exists($oldFilePath)) {
+                            @unlink($oldFilePath);
+                        }
+                    }
+
+                    $file->move($folder, $fileName);
+                    $expense->bill_receipt = $fileName;
+                }
             }
 
             // Optional fields update

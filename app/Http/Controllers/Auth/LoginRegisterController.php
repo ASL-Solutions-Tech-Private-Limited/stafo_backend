@@ -219,6 +219,10 @@ class LoginRegisterController extends Controller
                 ->first();
 
             if ($company) {
+                $company->otp = null;
+                $company->save();
+                Cache::forget('otp_' . $input);
+
                 Auth::guard('web')->login($company);
                 $request->session()->regenerate();
 
@@ -240,6 +244,10 @@ class LoginRegisterController extends Controller
                 ->first();
 
             if ($employee) {
+                $employee->otp = null;
+                $employee->save();
+                Cache::forget('otp_' . $input);
+
                 Auth::guard('employee')->login($employee);
                 $request->session()->regenerate();
 
@@ -267,6 +275,10 @@ class LoginRegisterController extends Controller
                 ->first();
 
                 if ($employee) {
+                    $employee->otp = null;
+                    $employee->save();
+                    Cache::forget('otp_' . $input);
+
                     Auth::guard('employee')->login($employee);
                     $request->session()->regenerate();
 

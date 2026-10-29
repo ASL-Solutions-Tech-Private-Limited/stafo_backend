@@ -18,6 +18,7 @@ class ChatController extends Controller
         $is_active_plan = true;
         $message = '';
 
+
         
         if (empty($package_id)) {
             $is_active_plan = false;
@@ -109,7 +110,7 @@ class ChatController extends Controller
     public function uploadAttachment(Request $request)
     {
         $request->validate([
-            'file' => 'required|file|mimes:jpeg,png,jpg,gif,webp,svg,pdf|max:10240',
+            'file' => 'required|file|mimes:jpeg,png,jpg,gif,webp,pdf|max:10240',
             'message' => 'nullable|string'
         ]);
 

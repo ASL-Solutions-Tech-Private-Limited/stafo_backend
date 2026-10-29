@@ -92,7 +92,9 @@ class companyDashboardController extends Controller
      * )
      */
     public function appbanner(){
-       $appbanner =  AppBanner::where('type', '1')->where('status', '1')->get();
+       $appbanner = \Illuminate\Support\Facades\Cache::remember('api_app_banners_active', 86400, function () {
+           return AppBanner::where('type', '1')->where('status', '1')->get();
+       });
        $data = [];
        if($appbanner){
         $data['banner'] = $appbanner;

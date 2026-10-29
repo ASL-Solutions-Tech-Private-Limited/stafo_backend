@@ -19,6 +19,12 @@ use Illuminate\Support\Collection;
 class PayrollCalculatorService
 {
     /**
+     * In-memory cache for company-wide settings to eliminate N+1 queries during bulk payroll generation.
+     */
+    protected array $graceSettingsCache = [];
+    protected array $companyHolidaysCache = [];
+
+    /**
      * Compute comprehensive, market-standard payroll for an employee (Keka / Zoho Payroll parity).
      *
      * @param Employee $employee
@@ -112,7 +118,10 @@ class PayrollCalculatorService
             }
         }
 
-        $graceSettings = GraceSetting::where('company_id', $companyId)->get();
+        if (!isset($this->graceSettingsCache[$companyId])) {
+            $this->graceSettingsCache[$companyId] = GraceSetting::where('company_id', $companyId)->get();
+        }
+        $graceSettings = $this->graceSettingsCache[$companyId];
         $graceTimeMinutes = (isset($graceSettings[0]) && is_numeric($graceSettings[0]->value)) ? (int)$graceSettings[0]->value : 15;
         $graceAllowedDays = (isset($graceSettings[1]) && is_numeric($graceSettings[1]->value) && (int)$graceSettings[1]->value > 0) ? (int)$graceSettings[1]->value : 3;
         $graceCutoffEntry = Carbon::parse($shiftStartTime)->addMinutes($graceTimeMinutes)->format('H:i:s');
@@ -869,6 +878,11 @@ class PayrollCalculatorService
      */
     public function getCompanyHolidayDates(int $companyId, int $year, int $month): Collection
     {
+        $cacheKey = "{$companyId}_{$year}_{$month}";
+        if (isset($this->companyHolidaysCache[$cacheKey])) {
+            return $this->companyHolidaysCache[$cacheKey];
+        }
+
         $startOfMonth = Carbon::create($year, $month, 1)->startOfMonth();
         $endOfMonth = Carbon::create($year, $month, 1)->endOfMonth();
 
@@ -886,7 +900,9 @@ class PayrollCalculatorService
                 $holidayDates->push($date->format('Y-m-d'));
             }
         }
-        return $holidayDates->unique();
+        $uniqueHolidays = $holidayDates->unique();
+        $this->companyHolidaysCache[$cacheKey] = $uniqueHolidays;
+        return $uniqueHolidays;
     }
 
     /**

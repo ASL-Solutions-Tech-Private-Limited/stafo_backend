@@ -223,15 +223,19 @@ public function index(Request $request)
             $billPath = null;
             if ($request->hasFile('bill_receipt')) {
                 $file = $request->file('bill_receipt');
-                $fileName = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
-                $destinationPath = public_path('uploads/bill_receipt');
+                $allowedExtensions = ['pdf', 'doc', 'docx', 'jpg', 'jpeg', 'png', 'webp'];
+                $extension = strtolower($file->getClientOriginalExtension());
+                if (in_array($extension, $allowedExtensions)) {
+                    $fileName = time() . '_' . uniqid() . '.' . $extension;
+                    $destinationPath = public_path('uploads/bill_receipt');
 
-                if (!file_exists($destinationPath)) {
-                    mkdir($destinationPath, 0755, true);
+                    if (!file_exists($destinationPath)) {
+                        mkdir($destinationPath, 0755, true);
+                    }
+
+                    $file->move($destinationPath, $fileName);
+                    $billPath = $fileName;
                 }
-
-                $file->move($destinationPath, $fileName);
-                $billPath = $fileName;
             }
 
             // Create the TripExpense
@@ -375,15 +379,19 @@ public function update(Request $request)
     // Handle bill receipt upload
     if ($request->hasFile('bill_receipt')) {
         $file = $request->file('bill_receipt');
-        $fileName = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
-        $destinationPath = public_path('uploads/bill_receipt');
+        $allowedExtensions = ['pdf', 'doc', 'docx', 'jpg', 'jpeg', 'png', 'webp'];
+        $extension = strtolower($file->getClientOriginalExtension());
+        if (in_array($extension, $allowedExtensions)) {
+            $fileName = time() . '_' . uniqid() . '.' . $extension;
+            $destinationPath = public_path('uploads/bill_receipt');
 
-        if (!file_exists($destinationPath)) {
-            mkdir($destinationPath, 0755, true);
+            if (!file_exists($destinationPath)) {
+                mkdir($destinationPath, 0755, true);
+            }
+
+            $file->move($destinationPath, $fileName);
+            $expense->bill_receipt = $fileName;
         }
-
-        $file->move($destinationPath, $fileName);
-        $expense->bill_receipt = $fileName;
     }
 
     // Update other fields

@@ -129,9 +129,18 @@ class EmployeeDocumentController extends Controller
                     ], 200);
                 }
 
-                // Handle the file upload
                 $file = $doc['file'];
-                $filename = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+                $allowedExtensions = ['pdf', 'doc', 'docx', 'jpg', 'jpeg', 'png', 'webp'];
+                $extension = strtolower($file->getClientOriginalExtension());
+                if (!in_array($extension, $allowedExtensions)) {
+                    return response()->json([
+                        'status' => false,
+                        'message' => 'Invalid file type. Allowed formats: PDF, DOC, DOCX, JPG, PNG, WEBP.',
+                    ], 200);
+                }
+
+                // Handle the file upload with sanitized extension
+                $filename = time() . '_' . uniqid() . '.' . $extension;
                 $file->move(public_path('uploads/employee_documents'), $filename);
 
                 // Create the document record in the database

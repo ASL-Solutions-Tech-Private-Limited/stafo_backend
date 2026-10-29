@@ -32,7 +32,9 @@ class PackageController extends Controller
     {
         try {
             
-            $packages = Package::with('features')->where('status','active')->get();
+            $packages = \Illuminate\Support\Facades\Cache::remember('api_packages_active', 86400, function () {
+                return Package::with('features')->where('status','active')->get();
+            });
 
             return response()->json([
                 'status' => true,
@@ -111,8 +113,8 @@ class PackageController extends Controller
 
         $company = CompanyDetail::find($request->company_id);
         $package = Package::find($request->package_id); // Assuming you have the package ID from the request
-        $merchantKey = '1AJhSD'; // Replace with your merchant key
-        $salt = 'tBjCq35cgf3f12ya0usuhEtH9IJ7pSyq'; // Replace with your salt key
+        $merchantKey = env('PAYU_MERCHANT_KEY', '1AJhSD');
+        $salt = env('PAYU_SALT', 'tBjCq35cgf3f12ya0usuhEtH9IJ7pSyq');
 
         // Collect user inputs from the form
         $firstname = $company->company_name;  // Example first name

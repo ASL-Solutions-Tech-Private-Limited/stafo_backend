@@ -61,12 +61,12 @@ use App\Http\Controllers\Api\GraceSettingController;
 // Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 //     return $request->user();
 // });
-Route::post('login', 'App\Http\Controllers\Api\ApiLoginController@login')->name('api.login');
+Route::post('login', 'App\Http\Controllers\Api\ApiLoginController@login')->middleware('throttle:login')->name('api.login');
 
 Route::post('register', 'App\Http\Controllers\Api\ApiLoginController@register')->name('api.register');
 
-Route::post('send-otp', 'App\Http\Controllers\Api\ApiLoginController@sendOtp')->name('sendOtp');
-Route::post('verify-otp', 'App\Http\Controllers\Api\ApiLoginController@loginWithOtp')->name('loginWithOtp');
+Route::post('send-otp', 'App\Http\Controllers\Api\ApiLoginController@sendOtp')->middleware('throttle:otp')->name('sendOtp');
+Route::post('verify-otp', 'App\Http\Controllers\Api\ApiLoginController@loginWithOtp')->middleware('throttle:login')->name('loginWithOtp');
 
 Route::get('punchReminder', 'App\Http\Controllers\Api\EmployeeController@punchReminder')->name('punchReminder');
 Route::match(['get', 'post'], 'autoPunchOut', 'App\Http\Controllers\Api\EmployeeController@autoPunchOut')->name('autoPunchOut');
@@ -390,105 +390,83 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::match(['get', 'post'], 'company/grace-settings/list', [GraceSettingController::class, 'index']);
     Route::match(['post', 'put'], 'company/grace-settings/update', [GraceSettingController::class, 'update']);
 
+    // Protected Company/Business Types Store
+    Route::post('company-types', [CompanyTypeController::class, 'store']);
+    Route::post('business-types', [BusinessTypeController::class, 'store']);
+    Route::post('/document-verify', [CompanyController::class, 'documentVerify']);
+
+    // download report for employee
+    Route::post('report/export-employee', [EmployeeReportController::class, 'exportEmployee'])->name('api.report.exportEmployee');
+    Route::get('employee/reports/list', [EmployeeReportController::class, 'getAllEmployeeReports']);
+
+    // download report for attendance
+    Route::post('report/export-attendace', [AttendaceReportController::class, 'exportAttendance'])->name('api.report.exportAttendance');
+    Route::get('attendace/reports/list', [AttendaceReportController::class, 'getAllAttendanceReports']);
+
+    // download report for leave
+    Route::post('report/export-leave', [LeaveReportController::class, 'exportLeave']);
+    Route::get('leave/reports/list', [LeaveReportController::class, 'getAllLeaveReports']);
+
+    // Salary APIs
+    Route::post('salarytype/store', [SalaryController::class, 'storeSalaryType']);
+    Route::post('salarytype/list', [SalaryController::class, 'listSalaryType']);
+    Route::post('salarytype/delete', [SalaryController::class, 'deleteSalaryType']);
+    Route::post('salary/preview', [SalaryController::class, 'generateEmployeeSalaryPreview']);
+    Route::post('salary/save', [SalaryController::class, 'saveGeneratedEmployeeSalary']);
+    Route::post('employee/salary-slip/download', [SalaryController::class, 'salaryPDF']);
+    Route::match(['get', 'post'], 'gracesetting-list', [GraceSettingController::class, 'index']);
+    Route::match(['put', 'post'], 'gracesetting-update/{id}', [GraceSettingController::class, 'update']);
+    Route::post('generate-all-salary', [SalaryController::class, 'generateAllSalary']);
+
+    // bbps category
+    Route::prefix('bbps')->group(function () {
+        Route::get('categories', [BbpsCategoryController::class, 'index']);
+        Route::post('categories', [BbpsCategoryController::class, 'store']);
+        Route::post('categories-update/{id}', [BbpsCategoryController::class, 'update']);
+        Route::delete('categories-delete/{id}', [BbpsCategoryController::class, 'destroy']);
+    });
+
+    // bbps sub category
+    Route::prefix('bbps-sub-category')->group(function () {
+        Route::get('list', [BbpsSubCategoryController::class, 'index']);
+        Route::post('create', [BbpsSubCategoryController::class, 'store']);
+        Route::post('update/{id}', [BbpsSubCategoryController::class, 'update']);
+        Route::delete('delete/{id}', [BbpsSubCategoryController::class, 'destroy']);
+    });
+
+    // bbps sub operators
+    Route::prefix('bbps-operators')->group(function () {
+        Route::post('list', [BbpsOperatorMasterController::class, 'index']);
+        Route::post('create', [BbpsOperatorMasterController::class, 'store']);
+        Route::get('details/{operator_code}', [BbpsOperatorMasterController::class, 'show']);
+        Route::post('update/{id}', [BbpsOperatorMasterController::class, 'update']);
+        Route::delete('delete/{id}', [BbpsOperatorMasterController::class, 'destroy']);
+    });
+
+    // api-providers
+    Route::prefix('api-providers')->group(function () {
+        Route::get('list', [ApiProviderController::class, 'index']);
+        Route::post('create', [ApiProviderController::class, 'store']);
+        Route::get('details/{id}', [ApiProviderController::class, 'show']);
+        Route::post('update/{id}', [ApiProviderController::class, 'update']);
+        Route::delete('delete/{id}', [ApiProviderController::class, 'destroy']);
+    });
+
+    // Chat
+    Route::prefix('chat')->group(function () {
+        Route::post('send', [ChatController::class, 'sendchat']);
+        Route::post('get', [ChatController::class, 'getChat']);
+    });
 });
 
-//location country,state,city
+// Public Lookups & Registration Reference Data (No auth required)
 Route::get('countries', [LocationController::class, 'getCountries']);
 Route::get('countries/{countryId}/states', [LocationController::class, 'getStates']);
 Route::get('states/{stateId}/cities', [LocationController::class, 'getCities']);
-
-
-//company type api
 Route::get('company-types', [CompanyTypeController::class, 'index']);
-Route::post('company-types', [CompanyTypeController::class, 'store']);
-//business type api
 Route::get('business-types', [BusinessTypeController::class, 'index']);
-Route::post('business-types', [BusinessTypeController::class, 'store']);
-
-Route::post('/cron-job/mark-absent', [EmployeeController::class, 'runMarkAbsentJob']);
-
-Route::post('/document-verify', [CompanyController::class, 'documentVerify']);
 Route::get('app-banner', [companyDashboardController::class, 'appbanner']);
 
-
-// download report for employee
-Route::post('report/export-employee', [EmployeeReportController::class, 'exportEmployee'])->name('api.report.exportEmployee');
-
-// employee report list
-Route::get('employee/reports/list', [EmployeeReportController::class, 'getAllEmployeeReports']);
-
-
-// download report for attendance
-Route::post('report/export-attendace', [AttendaceReportController::class, 'exportAttendance'])->name('api.report.exportAttendance');
-
-//  attendance report list
-Route::get('attendace/reports/list', [AttendaceReportController::class, 'getAllAttendanceReports']);
-
-
-// download report for leave
-Route::post('report/export-leave', [LeaveReportController::class, 'exportLeave']);
-
-// leave report list
-Route::get('leave/reports/list', [LeaveReportController::class, 'getAllLeaveReports']);
-
-
-// add salary type
-Route::post('salarytype/store', [SalaryController::class, 'storeSalaryType']);
-// add salary type list
-Route::post('salarytype/list', [SalaryController::class, 'listSalaryType']);
-// add salary type delete
-Route::post('salarytype/delete', [SalaryController::class, 'deleteSalaryType']);
-
-// salary generate
-Route::post('salary/preview', [SalaryController::class, 'generateEmployeeSalaryPreview']);
-// Final Save
-Route::post('salary/save', [SalaryController::class, 'saveGeneratedEmployeeSalary']);
-
-Route::post('employee/salary-slip/download', [SalaryController::class, 'salaryPDF']);
-Route::match(['get', 'post'], 'gracesetting-list', [GraceSettingController::class, 'index']);
-Route::match(['put', 'post'], 'gracesetting-update/{id}', [GraceSettingController::class, 'update']);
-Route::post('generate-all-salary', [SalaryController::class, 'generateAllSalary']);
-
-// bbps category
-Route::prefix('bbps')->group(function () {
-    Route::get('categories', [BbpsCategoryController::class, 'index']);
-    Route::post('categories', [BbpsCategoryController::class, 'store']);
-    Route::post('categories-update/{id}', [BbpsCategoryController::class, 'update']);
-    Route::delete('categories-delete/{id}', [BbpsCategoryController::class, 'destroy']);
-});
-
-
-// bbps sub category
-Route::prefix('bbps-sub-category')->group(function () {
-    Route::get('list', [BbpsSubCategoryController::class, 'index']);
-    Route::post('create', [BbpsSubCategoryController::class, 'store']);
-    Route::post('update/{id}', [BbpsSubCategoryController::class, 'update']);
-    Route::delete('delete/{id}', [BbpsSubCategoryController::class, 'destroy']);
-});
-
-// bbps sub operators
-Route::prefix('bbps-operators')->group(function () {
-    Route::post('list', [BbpsOperatorMasterController::class, 'index']);
-    Route::post('create', [BbpsOperatorMasterController::class, 'store']);
-    // Route::get('details/{id}', [BbpsOperatorMasterController::class, 'show']);
-    Route::get('details/{operator_code}', [BbpsOperatorMasterController::class, 'show']);
-    Route::post('update/{id}', [BbpsOperatorMasterController::class, 'update']);
-    Route::delete('delete/{id}', [BbpsOperatorMasterController::class, 'destroy']);
-});
-
-
-// api-providers
-Route::prefix('api-providers')->group(function () {
-    Route::get('list', [ApiProviderController::class, 'index']);
-    Route::post('create', [ApiProviderController::class, 'store']);
-    Route::get('details/{id}', [ApiProviderController::class, 'show']);
-    Route::post('update/{id}', [ApiProviderController::class, 'update']);
-    Route::delete('delete/{id}', [ApiProviderController::class, 'destroy']);
-});
-
-Route::prefix('chat')->group(function () {
-    Route::post('send', [ChatController::class, 'sendchat']);
-    Route::post('get', [ChatController::class, 'getChat']);
-});
-//Route::post('chat/send', [SendController::class, 'sendchat']);
+// Cron Jobs
+Route::post('/cron-job/mark-absent', [EmployeeController::class, 'runMarkAbsentJob']);
 
